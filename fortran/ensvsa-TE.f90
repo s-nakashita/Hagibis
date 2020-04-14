@@ -91,12 +91,16 @@ program ensvsa_TE
            call fread3(rdf,vname(id),ip,zv3)
            if(mod(id,4)==1)then
               T=zv3(:,:,1:3)
+              print*,T(1,1,1)
            elseif(mod(id,4)==2)then
               ug=zv3(:,:,1:3)
+              print*,ug(1,1,1)
            elseif(mod(id,4)==3)then
               vg=zv3(:,:,1:3)
+              print*,vg(1,1,1)
            else
               q=zv3(:,:,1:3)
+              print*,q(1,1,1)
            endif
         enddo
         
@@ -115,7 +119,7 @@ program ensvsa_TE
               ze(i,j,10,imem)=ps(ilon,ilat)
            enddo
         enddo
-        !print*,ze(1,1,:,imem)
+        print*,imem!ze(1,1,:,imem)
      endif
   enddo
   
@@ -133,12 +137,16 @@ program ensvsa_TE
         !print*,maxval(zv),minval(zv)
         if(mod(id,4)==1)then
            T=zv3(:,:,1:3)
+           print*,T(1,1,1)
         elseif(mod(id,4)==2)then
            ug=zv3(:,:,1:3)
+           print*,ug(1,1,1)
         elseif(mod(id,4)==3)then
            vg=zv3(:,:,1:3)
+           print*,vg(1,1,1)
         else
            q=zv3(:,:,1:3)
+           print*,q(1,1,1)
         endif
      enddo
      
