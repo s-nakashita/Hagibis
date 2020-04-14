@@ -7,7 +7,7 @@ program grads_ensvsa_TE
   integer,parameter :: dslon=35, delon=45, dslat=67, delat=75 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
-  integer,parameter :: nvar=3*kmax+1 
+  integer,parameter :: nvar=3*3+1 
   integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
   real,parameter :: cp=1005.7, R=287.04, Lh=2.5104*10**6 
@@ -98,13 +98,13 @@ program grads_ensvsa_TE
            do id=1,4
               call fread3(rdf,vname(id),ip,zv3)
               if(mod(id,4)==1)then
-                 T(:,:,:)=zv3
+                 T=zv3(:,:,1:3)
               elseif(mod(id,4)==2)then
-                 ug(:,:,:)=zv3
+                 ug=zv3(:,:,1:3)
               elseif(mod(id,4)==3)then
-                 vg(:,:,:)=zv3
+                 vg=zv3(:,:,1:3)
               else
-                 q(:,:,:)=zv3
+                 q=zv3(:,:,1:3)
               endif
            enddo
            
@@ -135,13 +135,13 @@ program grads_ensvsa_TE
            call fread3(rdf,vname(id),ip,zv3)
            !print*,maxval(zv),minval(zv)
            if(mod(id,4)==1)then
-              T(:,:,:)=zv3
+              T=zv3(:,:,1:3)
            elseif(mod(id,4)==2)then
-              ug(:,:,:)=zv3
+              ug=zv3(:,:,1:3)
            elseif(mod(id,4)==3)then
-              vg(:,:,:)=zv3
+              vg=zv3(:,:,1:3)
            else
-              q(:,:,:)=zv3
+              q=zv3(:,:,1:3)
            endif
         enddo
         

@@ -2,7 +2,7 @@ module read_netcdf
   implicit none
   include '/opt/local/include/netcdf.inc'
 
-  integer,parameter :: imax=61,jmax=161,kmax=3,ntime=29
+  integer,parameter :: imax=61,jmax=161,kmax=5,ntime=29
 
 contains
 
