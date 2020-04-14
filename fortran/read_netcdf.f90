@@ -64,6 +64,8 @@ contains
     ic=NF_GET_VAR_REAL(ncid,idlev,rlev)
     ic=NF_GET_VAR_DOUBLE(ncid,idtime,rtime)
 
+    print*,rlev
+    
     istart(1) = 1
     istart(2) = 1
     istart(3) = 1
