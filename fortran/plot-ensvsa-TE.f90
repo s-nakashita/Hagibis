@@ -20,7 +20,8 @@ program plot_ensvsa_TE
   
   real ::  tmp, score, crate
   real ::  ps(imax,jmax),ug(imax,jmax,3),vg(imax,jmax,3)
-  real ::  T(imax,jmax,3),q(imax,jmax,3),zv(0:imax-1,jmax)
+  real ::  T(imax,jmax,3),q(imax,jmax,3)
+  real ::  zv3(0:imax-1,jmax,kmax),zv(0:imax-1,jmax)
   real ::  z0(nlon,nlat,nvar),zm(nlon,nlat,nvar),zf(nlon,nlat,nvar)
   real,allocatable ::  ze(:,:,:,:)
   real ::  sigma(3),area
@@ -29,25 +30,23 @@ program plot_ensvsa_TE
   real :: TEm(ntime),TEf(ntime),day(ntime)
       
   character rdf*100,rdw*100,wd*100,wdm*100,wdf*100
-  character dir*14,nmem*2,fd*1,date*10,yyyymmdd*8,hh*2,yyyymmddhh*10,orig*4
-  character(len=17) :: vname(13)
-  data vname/'TMP_250mb','UGRD_250mb','VGRD_250mb','SPFH_250mb',&
-       &'TMP_500mb','UGRD_500mb','VGRD_500mb','SPFH_500mb','TMP_850mb',&
-       &'UGRD_850mb','VGRD_850mb','SPFH_850mb','PRES_meansealevel'/
+  character dir*48,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
+  character(len=17) :: vname(5)
+  data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
 
-     !|----/----/----/----/----/----/----/----| 
-  dir='../netcdf/jma/'
+     !|----/----/----/----/----/----/----/----/----/----| 
+  dir='/Users/nakashita/Documents/hagibis/netcdf/tigge/'
 
-  sigma(1)=4.0/5.0*200.0/pr
-  sigma(2)=6.0/7.0*300.0/pr+1.0/5.0*200.0/pr
+  sigma(1)=200.0/pr
+  sigma(2)=6.0/7.0*300.0/pr
   sigma(3)=8.0/7.0*300.0/pr
   print*,sigma
       
   !  データの設定 
   yyyymmddhh="2019101000"
-  yyyymmdd=yyyymmddhh(1:8)
-  hh=yyyymmddhh(9:10)
-  print*,yyyymmdd,hh
+  yyyy=yyyymmddhh(1:4)
+  mmddhh=yyyymmddhh(5:10)
+  print*,yyyy,mmddhh
   
   mem=memn 
   rdw='./weight-dryTE-jma-'//yyyymmddhh//'.grd'
@@ -89,28 +88,24 @@ program plot_ensvsa_TE
         ilu=0
         ilv=0
         ilq=0
-        rdf=dir//yyyymmddhh//'_'//nmem//'.nc'
+        rdf=dir//yyyy//'/jma/'//mmddhh//'_'//nmem//'.nc'
         !print*,rdf
         inquire(file=rdf, exist=ex)
         if(ex)then
-           do id=1,12
-              call fread(rdf,vname(id),ip,zv)
+           do id=1,4
+              call fread3(rdf,vname(id),ip,zv3)
               if(mod(id,4)==1)then
-                 ilt=ilt+1
-                 T(:,:,ilt)=zv
+                 T(:,:,:)=zv3
               elseif(mod(id,4)==2)then
-                 ilu=ilu+1
-                 ug(:,:,ilu)=zv
+                 ug(:,:,:)=zv3
               elseif(mod(id,4)==3)then
-                 ilv=ilv+1
-                 vg(:,:,ilv)=zv
+                 vg(:,:,:)=zv3
               else
-                 ilq=ilq+1
-                 q(:,:,ilq)=zv
+                 q(:,:,:)=zv3
               endif
            enddo
            
-           call fread(rdf,vname(13),ip,zv)
+           call fread(rdf,vname(5),ip,zv)
            ps=zv/100     !Pa->hPa
             
            do i=1,nlon
@@ -133,30 +128,26 @@ program plot_ensvsa_TE
      ilu=0
      ilv=0
      ilq=0
-     rdf=dir//yyyymmddhh//'_mean.nc'
+     rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'
      inquire(file=rdf, exist=ex)
      if(ex)then
-        do id=1,12
+        do id=1,4
            !print*,rdf
            !print*,vname(id)
-           call fread(rdf,vname(id),ip,zv)
+           call fread3(rdf,vname(id),ip,zv3)
            !print*,maxval(zv),minval(zv)
            if(mod(id,4)==1)then
-              ilt=ilt+1
-              T(:,:,ilt)=zv
+              T(:,:,:)=zv3
            elseif(mod(id,4)==2)then
-              ilu=ilu+1
-              ug(:,:,ilu)=zv
+              ug(:,:,:)=zv3
            elseif(mod(id,4)==3)then
-              ilv=ilv+1
-              vg(:,:,ilv)=zv
+              vg(:,:,:)=zv3
            else
-              ilq=ilq+1
-              q(:,:,ilq)=zv
+              q(:,:,:)=zv3
            endif
         enddo
         
-        call fread(rdf,vname(13),ip,zv)
+        call fread(rdf,vname(5),ip,zv)
         ps=zv/100        !Pa->hPa
         !print*,maxval(ps),minval(ps)
         
