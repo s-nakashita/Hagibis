@@ -2,7 +2,7 @@ module read_netcdf
   implicit none
   include '/opt/local/include/netcdf.inc'
 
-  integer,parameter :: imax=61,jmax=161,kmax=3,ntime=29
+  integer,parameter :: imax=61,jmax=161,kmax=5,ntime=29
 
 contains
 
@@ -64,8 +64,7 @@ contains
     ic=NF_GET_VAR_REAL(ncid,idlev,rlev)
     ic=NF_GET_VAR_DOUBLE(ncid,idtime,rtime)
 
-    print*,rlev
-    
+
     istart(1) = 1
     istart(2) = 1
     istart(3) = 1
