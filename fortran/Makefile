@@ -19,6 +19,7 @@ grads-ensvsa-TE:	$(OBJS) grads-ensvsa-TE.o
 plot-ensvsa-TE:		$(OBJS) plot-ensvsa-TE.o
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
+$(OBJS):	read_netcdf.f90
 ensvsa-TE.o:	ensvsa-TE.f90
 grads-ensvsa-TE.o:	grads-ensvsa-TE.f90
 plot-ensvsa-TE.o:	plot-ensvsa-TE.f90
