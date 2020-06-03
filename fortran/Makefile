@@ -3,14 +3,17 @@ LDFLAGS = -L/opt/local/lib
 LIBS = -lnetcdff -llapack
 
 OBJS = read_netcdf.o
-FILES = ensvsa-TE grads-ensvsa-TE plot-ensvsa-TE
+TEFILES = ensvsa-TE grads-ensvsa-TE plot-ensvsa-TE
+SLPFILES = ensvsa-slp grads-ensvsa-slp plot-ensvsa-slp
 
 .SUFFIXES: .f90 .o
 
 .f90.o:
 	$(CC) $(LDFLAGS) $(LIBS) -c $<
 
-all:	$(FILES)
+TE:	$(TEFILES)
+
+SLP: $(SLPFILES)
 
 ensvsa-TE:	$(OBJS) ensvsa-TE.o
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
@@ -19,9 +22,20 @@ grads-ensvsa-TE:	$(OBJS) grads-ensvsa-TE.o
 plot-ensvsa-TE:		$(OBJS) plot-ensvsa-TE.o
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
+ensvsa-slp:	$(OBJS) ensvsa-slp.o
+	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
+grads-ensvsa-slp:	$(OBJS) grads-ensvsa-slp.o
+	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
+plot-ensvsa-slp:		$(OBJS) plot-ensvsa-slp.o
+	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
+
 $(OBJS):	read_netcdf.f90
 ensvsa-TE.o:	ensvsa-TE.f90
 grads-ensvsa-TE.o:	grads-ensvsa-TE.f90
 plot-ensvsa-TE.o:	plot-ensvsa-TE.f90
 
-clean:;		rm -f *.o ensvsa-TE grads-ensvsa-TE plot-ensvsa-TE
+ensvsa-slp.o:	ensvsa-slp.f90
+grads-ensvsa-slp.o:	grads-ensvsa-slp.f90
+plot-ensvsa-slp.o:	plot-ensvsa-slp.f90
+
+clean:;		rm -f *.o ensvsa-TE grads-ensvsa-TE plot-ensvsa-TE ensvsa-slp grads-ensvsa-slp plot-ensvsa-slp

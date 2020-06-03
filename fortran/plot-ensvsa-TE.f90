@@ -30,20 +30,20 @@ program plot_ensvsa_TE
   real :: TEm(ntime),TEf(ntime),day(ntime)
       
   character rdf*100,rdw*100,wd*100,wdm*100,wdf*100
-  character dir*48,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*40,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
 
      !|----/----/----/----/----/----/----/----/----/----| 
-  dir='/Users/nakashita/Documents/hagibis/netcdf/tigge/'
+  dir='/Users/nakashita/Documents/netcdf/tigge/'
 
-  sigma(1)=200.0/pr
+  sigma(1)=8.0/7.0*300.0/pr
   sigma(2)=6.0/7.0*300.0/pr
-  sigma(3)=8.0/7.0*300.0/pr
+  sigma(3)=200.0/pr
   print*,sigma
       
   !  データの設定 
-  yyyymmddhh="2019101000"
+  yyyymmddhh="2019100912"
   yyyy=yyyymmddhh(1:4)
   mmddhh=yyyymmddhh(5:10)
   print*,yyyy,mmddhh
@@ -132,7 +132,7 @@ program plot_ensvsa_TE
      ilu=0
      ilv=0
      ilq=0
-     rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'
+     rdf=dir//yyyy//'/jma/100900_mean.nc'
      inquire(file=rdf, exist=ex)
      if(ex)then
         do id=1,4
@@ -250,8 +250,8 @@ program plot_ensvsa_TE
   wdf='./TE-1mode-jma-'//yyyymmddhh//'.txt'
   open(22,file=wdf,status='new')
   do ip=1,ntime
-     write(21,'(f5.1,f9.4)') day(ip),TEm(ip)
-     write(22,'(f5.1,f9.4)') day(ip),TEf(ip)
+     write(21,'(f5.1,f10.4)') day(ip),TEm(ip)
+     write(22,'(f5.1,f10.4)') day(ip),TEf(ip)
   enddo
   close(21)
   close(22)
@@ -261,7 +261,7 @@ program plot_ensvsa_TE
      wd='./TE-'//nmem//'-jma-'//yyyymmddhh//'.txt'
      open(23,file=wd,status='new')
      do ip=1,ntime
-        write(23,'(f5.1,f9.4)') day(ip),TE(imem,ip)
+        write(23,'(f5.1,f10.4)') day(ip),TE(imem,ip)
      enddo
      close(23)
   enddo

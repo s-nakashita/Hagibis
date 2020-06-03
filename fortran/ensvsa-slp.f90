@@ -19,11 +19,10 @@ program ensvsa_TE
   logical :: ex
   
   real ::  tmp, score, crate
-  real ::  ps(imax,jmax),ug(imax,jmax,3),vg(imax,jmax,3)
-  real ::  T(imax,jmax,3),q(imax,jmax,3)
-  real ::  zv3(0:imax-1,jmax,kmax),zv(0:imax-1,jmax)
-  real ::  z0(nlon,nlat,nvar)
-  real,allocatable ::  ze(:,:,:,:)
+  real ::  ps(imax,jmax)
+  real ::  zv(0:imax-1,jmax)
+  real ::  z0(nlon,nlat)
+  real,allocatable ::  ze(:,:,:)
   real ::  sigma(3)
   real,allocatable ::  z(:,:),zT(:,:)
   double precision,allocatable :: a8(:,:),u8(:,:),vt8(:,:)
@@ -54,7 +53,7 @@ program ensvsa_TE
   mem=memn
   it=1
   ip=13
-  wd='./weight-dryTE-jma-'//yyyymmddhh//'.grd'
+  wd='./weight-slp-jma-'//yyyymmddhh//'.grd'
   open(21,file=wd,status='new',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
@@ -62,48 +61,27 @@ program ensvsa_TE
   ! 配列の割付
   l=min(mem,narea*nvar)
   print*,l
-  allocate(ze(nlon,nlat,nvar,mem))
-  allocate(z(narea*nvar,mem))
-  allocate(zT(mem,narea*nvar))
-  allocate(a8(narea*nvar,mem))
+  allocate(ze(nlon,nlat,mem))
+  allocate(z(narea,mem))
+  allocate(zT(mem,narea))
+  allocate(a8(narea,mem))
   allocate(sg8(l))
   allocate(sg(l))
-  allocate(u8(narea*nvar,narea*nvar))  
+  allocate(u8(narea,narea))  
   allocate(vt8(mem,mem))
   allocate(vt(mem,mem))
   allocate(p(mem))
   allocate(v(mem,mem))
   allocate(vtv(mem,mem))
-  allocate(work(3*narea*nvar))
+  allocate(work(3*narea))
   
   do imem=1,mem
      write(nmem,'(I2.2)') imem
      !print*,nmem
-     ilt=0
-     ilu=0
-     ilv=0
-     ilq=0
      rdf=dir//yyyy//'/jma/'//mmddhh//'_'//nmem//'.nc'
      !print*,rdf
      inquire(file=rdf, exist=ex)
      if(ex)then
-        do id=1,4
-           call fread3(rdf,vname(id),ip,zv3)
-           if(mod(id,4)==1)then
-              T=zv3(:,:,1:3)
-              print*,T(1,1,1)
-           elseif(mod(id,4)==2)then
-              ug=zv3(:,:,1:3)
-              print*,ug(1,1,1)
-           elseif(mod(id,4)==3)then
-              vg=zv3(:,:,1:3)
-              print*,vg(1,1,1)
-           else
-              q=zv3(:,:,1:3)
-              print*,q(1,1,1)
-           endif
-        enddo
-        
         call fread(rdf,vname(5),ip,zv)
         ps=zv/100     !Pa->hPa
         
@@ -111,45 +89,16 @@ program ensvsa_TE
            do j=1,nlat
               ilon=dslon+i-1
               ilat=dslat+j-1
-              ze(i,j,1:3,imem)=ug(ilon,ilat,:)
-              ze(i,j,4:6,imem)=vg(ilon,ilat,:)
-              ze(i,j,7:9,imem)=T(ilon,ilat,:)
-              !ze(i,j,10:12,imem)=q(ilon,ilat,:)
-              !ze(i,j,13,imem)=ps(ilon,ilat)
-              ze(i,j,10,imem)=ps(ilon,ilat)
+              ze(i,j,imem)=ps(ilon,ilat)
            enddo
         enddo
         print*,imem!ze(1,1,:,imem)
      endif
   enddo
   
-  ilt=0
-  ilu=0
-  ilv=0
-  ilq=0
   rdf=dir//yyyy//'/jma/100900_mean.nc'
   inquire(file=rdf, exist=ex)
   if(ex)then
-     do id=1,4
-        !print*,rdf
-        !print*,vname(id)
-        call fread3(rdf,vname(id),ip,zv3)
-        !print*,maxval(zv),minval(zv)
-        if(mod(id,4)==1)then
-           T=zv3(:,:,1:3)
-           print*,T(1,1,1)
-        elseif(mod(id,4)==2)then
-           ug=zv3(:,:,1:3)
-           print*,ug(1,1,1)
-        elseif(mod(id,4)==3)then
-           vg=zv3(:,:,1:3)
-           print*,vg(1,1,1)
-        else
-           q=zv3(:,:,1:3)
-           print*,q(1,1,1)
-        endif
-     enddo
-     
      call fread(rdf,vname(5),ip,zv)
      ps=zv/100        !Pa->hPa
      !print*,maxval(ps),minval(ps)
@@ -158,12 +107,7 @@ program ensvsa_TE
         do j=1,nlat
            ilon=dslon+i-1
            ilat=dslat+j-1
-           z0(i,j,1:3)=ug(ilon,ilat,:)
-           z0(i,j,4:6)=vg(ilon,ilat,:)
-           z0(i,j,7:9)=T(ilon,ilat,:)
-           !z0(i,j,10:12)=q(ilon,ilat,:)
-           !z0(i,j,13)=ps(ilon,ilat)
-           z0(i,j,10)=ps(ilon,ilat)
+           z0(i,j)=ps(ilon,ilat)
         enddo
      enddo
   endif
@@ -172,56 +116,40 @@ program ensvsa_TE
        
   !1.calcurate perturbation
   do imem=1,mem
-     ze(:,:,:,imem)=ze(:,:,:,imem)-z0(:,:,:)
+     ze(:,:,imem)=ze(:,:,imem)-z0(:,:)
   enddo
-  !2.Multiply by cos(lat) and layer thickness factor
+  !2.Multiply by cos(lat)
   do j=1,nlat
      lat=dslat+(j-1)-1
-     ze(:,j,:,:)=ze(:,j,:,:)*sqrt(cos(lat*dtheta*pi/180.0))
+     ze(:,j,:)=ze(:,j,:)*cos(lat*dtheta*pi/180.0)
   enddo
       
-  do ilev=1,3            !850,500,300hPa
-     do ivar=1,3!4         !ug,vg,T,q
-        ze(:,:,3*(ivar-1)+ilev,:)=ze(:,:,3*(ivar-1)+ilev,:)*sigma(ilev)
-     enddo
-  enddo
-  !3.Multiply by coefficient
-  !T
-  ze(:,:,7:9,:)=ze(:,:,7:9,:)*sqrt(cp/Tr)
-  !ps
-  !ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
-  ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
-  !q
-  !ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
-  
   do imem=1,mem
      print*,imem
-     print*,ze(1,1,:,imem)
+     print*,ze(1,1,imem)
   enddo
 
-  !4.make data array Z
+  !3.make data array Z
   
   do imem=1,mem
      iarea=0
      do i=1,nlon
         do j=1,nlat
-           do ivar=1,nvar
-              iarea=iarea+1
-              z(iarea,imem)=ze(i,j,ivar,imem)
-           enddo
+           iarea=iarea+1
+           z(iarea,imem)=ze(i,j,imem)
         enddo
      enddo
   enddo
   !print*,z
   ! 転置行列を作る
   do j=1,mem
-     do i=1,narea*nvar
+     do i=1,narea
         zT(j,i) = z(i,j)
      end do
   end do
   
   a8=real(z,kind=8)
-  call dgesvd('o','a',narea*nvar,mem,a8,narea*nvar,sg8,u8,narea*nvar,vt8,mem,work,lwork,info)
+  call dgesvd('o','a',narea,mem,a8,narea,sg8,u8,narea,vt8,mem,work,lwork,info)
   !特異値分解(eof.f90)と異なり、固有値の小さい順にデータが格納されていることに注意
   print *,'info=',info
   !print *,'eigen values=',s(:) !固有値
