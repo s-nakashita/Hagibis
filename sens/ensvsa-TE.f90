@@ -14,8 +14,9 @@ program ensvsa_TE
   real,parameter :: Tr=270.0, pr=1000.0 
       
   integer :: i,j,ieof,info,l,imem,id,iarea,ilon,ilat,it
-  integer :: ilt,ilu,ilv,ilq,ilev,ivar,ip,fday
+  integer :: ilt,ilu,ilv,ilq,ilev,ivar,fday
   integer :: lat,day,nd,mem,ios
+  integer :: idate,edate,ip
   logical :: ex
   
   real ::  tmp, score, crate
@@ -33,12 +34,12 @@ program ensvsa_TE
   real,allocatable :: sg(:),p(:)
   
   character rdf*100,wd*100,rdt*100
-  character dir*40,nmem*2,fd*1,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*30,nmem*2,fd*1,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
   
      !|----/----/----/----/----/----/----/----/----/----/----/----| 
-  dir='/Users/nakashita/Documents/netcdf/tigge/'
+  dir='/Users/nakashita/netcdf/tigge/'
 
   sigma(1)=8.0/7.0*300.0/pr
   sigma(2)=6.0/7.0*300.0/pr
@@ -46,14 +47,19 @@ program ensvsa_TE
   print*,sigma
   
   !  データの設定 
-  yyyymmddhh="2019100912"
+  idate=2019100912
+  write(yyyymmddhh,'(I10)') idate
   yyyy=yyyymmddhh(1:4)
   mmddhh=yyyymmddhh(5:10)
   print*,yyyy,mmddhh
   
   mem=memn
   it=1
-  ip=13
+  edate=2019101212
+  call calc_steps(idate,edate,ip)
+  print*,ip
+  ip = ip+1
+  !ip=13
   wd='./weight-dryTE-jma-'//yyyymmddhh//'.grd'
   open(21,file=wd,status='new',access='direct',&
        &        convert='big_endian',&
