@@ -1,18 +1,18 @@
 #!/bin/bash
-init0=2019101000
+init0=2019100912
 CDIR=`pwd`
 bstfile=$CDIR/bst_hagibis.txt
-outfile=track_${init0}.ps
+outfile=track_jma_${init0}_c.ps
 
 function plot_track() {
-    for orig in 0 1 2 3;do
+    for orig in 1 ;do
 	case $orig in
 	    0 ) datadir=ecmf ;;
 	    1 ) datadir=rjtd ;;
 	    2 ) datadir=kwbc ;;
 	    3 ) datadir=egrr ;;
 	esac
-	tracktxt=$datadir/track${1}.txt
+	tracktxt=$datadir/track${1}_c.txt
 	yyyy=`echo ${1:0:4}`
 	mm=`echo ${1:4:2}`
 	dd=`echo ${1:6:2}`

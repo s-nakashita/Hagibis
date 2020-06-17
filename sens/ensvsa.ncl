@@ -26,16 +26,18 @@ begin
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  ug       = a->ugrd(6,:,:,:)
-  vg       = a->vgrd(6,:,:,:)
-  temp     = a->t(6,:,:,:)
-  ps       = a->pres_meansealev(6,:,:)
-  te       = a->te(6,:,:)
+  d = 6
+  ug       = a->ugrd(d,:,:,:)
+  vg       = a->vgrd(d,:,:,:)
+  temp     = a->t(d,:,:,:)
+  spfh	   = a->q(d,:,:,:)
+  ps       = a->pres_meansealev(d,:,:)
+  te       = a->te(d,:,:)
   lat_uv   = a->lat
   lon_uv   = a->lon
   plev     = a->lev
   
-  wks = gsn_open_wks("png","ensvsa_t+wind_100912_v")
+  wks = gsn_open_wks("png","ensvsa_m_t+wind_100912_v")
   plot = new(5,graphic)
   cmap = read_colormap_file("posneg_1")
     
@@ -44,6 +46,8 @@ begin
      u = ug(k,:,:)
      v = vg(k,:,:)
      t = temp(k,:,:)
+     q = spfh(k,:,:)
+     q = q*10000
      hgt = plev(k)
 ;---Create plot
      res                = True               ; plot mods desired
@@ -51,9 +55,10 @@ begin
      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = "T+wind_"+hgt+"hPa"
+     res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
      res@gsnCenterStringOrthogonalPosF = 0.02
-     res@gsnLeftString	    = ""
+     res@gsnLeftString	    = "K"
+     res@gsnRightString   = "10^(-4)kg/kg"    
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False              ; turn off contour lines
@@ -77,7 +82,7 @@ begin
       res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
       res@cnMinLevelValF       = -1.0               ; set min contour level
-      res@cnMaxLevelValF       = 1                 ; set max contour level
+      res@cnMaxLevelValF       = 1.0                 ; set max contour level
       res@cnLevelSpacingF      = 0.2               ; set contour spacing
 
       res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
@@ -96,7 +101,30 @@ begin
       wind = sqrt(u^2+v^2)
       u = where(wind.lt.0.1, u@_FillValue, u)
   
-      plot(k) = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
+      plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
+
+      res@cnFillOn             = False             ; turn on color for contours
+      res@cnLinesOn            = True              ; turn off contour lines
+      res@cnLineLabelsOn       = True
+      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+;     res@cnMaxLevelCount	   = 10
+      res@cnMinLevelValF       = -8.0              ; set min contour level
+      res@cnMaxLevelValF       = 8.0                 ; set max contour level
+      res@cnLevelSpacingF      = 1.0               ; set contour spacing
+; when using the gsn_csm plot templates and overlay, it is necessary to
+; turn off the automatic label strings so that you don't get text on 
+; top of text
+      res@gsnRightString   = ""    
+      res@gsnLeftString    = ""
+      res@gsnCenterString  = ""
+      
+      plotq = gsn_csm_contour(wks,q,res)
+      overlay(plott,plotq)
+      plot(k) = plott
+      delete(plott)
+      delete(plotq)
    end do
 
    resps                = True               ; plot mods desired
@@ -142,7 +170,7 @@ begin
    reste@gsnFrame	      = False
 ;   res@cnInfoLabelOn	      = False
      
-   reste@gsnCenterString	   = "total dry energy"
+   reste@gsnCenterString	   = "total moist energy"
    reste@gsnCenterStringOrthogonalPosF = 0.02
    reste@gsnLeftString	    = ""
    reste@gsnAddCyclic	      = False

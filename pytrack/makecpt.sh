@@ -14,8 +14,11 @@ outfmt=+%s
 init0=${1}
 init1=${2}
 dt=${3}
-t0=$(date -j -f "$fmt" "${init0}" "${outfmt}")
-t1=$(($(date -j -f "$fmt" "${init1}" "${outfmt}") + dt))
-palette=viridis
+echo $init0 $init1 $dt
+t0=$(date -j -f "$fmt" "${init0}0000" "${outfmt}")
+t1=$(($(date -j -f "$fmt" "${init1}0000" "${outfmt}") + ${dt}))
+echo $t0
+echo $t1
+palette=polar
 cptfile=track2.cpt
 gmt makecpt -C${palette} -T${t0}/${t1}/${dt} > ${cptfile}

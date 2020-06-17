@@ -7,7 +7,7 @@ program grads_ensvsa_TE
   integer,parameter :: dslon=35, delon=45, dslat=67, delat=75 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
-  integer,parameter :: nv3d=3,nv2d=2,nlev=3
+  integer,parameter :: nv3d=4,nv2d=2,nlev=3
   integer,parameter :: nvar=nv3d*nlev+nv2d-1 
   integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
@@ -35,12 +35,12 @@ program grads_ensvsa_TE
   real :: buf4(imax,jmax)
       
   character rdf*100,rdw*100,wd*100,wdm*100,wdf*100
-  character dir*40,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*30,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
 
      !|----/----/----/----/----/----/----/----/----/----| 
-  dir='/Users/nakashita/Documents/netcdf/tigge/'
+  dir='/Users/nakashita/netcdf/tigge/'
 
   sigma(1)=8.0/7.0*300.0/pr
   sigma(2)=6.0/7.0*300.0/pr
@@ -52,13 +52,13 @@ program grads_ensvsa_TE
   yyyy=yyyymmddhh(1:4)
   mmddhh=yyyymmddhh(5:10)
   print*,yyyy,mmddhh
-  wd='./ensvsa-dryTE-m1-jma-'//yyyymmddhh//'-gr'
+  wd='./ensvsa-TE-m1-jma-'//yyyymmddhh//'-gr'
   open(21,file=wd,status='new',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*imax*jmax)
   
   mem=memn 
-  rdw='./weight-dryTE-jma-'//yyyymmddhh//'.grd'
+  rdw='./weight-TE-jma-'//yyyymmddhh//'.grd'
   open(10,file=rdw,status='old',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
@@ -124,9 +124,9 @@ program grads_ensvsa_TE
            ze(:,:,1:3,imem)=ug
            ze(:,:,4:6,imem)=vg
            ze(:,:,7:9,imem)=T
-           !ze(:,:,10:12,imem)=q
-           !ze(:,:,13,imem)=ps
-           ze(:,:,10,imem)=ps
+           ze(:,:,10:12,imem)=q
+           ze(:,:,13,imem)=ps
+           !ze(:,:,10,imem)=ps
            
            !print*,ze(1,1,:,imem)
         endif
@@ -166,9 +166,9 @@ program grads_ensvsa_TE
         z0(:,:,1:3)=ug
         z0(:,:,4:6)=vg
         z0(:,:,7:9)=T
-        !z0(:,:,10:12)=q
-        !z0(:,:,13)=ps
-        z0(:,:,10)=ps
+        z0(:,:,10:12)=q
+        z0(:,:,13)=ps
+        !z0(:,:,10)=ps
      endif
      !print*,z0(1,1,:)
      
@@ -219,7 +219,7 @@ program grads_ensvsa_TE
      !enddo
      
      do ilev=1,3            !850,500,300hPa
-        do ivar=1,3!4         !ug,vg,T,q
+        do ivar=1,4         !ug,vg,T,q
            ze(:,:,3*(ivar-1)+ilev,:)=ze(:,:,3*(ivar-1)+ilev,:)*sigma(ilev)
         enddo
      enddo
@@ -227,10 +227,10 @@ program grads_ensvsa_TE
      !T
      ze(:,:,7:9,:)=ze(:,:,7:9,:)*sqrt(cp/Tr)
      !ps
-     !ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
-     ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
+     ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
+     !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
      !q
-     !ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
+     ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
      
      do imem=1,mem
         print*,imem

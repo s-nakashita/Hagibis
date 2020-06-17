@@ -33,9 +33,9 @@ begin
 ; read in atmospheric data
 ;************************************************
   yyyymmddhh = "2019100912"
-  ds = 0 ;start
-  de = 2 ;end
-  a = addfile("../netcdf/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
+  ds = 3 ;start
+  de = 6 ;end
+  a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
   t = a->time
   year 	     = str_get_cols(yyyymmddhh,0,3)
   month	     = str_get_cols(yyyymmddhh,4,5)
@@ -43,19 +43,19 @@ begin
   hour	     = str_get_cols(yyyymmddhh,8,9)
   sec = cd_inv_calendar(toint(year),toint(month),toint(day),toint(hour),0,0,t@units,0)
   ssec 	= sec
-  ssec  = sec + 12*60*60*ds
+  ssec  = sec + 6*60*60*ds
   esec 	= sec
-  esec	= sec + 12*60*60*de
+  esec	= sec + 6*60*60*de
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
   wks = gsn_open_wks("png","../png/asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday)             ; send graphics to PNG file
   gsn_define_colormap(wks, "matlab_jet")
   plot = new(4*4,"graphic")
 
-  i = 4
+  i = 0
   do d = ds,de
      dsec = sec
-     dsec = sec + 12*60*60*d
+     dsec = sec + 6*60*60*d
      index = ind(t.eq.dsec)
      day   = cd_string(dsec, "%Y%N%D%H")
      print(day)
@@ -159,7 +159,7 @@ begin
 ; Add rotated text strings on left side of paneled plots.
 ; Use the resized plots to determine the position of the titles
   pos = new(4*2,float)
-;  pos(0:1) = get_title_position(plot(0))
+  pos(0:1) = get_title_position(plot(0))
   pos(2:3) = get_title_position(plot(4))
   pos(4:5) = get_title_position(plot(8))
   pos(6:7) = get_title_position(plot(12))
@@ -174,9 +174,9 @@ begin
   sec = cd_inv_calendar(toint(year),toint(month),toint(day),toint(hour),0,0,t@units,0)
   do d = ds,de
      newsec = sec
-     newsec = sec + 12*60*60*d
+     newsec = sec + 6*60*60*d
      date = cd_string(newsec,"%Y%N%D%H")
-     gsn_text_ndc(wks, date, pos(2*(d-ds+1)), pos(2*(d-ds+1)+1), txres)
+     gsn_text_ndc(wks, date, pos(2*(d-ds)), pos(2*(d-ds)+1), txres)
   end do    
 ;  gsn_text_ndc(wks, "2019100912", pos1(0), pos1(1), txres)
 ;  gsn_text_ndc(wks, "2019101000", pos2(0), pos2(1), txres)

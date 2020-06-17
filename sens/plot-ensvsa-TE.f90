@@ -6,8 +6,9 @@ program plot_ensvsa_TE
     
   integer,parameter :: dslon=35, delon=45, dslat=67, delat=75 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
-  integer,parameter :: narea=nlon*nlat 
-  integer,parameter :: nvar=3*3+1 
+  integer,parameter :: narea=nlon*nlat
+  integer,parameter :: nv3d=4,nv2d=1
+  integer,parameter :: nvar=3*nv3d+nv2d 
   integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
   real,parameter :: cp=1005.7, R=287.04, Lh=2.5104*10**6 
@@ -30,12 +31,12 @@ program plot_ensvsa_TE
   real :: TEm(ntime),TEf(ntime),day(ntime)
       
   character rdf*100,rdw*100,wd*100,wdm*100,wdf*100
-  character dir*40,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*30,nmem*2,fd*1,date*10,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
 
      !|----/----/----/----/----/----/----/----/----/----| 
-  dir='/Users/nakashita/Documents/netcdf/tigge/'
+  dir='/Users/nakashita/netcdf/tigge/'
 
   sigma(1)=8.0/7.0*300.0/pr
   sigma(2)=6.0/7.0*300.0/pr
@@ -49,7 +50,7 @@ program plot_ensvsa_TE
   print*,yyyy,mmddhh
   
   mem=memn 
-  rdw='./weight-dryTE-jma-'//yyyymmddhh//'.grd'
+  rdw='./weight-TE-jma-'//yyyymmddhh//'.grd'
   open(10,file=rdw,status='old',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
@@ -119,9 +120,9 @@ program plot_ensvsa_TE
                  ze(i,j,1:3,imem)=ug(ilon,ilat,:)
                  ze(i,j,4:6,imem)=vg(ilon,ilat,:)
                  ze(i,j,7:9,imem)=T(ilon,ilat,:)
-                 !ze(i,j,10:12,imem)=q(ilon,ilat,:)
-                 !ze(i,j,13,imem)=ps(ilon,ilat)
-                 ze(i,j,10,imem)=ps(ilon,ilat)
+                 ze(i,j,10:12,imem)=q(ilon,ilat,:)
+                 ze(i,j,13,imem)=ps(ilon,ilat)
+                 !ze(i,j,10,imem)=ps(ilon,ilat)
               enddo
            enddo
            !print*,ze(1,1,:,imem)
@@ -166,9 +167,9 @@ program plot_ensvsa_TE
               z0(i,j,1:3)=ug(ilon,ilat,:)
               z0(i,j,4:6)=vg(ilon,ilat,:)
               z0(i,j,7:9)=T(ilon,ilat,:)
-              !z0(i,j,10:12)=q(ilon,ilat,:)
-              !z0(i,j,13)=ps(ilon,ilat)
-              z0(i,j,10)=ps(ilon,ilat)
+              z0(i,j,10:12)=q(ilon,ilat,:)
+              z0(i,j,13)=ps(ilon,ilat)
+              !z0(i,j,10)=ps(ilon,ilat)
            enddo
         enddo
      endif
@@ -190,7 +191,7 @@ program plot_ensvsa_TE
      enddo
       
      do ilev=1,3            !250,500,850hPa
-        do ivar=1,3!4         !ug,vg,T,q
+        do ivar=1,nv3d         !ug,vg,T,q
            ze(:,:,3*(ivar-1)+ilev,:)=ze(:,:,3*(ivar-1)+ilev,:)*sigma(ilev)
         enddo
      enddo
@@ -198,10 +199,10 @@ program plot_ensvsa_TE
      !T
      ze(:,:,7:9,:)=ze(:,:,7:9,:)*sqrt(cp/Tr)
      !ps
-     !ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
-     ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
+     ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
+     !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
      !q
-     !ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
+     ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
 
      do imem=1,mem
         print*,imem
@@ -245,9 +246,9 @@ program plot_ensvsa_TE
      print*,"1 mode",TEf(ip)
   end do
   
-  wdm='./TE-mean-jma-'//yyyymmddhh//'.txt'
+  wdm='./mTE-mean-jma-'//yyyymmddhh//'.txt'
   open(21,file=wdm,status='new')
-  wdf='./TE-1mode-jma-'//yyyymmddhh//'.txt'
+  wdf='./mTE-1mode-jma-'//yyyymmddhh//'.txt'
   open(22,file=wdf,status='new')
   do ip=1,ntime
      write(21,'(f5.1,f10.4)') day(ip),TEm(ip)
@@ -258,7 +259,7 @@ program plot_ensvsa_TE
   
   do imem=1,mem
      write(nmem,'(I2.2)') imem
-     wd='./TE-'//nmem//'-jma-'//yyyymmddhh//'.txt'
+     wd='./mTE-'//nmem//'-jma-'//yyyymmddhh//'.txt'
      open(23,file=wd,status='new')
      do ip=1,ntime
         write(23,'(f5.1,f10.4)') day(ip),TE(imem,ip)

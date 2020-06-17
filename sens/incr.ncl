@@ -20,60 +20,55 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../../netcdf/tigge/2019/jma/100900_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
+  a = addfile("../../netcdf/tigge/2019/jma/100900_ctrl.nc","r")
+  b = addfile("../../netcdf/tigge/2019/jma/100912_ctrl.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  pres00   = a->HGT(:,:,:,:)
-  pres12   = b->HGT(:,:,:,:)
   u00      = a->UGRD(:,:,:,:)
   v00      = a->VGRD(:,:,:,:)
+  t00      = a->TMP(:,:,:,:)
+  ps00     = a->PRES_meansealevel(:,:,:)
   u12      = b->UGRD(:,:,:,:)
   v12      = b->VGRD(:,:,:,:)
-  lat_uv   = b->lat
-  lon_uv   = b->lon
-  time_00  = a->time
-  time_12  = b->time
+  t12      = b->TMP(:,:,:,:)
+  ps12     = b->PRES_meansealevel(:,:,:)
+  lat_uv   = a->lat
+  lon_uv   = a->lon
+  plev     = a->level
+  time_00   = a->time
+  time_12   = b->time
   date_00  = cd_string(time_00, "%Y%N%D%H")
   date_12  = cd_string(time_12, "%Y%N%D%H")
-  print(date_00)
-  print(date_12)
-
-  wks = gsn_open_wks("png","200hgt+wind_100912-100900")
-  plot = new(7,graphic)
-  cmap = read_colormap_file("ViBlGrWhYeOrRe")
+  
+  wks = gsn_open_wks("png","incr_100912-100900_c")
+  plot = new(4,graphic)
+  cmap = read_colormap_file("hotcold_18lev")
     
   vdate = 2019100912
-  do d = 0,6
-     print(vdate)
-     ind_00   = ind(date_00.eq.vdate)
-     ind_12   = ind(date_12.eq.vdate)
-     print(ind_00)
-     print(ind_12)
-
-     u = u12(ind_12,:,:)
-     u = u12(ind_12,:,:) - u00(ind_00,:,:)
-     v = v12(ind_12,:,:)
-     v = v12(ind_12,:,:) - v00(ind_00,:,:)
-     pres = pres12(ind_12,:,:)
-     pres = pres12(ind_12,:,:) - pres00(ind_00,:,:)
-     printVarSummary(u)
-     printMinMax(u,1)
-     printVarSummary(v)
-     printMinMax(v,1)
-     printVarSummary(pres)
-     printMinMax(pres,1)
+  ind_00 = ind(date_00.eq.vdate)
+  ind_12 = ind(date_12.eq.vdate)
+  do k = 0,2
+     u = u12(ind_12,k,:,:)
+     u = u12(ind_12,k,:,:) - u00(ind_00,k,:,:) 
+     v = v12(ind_12,k,:,:)
+     v = v12(ind_12,k,:,:) - v00(ind_00,k,:,:)
+     t = t12(ind_12,k,:,:)
+     t = t12(ind_12,k,:,:) - t00(ind_00,k,:,:)
+     ps = ps12(ind_12,:,:)
+     ps = ps12(ind_12,:,:) - ps00(ind_00,:,:)
+     hgt = plev(k)
 ;---Create plot
-     res                      = True               ; plot mods desired
+     res                = True               ; plot mods desired
      res@gsnDraw	      = False
      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = "ft="+vdate
+     res@gsnCenterString	   = "T+wind_"+hgt+"hPa"
      res@gsnCenterStringOrthogonalPosF = 0.02
+     res@gsnLeftString	    = ""
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False              ; turn off contour lines
@@ -81,10 +76,11 @@ begin
      res@gsnScalarContour     = True               ; contours desired
      res@cnFillPalette        = cmap
 
-     res@mpLandFillColor      = "gray"            ; set land to be gray
+;     res@mpLandFillColor      = "gray"            ; set land to be gray
+     res@mpFillOn	      = False
      res@mpMinLonF            =  120.               ; select a subregion
      res@mpMaxLonF            =  150.
-     res@mpMinLatF            =  0. 
+     res@mpMinLatF            =  10. 
      res@mpMaxLatF            =  60.
 
      res@lbOrientation            = "Vertical"     ; vertical label bar
@@ -96,9 +92,9 @@ begin
 
       res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-      res@cnMinLevelValF       = -50.0               ; set min contour level
-      res@cnMaxLevelValF       = 50                 ; set max contour level
-      res@cnLevelSpacingF      = 10.0               ; set contour spacing
+      res@cnMinLevelValF       = -3.0               ; set min contour level
+      res@cnMaxLevelValF       = 3                 ; set max contour level
+      res@cnLevelSpacingF      = 0.5               ; set contour spacing
 
       res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
       res@vcRefLengthF              = 0.045           ; define length of vec ref
@@ -114,20 +110,48 @@ begin
       res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
       wind = sqrt(u^2+v^2)
-      u = where(wind.lt.1, u@_FillValue, u)
+      u = where(wind.lt.0.1, u@_FillValue, u)
   
-      plot(d) = gsn_csm_vector_scalar_map_ce(wks,u,v,pres,res)
-
-      year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
-      month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
-      day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
-      hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
-      sec = cd_inv_calendar(year,month,day,hour,0,0, time_12@units, 0)
-      newsec = sec
-      newsec = sec + 12*60*60
-      vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
+      plot(k) = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
    end do
+
+   resps                = True               ; plot mods desired
+   resps@gsnDraw	      = False
+   resps@gsnFrame	      = False
+;   res@cnInfoLabelOn	      = False
+     
+   resps@gsnCenterString	   = "slp"
+   resps@gsnCenterStringOrthogonalPosF = 0.02
+   resps@gsnLeftString	    = ""
+   resps@gsnAddCyclic	      = False
+   resps@cnFillOn             = True               ; turn on color for contours
+   resps@cnLinesOn            = True              ; turn off contour lines
+   resps@cnLineLabelsOn       = False              ; turn off contour line labels
+   resps@gsnScalarContour     = True               ; contours desired
+   resps@cnFillPalette        = cmap
+
+   resps@mpLandFillColor      = "gray"            ; set land to be gray
+   resps@mpMinLonF            =  120.               ; select a subregion
+   resps@mpMaxLonF            =  150.
+   resps@mpMinLatF            =  10. 
+   resps@mpMaxLatF            =  60.
+
+   resps@lbOrientation            = "Vertical"     ; vertical label bar
+   resps@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
+
+; note, when doing a subregion, NCL determines the range of the data from
+; the full domain. If you wish to just consider the domain you are plotting,
+; you must manually set those levels.
+
+   resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+;     res@cnMaxLevelCount	   = 10
+   resps@cnMinLevelValF       = -500.0               ; set min contour level
+   resps@cnMaxLevelValF       = 500.0                 ; set max contour level
+   resps@cnLevelSpacingF      = 50.0               ; set contour spacing
+
+   plot(3) = gsn_csm_contour_map(wks, ps, resps)
+
    resP	                   = True
-   resP@gsnPanelMainString	   = "hgt&wind difference 100912-100900"
-   gsn_panel(wks,plot,(/2,4/),resP)
+   resP@gsnPanelMainString	   = "increment(ctrl) T&wind,slp "+vdate
+   gsn_panel(wks,plot,(/2,2/),resP)
 end

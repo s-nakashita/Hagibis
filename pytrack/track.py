@@ -12,26 +12,27 @@ btime = []
 for t in bst[:, (0, 1, 2, 3)].astype(np.int32): # [2019 10 4 18]
     btime.append(datetime(*t)) # 2019-10-04 18:00:00
 
-t0 = datetime(2019, 10, 5, 0) # 2019-10-06 12:00:00
-t0max = datetime(2019, 10, 13, 12) # 2019-10-07 12:00:00
+t0 = datetime(2019, 10, 9, 0) # 2019-10-06 12:00:00
+t0max = datetime(2019, 10, 9, 12) # 2019-10-07 12:00:00
 dt = timedelta(hours = 12) # 1 days, 0:00:00
 dc = 5
 pc = 101000
 latc = 40
 sigma = 0.0
-orig = "rjtd"
+orig = "jma"
 #outdir = Path("../ecmwf")
 #outdir.mkdir(0o755, True, True)
 
 while t0 <= t0max:
-    init = t0.strftime("%Y%m%d%H") # -> 2019100600
+    init = t0.strftime("%m%d%H") # -> 2019100600
+    year = t0.strftime("%Y")
     print(init)
-    outfile = orig+"/track" + init + ".txt"
+    outfile = orig+"/track" + year + init + "_c.txt"
     track = open(outfile, "w")
-    infile = "../../tigge_"+orig+"_slp/tigge_"+orig+"_slp_" + init + "_mean.nc"
+    infile = "../../netcdf/tigge/"+year+"/"+orig+"/"+init+"_ctrl.nc"
     nc = netCDF4.Dataset(infile, 'r')
-    lon = nc.variables['longitude'][:]
-    lat = nc.variables['latitude'][:]
+    lon = nc.variables['lon'][:]
+    lat = nc.variables['lat'][:]
     time = nc.variables['time']
     for i in range(len(time)):
         t = netCDF4.num2date(time[i], time.units) # 2019-10-06 12:00:00
