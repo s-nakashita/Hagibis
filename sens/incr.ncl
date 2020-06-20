@@ -20,8 +20,8 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../../netcdf/tigge/2019/jma/100900_ctrl.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_ctrl.nc","r")
+  a = addfile("../../netcdf/tigge/2019/jma/100900_mean.nc","r")
+  b = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -35,6 +35,7 @@ begin
   v12      = b->VGRD(:,:,:,:)
   t12      = b->TMP(:,:,:,:)
   ps12     = b->PRES_meansealevel(:,:,:)
+  z12      = b->HGT(:,:,:,:)
   lat_uv   = a->lat
   lon_uv   = a->lon
   plev     = a->level
@@ -43,7 +44,7 @@ begin
   date_00  = cd_string(time_00, "%Y%N%D%H")
   date_12  = cd_string(time_12, "%Y%N%D%H")
   
-  wks = gsn_open_wks("png","incr_100912-100900_c")
+  wks = gsn_open_wks("png","incr_100912-100900")
   plot = new(4,graphic)
   cmap = read_colormap_file("hotcold_18lev")
     
@@ -59,6 +60,8 @@ begin
      t = t12(ind_12,k,:,:) - t00(ind_00,k,:,:)
      ps = ps12(ind_12,:,:)
      ps = ps12(ind_12,:,:) - ps00(ind_00,:,:)
+     pful = ps12(ind_12,:,:)
+     z = z12(ind_12,k,:,:)
      hgt = plev(k)
 ;---Create plot
      res                = True               ; plot mods desired
@@ -79,7 +82,7 @@ begin
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpFillOn	      = False
      res@mpMinLonF            =  120.               ; select a subregion
-     res@mpMaxLonF            =  150.
+     res@mpMaxLonF            =  160.
      res@mpMinLatF            =  10. 
      res@mpMaxLatF            =  60.
 
@@ -93,7 +96,7 @@ begin
       res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
       res@cnMinLevelValF       = -3.0               ; set min contour level
-      res@cnMaxLevelValF       = 3                 ; set max contour level
+      res@cnMaxLevelValF       = 3.0                 ; set max contour level
       res@cnLevelSpacingF      = 0.5               ; set contour spacing
 
       res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
@@ -112,7 +115,42 @@ begin
       wind = sqrt(u^2+v^2)
       u = where(wind.lt.0.1, u@_FillValue, u)
   
-      plot(k) = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
+      plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
+
+      res@cnFillOn             = False             ; turn on color for contours
+      res@cnLinesOn            = True              ; turn off contour lines
+      res@cnLineLabelsOn       = True
+      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+      ;res@cnMaxLevelCount	   = 10
+      if (k .eq. 0) then
+         res@cnMinLevelValF       = 1200.0              ; set min contour level
+         res@cnMaxLevelValF       = 1500.0                 ; set max contour level
+         res@cnLevelSpacingF      = 30.0               ; set contour spacing
+      end if
+      if (k .eq. 1) then
+         res@cnMinLevelValF       = 5200.0              ; set min contour level
+         res@cnMaxLevelValF       = 5800.0                 ; set max contour level
+         res@cnLevelSpacingF      = 50.0               ; set contour spacing
+      end if
+      if (k .eq. 2) then
+         res@cnMinLevelValF       = 8800.0              ; set min contour level
+         res@cnMaxLevelValF       = 9600.0                 ; set max contour level
+         res@cnLevelSpacingF      = 80.0               ; set contour spacing
+      end if
+; when using the gsn_csm plot templates and overlay, it is necessary to
+; turn off the automatic label strings so that you don't get text on 
+; top of text
+      res@gsnRightString   = ""    
+      res@gsnLeftString    = ""
+      res@gsnCenterString  = ""
+      
+      plotz = gsn_csm_contour(wks,z,res)
+      overlay(plott,plotz)
+      plot(k) = plott
+      delete(plott)
+      delete(plotz)
    end do
 
    resps                = True               ; plot mods desired
@@ -125,14 +163,14 @@ begin
    resps@gsnLeftString	    = ""
    resps@gsnAddCyclic	      = False
    resps@cnFillOn             = True               ; turn on color for contours
-   resps@cnLinesOn            = True              ; turn off contour lines
+   resps@cnLinesOn            = False              ; turn off contour lines
    resps@cnLineLabelsOn       = False              ; turn off contour line labels
    resps@gsnScalarContour     = True               ; contours desired
    resps@cnFillPalette        = cmap
 
    resps@mpLandFillColor      = "gray"            ; set land to be gray
    resps@mpMinLonF            =  120.               ; select a subregion
-   resps@mpMaxLonF            =  150.
+   resps@mpMaxLonF            =  160.
    resps@mpMinLatF            =  10. 
    resps@mpMaxLatF            =  60.
 
@@ -149,9 +187,29 @@ begin
    resps@cnMaxLevelValF       = 500.0                 ; set max contour level
    resps@cnLevelSpacingF      = 50.0               ; set contour spacing
 
-   plot(3) = gsn_csm_contour_map(wks, ps, resps)
+   plotp = gsn_csm_contour_map(wks, ps, resps)
 
+   resps@cnFillOn             = False             ; turn on color for contours
+   resps@cnLinesOn            = True              ; turn off contour lines
+   resps@cnLineLabelsOn       = True
+   resps@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+   ;resps@cnMaxLevelCount	   = 10
+   resps@cnMinLevelValF       = 96000.0              ; set min contour level
+   resps@cnMaxLevelValF       = 108000.0                 ; set max contour level
+   resps@cnLevelSpacingF      = 400.0               ; set contour spacing
+; when using the gsn_csm plot templates and overlay, it is necessary to
+; turn off the automatic label strings so that you don't get text on 
+; top of text
+   resps@gsnRightString   = ""    
+   resps@gsnLeftString    = ""
+   resps@gsnCenterString  = ""
+      
+   plotpf = gsn_csm_contour(wks,pful,resps)
+   overlay(plotp,plotpf)
+   plot(3) = plotp
+   delete(plotp)
+   delete(plotpf)
    resP	                   = True
-   resP@gsnPanelMainString	   = "increment(ctrl) T&wind,slp "+vdate
+   resP@gsnPanelMainString	   = "increment T&wind,slp "+vdate
    gsn_panel(wks,plot,(/2,2/),resP)
 end

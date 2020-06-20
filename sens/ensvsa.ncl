@@ -26,7 +26,7 @@ begin
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  d = 6
+  d = 0
   ug       = a->ugrd(d,:,:,:)
   vg       = a->vgrd(d,:,:,:)
   temp     = a->t(d,:,:,:)
@@ -37,7 +37,7 @@ begin
   lon_uv   = a->lon
   plev     = a->lev
   
-  wks = gsn_open_wks("png","ensvsa_m_t+wind_100912_v")
+  wks = gsn_open_wks("png","ensvsa_m_t+wind_100912")
   plot = new(5,graphic)
   cmap = read_colormap_file("posneg_1")
     
@@ -68,7 +68,7 @@ begin
 
      res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpMinLonF            =  120.               ; select a subregion
-     res@mpMaxLonF            =  150.
+     res@mpMaxLonF            =  160.
      res@mpMinLatF            =  10. 
      res@mpMaxLatF            =  60.
 
@@ -144,7 +144,7 @@ begin
 
    resps@mpLandFillColor      = "gray"            ; set land to be gray
    resps@mpMinLonF            =  120.               ; select a subregion
-   resps@mpMaxLonF            =  150.
+   resps@mpMaxLonF            =  160.
    resps@mpMinLatF            =  10. 
    resps@mpMaxLatF            =  60.
 
@@ -182,7 +182,7 @@ begin
 
    reste@mpLandFillColor      = "gray"            ; set land to be gray
    reste@mpMinLonF            =  120.               ; select a subregion
-   reste@mpMaxLonF            =  150.
+   reste@mpMaxLonF            =  160.
    reste@mpMinLatF            =  10. 
    reste@mpMaxLatF            =  60.
 

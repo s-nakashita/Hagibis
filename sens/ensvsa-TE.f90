@@ -4,7 +4,7 @@ program ensvsa_TE
   
   implicit none
     
-  integer,parameter :: dslon=35, delon=45, dslat=67, delat=75 
+  integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
   integer,parameter :: nvar=3*4+1 
