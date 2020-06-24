@@ -41,7 +41,7 @@ begin
   plot = new(5,graphic)
   cmap = read_colormap_file("posneg_1")
     
-  vdate = 2019101212
+  vdate = 2019100912
   do k = 0,2
      u = ug(k,:,:)
      v = vg(k,:,:)
@@ -134,7 +134,7 @@ begin
      
    resps@gsnCenterString	   = "slp"
    resps@gsnCenterStringOrthogonalPosF = 0.02
-   resps@gsnLeftString	    = ""
+   resps@gsnLeftString	    = "hPa"
    resps@gsnAddCyclic	      = False
    resps@cnFillOn             = True               ; turn on color for contours
    resps@cnLinesOn            = True              ; turn off contour lines
@@ -172,7 +172,7 @@ begin
      
    reste@gsnCenterString	   = "total moist energy"
    reste@gsnCenterStringOrthogonalPosF = 0.02
-   reste@gsnLeftString	    = ""
+   reste@gsnLeftString	    = "J/kg/m^2"
    reste@gsnAddCyclic	      = False
    reste@cnFillOn             = True               ; turn on color for contours
    reste@cnLinesOn            = True              ; turn off contour lines
