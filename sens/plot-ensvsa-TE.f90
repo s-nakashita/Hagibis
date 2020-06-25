@@ -50,7 +50,7 @@ program plot_ensvsa_TE
   print*,yyyy,mmddhh
   
   mem=memn 
-  rdw='./weight-TE-jma-'//yyyymmddhh//'.grd'
+  rdw='./weight-TE-jma-'//yyyymmddhh//'_n.grd'
   open(10,file=rdw,status='old',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
@@ -133,7 +133,8 @@ program plot_ensvsa_TE
      ilu=0
      ilv=0
      ilq=0
-     rdf=dir//yyyy//'/jma/100900_mean.nc'
+     rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'
+!     rdf=dir//yyyy//'/jma/100900_mean.nc'
      inquire(file=rdf, exist=ex)
      if(ex)then
         do id=1,4

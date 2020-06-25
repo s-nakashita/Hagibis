@@ -20,13 +20,13 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("ensvsa-TE-m1.nc","r")
+  a = addfile("ensvsa-TE-m1_a.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  d = 0
+  d = 6
   ug       = a->ugrd(d,:,:,:)
   vg       = a->vgrd(d,:,:,:)
   temp     = a->t(d,:,:,:)
@@ -37,17 +37,17 @@ begin
   lon_uv   = a->lon
   plev     = a->lev
   
-  wks = gsn_open_wks("png","ensvsa_m_t+wind_100912")
+  wks = gsn_open_wks("png","ensvsa_m_t+wind_a_100912_v")
   plot = new(5,graphic)
   cmap = read_colormap_file("posneg_1")
     
-  vdate = 2019100912
+  vdate = 2019101212
   do k = 0,2
      u = ug(k,:,:)
      v = vg(k,:,:)
      t = temp(k,:,:)
      q = spfh(k,:,:)
-     q = q*10000
+     q = q*1000
      hgt = plev(k)
 ;---Create plot
      res                = True               ; plot mods desired
@@ -58,7 +58,7 @@ begin
      res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
      res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnLeftString	    = "K"
-     res@gsnRightString   = "10^(-4)kg/kg"    
+     res@gsnRightString   = "10^(-3)kg/kg"    
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False              ; turn off contour lines
@@ -81,9 +81,14 @@ begin
 
       res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-      res@cnMinLevelValF       = -1.0               ; set min contour level
-      res@cnMaxLevelValF       = 1.0                 ; set max contour level
-      res@cnLevelSpacingF      = 0.2               ; set contour spacing
+;  d=0
+;      res@cnMinLevelValF       = -3.               ; set min contour level
+;      res@cnMaxLevelValF       = 3.                 ; set max contour level
+;      res@cnLevelSpacingF      = 0.5               ; set contour spacing
+;  d=6
+      res@cnMinLevelValF       = -5.               ; set min contour level
+      res@cnMaxLevelValF       = 5.                 ; set max contour level
+      res@cnLevelSpacingF      = 1.               ; set contour spacing
 
       res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
       res@vcRefLengthF              = 0.045           ; define length of vec ref
@@ -110,9 +115,9 @@ begin
       res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
       res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-      res@cnMinLevelValF       = -8.0              ; set min contour level
-      res@cnMaxLevelValF       = 8.0                 ; set max contour level
-      res@cnLevelSpacingF      = 1.0               ; set contour spacing
+      res@cnMinLevelValF       = -1.5              ; set min contour level
+      res@cnMaxLevelValF       = 1.5                 ; set max contour level
+      res@cnLevelSpacingF      = 0.25               ; set contour spacing
 ; when using the gsn_csm plot templates and overlay, it is necessary to
 ; turn off the automatic label strings so that you don't get text on 
 ; top of text
@@ -157,9 +162,14 @@ begin
 
    resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-   resps@cnMinLevelValF       = -3.0               ; set min contour level
-   resps@cnMaxLevelValF       = 3                 ; set max contour level
-   resps@cnLevelSpacingF      = 0.2               ; set contour spacing
+;  d=0
+;   resps@cnMinLevelValF       = -5.0               ; set min contour level
+;   resps@cnMaxLevelValF       = 5.                 ; set max contour level
+;   resps@cnLevelSpacingF      = 0.5               ; set contour spacing
+;  d=6
+   resps@cnMinLevelValF       = -10.0               ; set min contour level
+   resps@cnMaxLevelValF       = 10.                 ; set max contour level
+   resps@cnLevelSpacingF      = 1.               ; set contour spacing
 
    plot(3) = gsn_csm_contour_map(wks, ps, resps)
 
@@ -195,10 +205,14 @@ begin
 
    reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
+;  d=0
+;   reste@cnMinLevelValF       = 0.0               ; set min contour level
+;   reste@cnMaxLevelValF       = 5.0                 ; set max contour level
+;   reste@cnLevelSpacingF      = 0.5               ; set contour spacing
+;  d=6
    reste@cnMinLevelValF       = 0.0               ; set min contour level
-   reste@cnMaxLevelValF       = 3.0                 ; set max contour level
-   reste@cnLevelSpacingF      = 0.2               ; set contour spacing
-
+   reste@cnMaxLevelValF       = 20.0                 ; set max contour level
+   reste@cnLevelSpacingF      = 2.               ; set contour spacing
    plot(4) = gsn_csm_contour_map(wks, te, reste)
 
    resP	                   = True

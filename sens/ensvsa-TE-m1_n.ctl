@@ -1,4 +1,4 @@
-DSET ^ensvsa-TE-m1-jma-2019100912-gr
+DSET ^ensvsa-TE-m1-jma-2019100912_n-gr
 UNDEF 9.999E+20
 OPTIONS big_endian template
 ydef 161 linear 0.0 0.5

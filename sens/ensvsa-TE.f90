@@ -13,7 +13,7 @@ program ensvsa_TE
   real,parameter :: cp=1005.7, R=287.04, Lh=2.5104*10**6 
   real,parameter :: Tr=270.0, pr=1000.0 
       
-  integer :: i,j,ieof,info,l,imem,id,iarea,ilon,ilat,it
+  integer :: i,j,k,ieof,info,l,imem,id,iarea,ilon,ilat,it
   integer :: ilt,ilu,ilv,ilq,ilev,ivar,fday
   integer :: lat,day,nd,mem,ios
   integer :: idate,edate,ip
@@ -21,11 +21,13 @@ program ensvsa_TE
   
   real ::  tmp, score, crate
   real ::  ps(imax,jmax),ug(imax,jmax,3),vg(imax,jmax,3)
-  real ::  T(imax,jmax,3),q(imax,jmax,3)
+  real ::  T(imax,jmax,3),q(imax,jmax,3),rh(imax,jmax,3)
   real ::  zv3(0:imax-1,jmax,kmax),zv(0:imax-1,jmax)
   real ::  z0(nlon,nlat,nvar)
   real,allocatable ::  ze(:,:,:,:)
   real ::  sigma(3)
+  real :: plev(3)
+  data plev/850.0,500.0,300.0/
   real,allocatable ::  z(:,:),zT(:,:)
   double precision,allocatable :: a8(:,:),u8(:,:),vt8(:,:)
   real,allocatable :: vt(:,:),v(:,:),vtv(:,:)
@@ -34,12 +36,15 @@ program ensvsa_TE
   real,allocatable :: sg(:),p(:)
   
   character rdf*100,wd*100,rdt*100
-  character dir*30,nmem*2,fd*1,yyyy*4,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*30,dira*31,nmem*2,fd*1,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
+  character(len=18) :: vnamea(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
+  data vnamea/'TMP','UGRD','VGRD','RH','PRMSL_meansealevel'/
   
      !|----/----/----/----/----/----/----/----/----/----/----/----| 
   dir='/Users/nakashita/netcdf/tigge/'
+ dira='/Users/nakashita/netcdf/gsm/gl/'
 
   sigma(1)=8.0/7.0*300.0/pr
   sigma(2)=6.0/7.0*300.0/pr
@@ -50,6 +55,7 @@ program ensvsa_TE
   idate=2019100912
   write(yyyymmddhh,'(I10)') idate
   yyyy=yyyymmddhh(1:4)
+  mm=yyyymmddhh(5:6)
   mmddhh=yyyymmddhh(5:10)
   print*,yyyy,mmddhh
   
@@ -60,7 +66,7 @@ program ensvsa_TE
   print*,ip
   ip = ip+1
   !ip=13
-  wd='./weight-TE-jma-'//yyyymmddhh//'.grd'
+  wd='./weight-TE-jma-'//yyyymmddhh//'_a.grd'
   open(21,file=wd,status='new',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
@@ -133,46 +139,61 @@ program ensvsa_TE
   ilu=0
   ilv=0
   ilq=0
-  rdf=dir//yyyy//'/jma/100900_mean.nc'
+  !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
+  !rdf=dir//yyyy//'/jma/100900_mean.nc'
+  rdf=dira//yyyy//'/'//mm//'/init_sellev.nc' !_a
   inquire(file=rdf, exist=ex)
   if(ex)then
      do id=1,4
         !print*,rdf
         !print*,vname(id)
-        call fread3(rdf,vname(id),ip,zv3)
+         !call fread3(rdf,vname(id),ip,zv3)
+         call fread3a(rdf,vnamea(id),8,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
         !print*,maxval(zv),minval(zv)
-        if(mod(id,4)==1)then
-           T=zv3(:,:,1:3)
-           print*,T(1,1,1)
-        elseif(mod(id,4)==2)then
-           ug=zv3(:,:,1:3)
-           print*,ug(1,1,1)
-        elseif(mod(id,4)==3)then
-           vg=zv3(:,:,1:3)
-           print*,vg(1,1,1)
-        else
-           q=zv3(:,:,1:3)
-           print*,q(1,1,1)
-        endif
-     enddo
+         if(mod(id,4)==1)then
+            T=zv3(:,:,1:3)
+            print*,T(1,1,1)
+         elseif(mod(id,4)==2)then
+            ug=zv3(:,:,1:3)
+            print*,ug(1,1,1)
+         elseif(mod(id,4)==3)then
+            vg=zv3(:,:,1:3)
+            print*,vg(1,1,1)
+         else
+            !q=zv3(:,:,1:3)
+            rh=zv3(:,:,1:3)
+            print*,"rh",rh(1,1,1)
+            do k=1,kmax
+               do j=1,jmax
+                  do i=1,imax
+                     call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
+                  enddo
+               enddo
+            enddo
+            print*,q(1,1,1)
+         endif
+      enddo
      
-     call fread(rdf,vname(5),ip,zv)
-     ps=zv/100        !Pa->hPa
-     !print*,maxval(ps),minval(ps)
+      rdf=dira//yyyy//'/'//mm//'/init.nc' !_a
+      !call fread(rdf,vname(5),ip,zv)
+      call freada(rdf,vnamea(5),8,zv,90.0d0,180.0d0,0.0d0,80.0d0)
+      ps=zv/100        !Pa->hPa
+      print*,ps(1,1)
+      !print*,maxval(ps),minval(ps)
      
-     do i=1,nlon
-        do j=1,nlat
-           ilon=dslon+i-1
-           ilat=dslat+j-1
-           z0(i,j,1:3)=ug(ilon,ilat,:)
-           z0(i,j,4:6)=vg(ilon,ilat,:)
-           z0(i,j,7:9)=T(ilon,ilat,:)
-           z0(i,j,10:12)=q(ilon,ilat,:)
-           z0(i,j,13)=ps(ilon,ilat)
-           !z0(i,j,10)=ps(ilon,ilat)
-        enddo
-     enddo
-  endif
+      do i=1,nlon
+         do j=1,nlat
+            ilon=dslon+i-1
+            ilat=dslat+j-1
+            z0(i,j,1:3)=ug(ilon,ilat,:)
+            z0(i,j,4:6)=vg(ilon,ilat,:)
+            z0(i,j,7:9)=T(ilon,ilat,:)
+            z0(i,j,10:12)=q(ilon,ilat,:)
+            z0(i,j,13)=ps(ilon,ilat)
+            !z0(i,j,10)=ps(ilon,ilat)
+         enddo
+      enddo
+   endif
   !print*,z0(1,1,:)
   
        
