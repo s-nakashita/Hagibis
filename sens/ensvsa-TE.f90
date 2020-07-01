@@ -36,15 +36,15 @@ program ensvsa_TE
   real,allocatable :: sg(:),p(:)
   
   character rdf*100,wd*100,rdt*100
-  character dir*30,dira*31,nmem*2,fd*1,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*30,dira*33,nmem*2,fd*1,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
-  character(len=18) :: vnamea(5)
+  character(len=4) :: vnamea(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
-  data vnamea/'TMP','UGRD','VGRD','RH','PRMSL_meansealevel'/
+  data vnamea/'air','uwnd','vwnd','shum','slp'/
   
      !|----/----/----/----/----/----/----/----/----/----/----/----| 
   dir='/Users/nakashita/netcdf/tigge/'
- dira='/Users/nakashita/netcdf/gsm/gl/'
+ dira='/Users/nakashita/netcdf/nc-reanl/'
 
   sigma(1)=8.0/7.0*300.0/pr
   sigma(2)=6.0/7.0*300.0/pr
@@ -67,7 +67,7 @@ program ensvsa_TE
   ip = ip+1
   !ip=13
   wd='./weight-TE-jma-'//yyyymmddhh//'_a.grd'
-  open(21,file=wd,status='new',access='direct',&
+  open(21,file=wd,status='replace',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
   
@@ -141,14 +141,15 @@ program ensvsa_TE
   ilq=0
   !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
   !rdf=dir//yyyy//'/jma/100900_mean.nc'
-  rdf=dira//yyyy//'/'//mm//'/init_sellev.nc' !_a
+  ip = ip+2 !nomark&_a
+  rdf=dira//yyyy//'/hagibis.nc' !_a
   inquire(file=rdf, exist=ex)
   if(ex)then
      do id=1,4
         !print*,rdf
         !print*,vname(id)
          !call fread3(rdf,vname(id),ip,zv3)
-         call fread3a(rdf,vnamea(id),8,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
+         call fread3a(rdf,vnamea(id),ip,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
         !print*,maxval(zv),minval(zv)
          if(mod(id,4)==1)then
             T=zv3(:,:,1:3)
@@ -160,23 +161,23 @@ program ensvsa_TE
             vg=zv3(:,:,1:3)
             print*,vg(1,1,1)
          else
-            !q=zv3(:,:,1:3)
-            rh=zv3(:,:,1:3)
-            print*,"rh",rh(1,1,1)
-            do k=1,kmax
-               do j=1,jmax
-                  do i=1,imax
-                     call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
-                  enddo
-               enddo
-            enddo
+            q=zv3(:,:,1:3)
+            !rh=zv3(:,:,1:3)
+            !print*,"rh",rh(1,1,1)
+            !do k=1,kmax
+            !   do j=1,jmax
+            !      do i=1,imax
+            !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
+            !      enddo
+            !   enddo
+            !enddo
             print*,q(1,1,1)
          endif
       enddo
      
-      rdf=dira//yyyy//'/'//mm//'/init.nc' !_a
+      !rdf=dira//yyyy//'/'//mm//'/init.nc' !_a
       !call fread(rdf,vname(5),ip,zv)
-      call freada(rdf,vnamea(5),8,zv,90.0d0,180.0d0,0.0d0,80.0d0)
+      call freada(rdf,vnamea(5),ip+2,zv,90.0d0,180.0d0,0.0d0,80.0d0)
       ps=zv/100        !Pa->hPa
       print*,ps(1,1)
       !print*,maxval(ps),minval(ps)

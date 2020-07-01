@@ -3,7 +3,7 @@ module read_netcdf
   include '/opt/local/include/netcdf.inc'
 
   integer,parameter :: imax=181,jmax=161,kmax=3,ntime=21
-  integer,parameter :: imaxa=720,jmaxa=361,kmaxa=3,ntimea=8
+  integer,parameter :: imaxa=720,jmaxa=361,kmaxa=3,ntimea=15
 
 contains
 
@@ -83,7 +83,7 @@ contains
     return
   end subroutine fread3
 !
-! subroutine for GSM initial file
+! subroutine for NCEP-NCAR reanalysis data (regrid 720x361)
 !
   subroutine freada(fname,vname,ip,z,slon,elon,slat,elat)
     implicit none
@@ -94,7 +94,7 @@ contains
     integer :: islon,ielon,islat,ielat
     double precision :: rlon(0:imaxa-1),rlat(jmaxa),rtime(ntimea)
     real,intent(out) :: z(0:imax-1,jmax)
-    character,intent(in) :: fname*100,vname*18
+    character,intent(in) :: fname*100,vname*4
 
     islon = int(slon/0.5d0) + 1
     ielon = int(elon/0.5d0) + 1
@@ -140,7 +140,7 @@ contains
     double precision :: rlon(0:imaxa-1),rlat(jmaxa),rtime(ntimea)
     real :: rlev(kmaxa)
     real,intent(out) :: z(0:imax-1,jmax,kmax)
-    character,intent(in) :: fname*100,vname*17
+    character,intent(in) :: fname*100,vname*4
 
     islon = int(slon/0.5d0) + 1
     ielon = int(elon/0.5d0) + 1

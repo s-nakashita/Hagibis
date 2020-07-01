@@ -37,14 +37,14 @@ program grads_ensvsa_TE
   real :: buf4(imax,jmax)
       
   character rdf*100,rdw*100,wd*100,wdm*100,wdf*100
-  character dir*30,dira*31,nmem*2,fd*1,date*10,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10,orig*4
+  character dir*30,dira*33,nmem*2,fd*1,date*10,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10,orig*4
   character(len=17) :: vname(5)
-  character(len=18) :: vnamea(5)
+  character(len=4) :: vnamea(5)
   data vname/'TMP','UGRD','VGRD','SPFH','PRES_meansealevel'/
-  data vnamea/'TMP','UGRD','VGRD','RH','PRMSL_meansealevel'/
+  data vnamea/'air','uwnd','vwnd','shum','slp'/
      !|----/----/----/----/----/----/----/----/----/----| 
   dir='/Users/nakashita/netcdf/tigge/'
- dira='/Users/nakashita/netcdf/gsm/gl/'
+ dira='/Users/nakashita/netcdf/nc-reanl/'
 
    sigma(1)=8.0/7.0*300.0/pr
    sigma(2)=6.0/7.0*300.0/pr
@@ -137,7 +137,7 @@ program grads_ensvsa_TE
          endif
       enddo
      
-      ip=2+fday
+      ip=ip+2
       print*,ip
       ilt=0
       ilu=0
@@ -145,7 +145,7 @@ program grads_ensvsa_TE
       ilq=0
       !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
       !rdf=dir//yyyy//'/jma/100900_mean.nc'
-      rdf=dira//yyyy//'/'//mm//'/init_sellev.nc' !_a
+      rdf=dira//yyyy//'/hagibis.nc' !_a
       inquire(file=rdf, exist=ex)
       if(ex)then
          do id=1,4
@@ -164,21 +164,21 @@ program grads_ensvsa_TE
                vg=zv3(:,:,1:3)
                print*,vg(1,1,1)
             else
-               !q=zv3(:,:,1:3)
-               rh=zv3(:,:,1:3)
-               print*,"rh",rh(1,1,1)
-               do k=1,kmax
-                  do j=1,jmax
-                     do i=1,imax
-                        call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
-                     enddo
-                  enddo
-               enddo
+               q=zv3(:,:,1:3)
+               !rh=zv3(:,:,1:3)
+               !print*,"rh",rh(1,1,1)
+               !do k=1,kmax
+               !   do j=1,jmax
+               !      do i=1,imax
+               !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
+               !      enddo
+               !   enddo
+               !enddo
                print*,q(1,1,1)
             endif
          enddo
      
-         rdf=dira//yyyy//'/'//mm//'/init.nc' !_a
+         !rdf=dira//yyyy//'/'//mm//'/init.nc' !_a
          !call fread(rdf,vname(5),ip,zv)
          call freada(rdf,vnamea(5),ip,zv,90.0d0,180.0d0,0.0d0,80.0d0)
          ps=zv/100        !Pa->hPa
