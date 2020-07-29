@@ -7,41 +7,41 @@ import pandas as pd
 import librotate
 
 #Usage echo yyyymmddhh | python create_netcdf.py
-param = sys.stdin.readline().strip("\n").split(" ")
-yyyymmddhh = param[0]
+#param = sys.stdin.readline().strip("\n").split(" ")
+#yyyymmddhh = param[0]
 
 datadir = Path('./')
 outdir  = Path('./')
-#nc_scl  = Path('np_sc_' + yyyymmddhh + '_mean.nc')
-#nc_vec  = Path('np_ve_' + yyyymmddhh + '_mean.nc')
-nc_scl  = Path('np_sc_anl.nc')
-nc_vec  = Path('np_ve_anl.nc')
+nc_scl  = Path('np_sc_init.nc')
+nc_vec  = Path('np_ve_init.nc')
 
-outvar = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground',\
+outvar = ['PRMSL_meansealevel','PRES_surface','TMP_2maboveground','RH_2maboveground',\
           'UGRD_10maboveground','VGRD_10maboveground',\
-          'UGRD','VGRD','TMP','SPFH','HGT']
+          'LCDC_surface','MCDC_surface','HCDC_surface','TCDC_surface',\
+          'UGRD','VGRD','TMP','RH','HGT','VVEL']
 #outvar = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground',\
 #          'UGRD_10maboveground','VGRD_10maboveground',\
 #          'UGRD','VGRD','TMP','SPFH','HGT']
-stname = ['Pressure','Temparature','Dew point of temparature',\
+stname = ['Pressure','Pressure','Temparature','Relative Humidity',\
           'U component of wind','V component of wind',\
+          'Low Cloud Cover','Medium Cloud Cover','High Cloud Cover','Total Cloud Cover',\
           'U component of wind','V component of wind',\
-          'Temparature','Specific humidity','Geopotential height']
-unit = ['Pa','K','K','m/s','m/s','m/s','m/s','K','kg/kg','m',]
+          'Temparature','Relative Humidity','Geopotential height','Vertical Velocity(Pressure)']
+unit = ['Pa','Pa','K','percent','m/s','m/s','percent','percent','percent','percent',\
+        'm/s','m/s','K','percent','m','Pa/s']
 outvar_dict = {}
 
-start = datetime.strptime(yyyymmddhh, '%Y%m%d%H')
+start = datetime.strptime('2019100900', '%Y%m%d%H')
 dt = timedelta(hours=6)
 
-#outnc = netCDF4.Dataset(outdir/Path('np_'+yyyymmddhh+'_mean.nc'), 'w')
-outnc = netCDF4.Dataset(outdir/Path('np_anl.nc'), 'w')
+outnc = netCDF4.Dataset(outdir/Path('np_init.nc'), 'w')
 in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
 nlat = in_scl.variables["latitude"][:].size
 nlon = in_scl.variables["longitude"][:].size
 print(nlat,nlon)
 
 time = outnc.createDimension('time',None)
-level = outnc.createDimension('level',8)
+level = outnc.createDimension('level',12)
 lat = outnc.createDimension('lat',nlat)
 lon = outnc.createDimension('lon',nlon)
 
@@ -97,12 +97,8 @@ for t in range(len(in_scl.variables["time"][:])):
             print(outvar_dict[name][:].shape)
         else:
             print(int(name[-5:-2]))
-            lev=1
-            if(int(name[-5:-2]) < 925):
-                lev+=1
+            lev=0
             if(int(name[-5:-2]) < 850):
-                lev+=1
-            if(int(name[-5:-2]) < 700):
                 lev+=1
             if(int(name[-5:-2]) < 500):
                 lev+=1
@@ -110,8 +106,6 @@ for t in range(len(in_scl.variables["time"][:])):
                 lev+=1
             if(int(name[-5:-2]) < 250):
                 lev+=1
-            if(int(name[-5:-2]) == 0):
-                lev=0
                         
             if(name[:3]=="TMP"):
                 print(name[:3])
@@ -140,12 +134,8 @@ for t in range(len(in_vec.variables["time"][:])):
             print(outvar_dict[name][:].shape)
         else:
             print(int(name[-5:-2]))
-            lev=1
-            if(int(name[-5:-2]) < 925):
-                lev+=1
+            lev=0
             if(int(name[-5:-2]) < 850):
-                lev+=1
-            if(int(name[-5:-2]) < 700):
                 lev+=1
             if(int(name[-5:-2]) < 500):
                 lev+=1
@@ -153,8 +143,6 @@ for t in range(len(in_vec.variables["time"][:])):
                 lev+=1
             if(int(name[-5:-2]) < 250):
                 lev+=1
-            if(int(name[-5:-2]) == 0):
-                lev=0
                         
             if(name[:4]=="UGRD"):
                 print(name[:4])

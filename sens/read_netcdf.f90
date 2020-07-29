@@ -182,32 +182,35 @@ contains
 !
 ! calcurate time steps between 2 dates
 !
-  subroutine calc_steps(idate,edate,nt)
+  subroutine calc_steps(idate,edate,dt,nt)
     implicit none
     integer,intent(in) :: idate,edate !format:yyyymmddhh
+    integer,intent(in) :: dt ! timestep
     integer,intent(out) :: nt
-    integer,parameter :: dt=6 ! timestep=6h
-    integer :: diff,ny,nm,nd,nh,maxday
+    integer :: diff,ny,nm,nd,nh
     integer :: iy,im,id,ih
     integer :: ey,em,ed,eh
 
+    print *, dt
     diff = idate
     iy = diff/1000000
     diff = diff - iy*1000000
     im = diff/10000
-    diff = diff - im*100000
+    diff = diff - im*10000
     id = diff/100
     diff = diff - id*100
-    ih = diff/dt
+    ih = diff
+    print*, ih,id,im,iy
 
     diff = edate
     ey = diff/1000000
     diff = diff - ey*1000000
     em = diff/10000
-    diff = diff - em*100000
+    diff = diff - em*10000
     ed = diff/100
     diff = diff - ed*100
-    eh = diff/dt
+    eh = diff
+    print*, eh,ed,em,ey
 
     ny = ey - iy
     if(em.ge.im)then
@@ -236,14 +239,57 @@ contains
       endif
     endif
     if(eh.ge.ih)then
-      nh = (eh - ih)/dt
+      nh = ceiling(real(eh - ih))/dt
     else
-      nh = (eh+24 - ih)/dt
+      nh = ceiling(real(eh+24 - ih))/dt
       nd = nd - 1
     endif
-    nt = nh + nd*4 + nm*4*30 + ny*4*365
+    print*, nh,nd,nm,ny
+    nt = nh + nd*(24/dt) + nm*(24/dt)*30 + ny*(24/dt)*365
     return
   end subroutine calc_steps
+!
+! calcurate date after any timesteps
+!
+  subroutine calc_date(idate,nt,edate)
+    implicit none
+    integer,intent(in) :: idate, nt !format:yyyymmddhh
+    integer,intent(out) :: edate
+    integer :: dt=6 !default timestep(6h)
+    integer :: diff,ny,nm,nd,nh
+    integer :: iy,im,id,ih
+    integer :: ey,em,ed,eh
+
+    edate = idate + dt*nt
+    eh = mod(edate,100)
+    if (eh==24) then
+      eh = 0
+      edate = edate + 100 - 24
+    endif
+    ed = mod(edate,10000)/100
+    em = mod(edate,1000000)/10000
+    ey = (edate - em*10000 - ed*100 - eh)/1000000
+    if (ed.gt.31.and.&
+    &(em.eq.1.or.em.eq.3.or.em.eq.5.or.em.eq.7&
+    &.or.em.eq.8.or.em.eq.10.or.em.eq.12))then
+      edate = edate + 10000 - 3100
+    elseif (ed.gt.30.and.&
+      &(em.eq.4.or.em.eq.6.or.em.eq.9.or.em.eq.11))then
+      edate = edate + 10000 - 3000
+    elseif (em==2.and.ed.gt.28) then
+      if (mod(ey,4)==0.and.ed.gt.29) then
+        edate = edate + 10000 - 2900
+      elseif(mod(ey,4).ne.0) then
+        edate = edate + 10000 - 2800
+      endif
+    endif
+    em = mod(edate,1000000)/10000
+    if (em.gt.12) then
+      edate = edate + 1000000 - 120000
+    endif
+
+    return
+  end subroutine calc_date
 !
 ! calcurate specific humidity from relative humidity
 !
@@ -276,4 +322,36 @@ contains
    
     RETURN
   END SUBROUTINE calc_q
+!-----------------------------------------------------------------------
+! Compute relative humidity (RH)
+!-----------------------------------------------------------------------
+  SUBROUTINE calc_rh(t,q,p,rh)
+    IMPLICIT NONE
+    DOUBLE PRECISION,PARAMETER :: t0=273.15d0
+    DOUBLE PRECISION,PARAMETER :: e0c=6.11d0
+    DOUBLE PRECISION,PARAMETER :: al=17.3d0
+    DOUBLE PRECISION,PARAMETER :: bl=237.3d0
+    DOUBLE PRECISION,PARAMETER :: e0i=6.1121d0
+    DOUBLE PRECISION,PARAMETER :: ai=22.587d0
+    DOUBLE PRECISION,PARAMETER :: bi=273.86d0
+    REAL,INTENT(IN) :: t,q,p
+    REAL,INTENT(OUT) :: rh
+    DOUBLE PRECISION :: e,es,tc
+  
+    e = q * p * 0.01d0 / (0.378d0 * q + 0.622d0)
+  
+    tc = t-t0
+    IF(tc >= 0.0d0) THEN
+      es = e0c * exp(al*tc/(bl+tc))
+    ELSE IF(tc <= -15.d0) THEN
+      es = e0i * exp(ai*tc/(bi+tc))
+    ELSE
+      es = e0c * exp(al*tc/(bl+tc)) * (15.0d0+tc)/15.0d0 &
+         + e0i * exp(ai*tc/(bi+tc)) * (-tc) / 15.0d0
+    END IF
+  
+    rh = e/es
+  
+    RETURN
+  END SUBROUTINE calc_rh
 end module read_netcdf

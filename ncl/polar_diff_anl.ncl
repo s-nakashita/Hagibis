@@ -32,28 +32,41 @@ begin
 ;************************************************
 ; read in atmospheric data
 ;************************************************
-  yyyymmddhh = "2019100912"
-  ds = 0 ;start
-  de = 11 ;end
-  a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
-  t = a->time
+  yyyymmddhh = "2019100900"
+  ds = 1 ;start
+  de = 6 ;end
+  a = addfile("../../netcdf/tigge/2019/jma/rotate/np_anl.nc","r")
+  b = addfile("../../netcdf/tigge/2019/jma/rotate/np_2019100912_mean.nc","r")
+  ta = a->time
+  tf = b->time
   lat = a->lat
   lon = a->lon
   year 	     = str_get_cols(yyyymmddhh,0,3)
   month	     = str_get_cols(yyyymmddhh,4,5)
   day	     = str_get_cols(yyyymmddhh,6,7)
   hour	     = str_get_cols(yyyymmddhh,8,9)
-  sec = cd_inv_calendar(toint(year),toint(month),toint(day),toint(hour),0,0,t@units,0)
+  sec = cd_inv_calendar(toint(year),toint(month),toint(day),toint(hour),0,0,ta@units,0)
   ssec 	= sec
-  ssec  = sec + 6*60*60*ds
+  ssec  = sec + 12*60*60*ds
   esec 	= sec
-  esec	= sec + 6*60*60*de
+  esec	= sec + 12*60*60*de
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
-  wks = gsn_open_wks("png","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
+  wks = gsn_open_wks("png","asym_0900-anl_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
   gsn_define_colormap(wks, "sunshine_9lev")
   plot = new(4*3,"graphic")
 
+; vertical integrate 1000hPa -> 300hPa
+  ;sig = new(8,float)
+  ;sig(0) = 1./21.
+  ;sig(1) = 2./21.
+  ;sig(2) = 1./7. + 1./21.
+  ;sig(3) = 2./21. + 1./14.
+  ;sig(4) = 1./7.
+  ;sig(5) = 1./7.
+  ;sig(6) = 1./7.
+  ;sig(7) = 1./14.
+  ;print(sig)
   sig = new(3,float)
   sig(0) = 3./7. + 4./49.
   sig(1) = 10./49. + 1./7.
@@ -62,35 +75,35 @@ begin
   i = 0
   do d = ds,de
     dsec = sec
-    dsec = sec + 6*60*60*d
-    index = ind(t.eq.dsec)
+    dsec = sec + 12*60*60*d
+    ind_a = ind(ta.eq.dsec)
+    ind_f = ind(tf.eq.dsec)
     day   = cd_string(dsec, "%Y%N%D%H")
     print(day)
     ;do lev = 0,3
 ;      print(i)
-    u = a->UGRD(index,:2,:,:)
-    v = a->VGRD(index,:2,:,:)
+    ua = a->UGRD(ind_a,(/2,5,7/),:,:)
+    va = a->VGRD(ind_a,(/2,5,7/),:,:)
+    uf = b->UGRD(ind_f,0:2,:,:)
+    vf = b->VGRD(ind_f,0:2,:,:)
 ;      print(u@level)
 ;  t = a->PRES_meansealevel(0,:,:)
 ;************************************************
 ; this data only has an missing_value, so we are
 ; copying this to _FillValue for plotting purposes
 ;************************************************
-    assignFillValue(v,u)                           ; in contributed.ncl   
-    assignFillValue(u,v)
+    assignFillValue(va,ua)                           ; in contributed.ncl   
+    assignFillValue(ua,va)
 
-    uzav = dim_avg_n(u,2)
-    vzav = dim_avg_n(v,2)
+    uzav = dim_avg_n(ua,2)
+    vzav = dim_avg_n(va,2)
     printVarSummary(uzav)
-    u_ = u
-    u_ = u - conform_dims(dimsizes(u),uzav,(/0,1/))
-    v_ = v
-    v_ = v - conform_dims(dimsizes(v),vzav,(/0,1/))
+    u_ = ua
+    u_ = ua - conform_dims(dimsizes(ua),uzav,(/0,1/))
+    v_ = va
+    v_ = va - conform_dims(dimsizes(va),vzav,(/0,1/))
 ;      printVarSummary(u_)
 ;      printVarSummary(v_)
-    w = u_
-    w = sqrt(u_^2 + v_^2)
-
     ndim = dimsizes(u_)
     print(ndim)
     do lev=0,ndim(0)-1
@@ -98,22 +111,60 @@ begin
         do ilon=0,ndim(2)-1
           u_(lev,ilat,ilon) = u_(lev,ilat,ilon)*sig(lev)
           v_(lev,ilat,ilon) = v_(lev,ilat,ilon)*sig(lev)
-          w(lev,ilat,ilon) = w(lev,ilat,ilon)*sig(lev)
         end do
       end do
     end do
-    upav = dim_sum_n(u_,0)
-    upav!0 = "lat"
-    upav!1 = "lon"
-    upav&lat = lat
-    upav&lon = lon
-    vpav = upav
-    vpav = dim_sum_n(v_,0)
+    upa = dim_sum_n(u_,0)
+    upa!0 = "lat"
+    upa!1 = "lon"
+    upa&lat = lat
+    upa&lon = lon
+    vpa = upa
+    vpa = dim_sum_n(v_,0)
+    printVarSummary(upa) 
+    delete(uzav)
+    delete(vzav)
+    delete(u_)
+    delete(v_)
+;      print(uzav)
+    assignFillValue(vf,uf)                           ; in contributed.ncl   
+    assignFillValue(uf,vf)
+
+    uzav = dim_avg_n(uf,2)
+    vzav = dim_avg_n(vf,2)
+    printVarSummary(uzav)
+    u_ = uf
+    u_ = uf - conform_dims(dimsizes(uf),uzav,(/0,1/))
+    v_ = vf
+    v_ = vf - conform_dims(dimsizes(vf),vzav,(/0,1/))
+;      printVarSummary(u_)
+;      printVarSummary(v_)
+    ndim = dimsizes(u_)
+    print(ndim)
+    do lev=0,ndim(0)-1
+      do ilat=0,ndim(1)-1
+        do ilon=0,ndim(2)-1
+          u_(lev,ilat,ilon) = u_(lev,ilat,ilon)*sig(lev)
+          v_(lev,ilat,ilon) = v_(lev,ilat,ilon)*sig(lev)
+        end do
+      end do
+    end do
+    upf = dim_sum_n(u_,0)
+    upf!0 = "lat"
+    upf!1 = "lon"
+    upf&lat = lat
+    upf&lon = lon
+    vpf = upf
+    vpf = dim_sum_n(v_,0)
+    printVarSummary(upf)
+
+    upav = upf
+    upav = upf - upa
+    vpav = vpf
+    vpav = vpf - vpa
     wpav = upav
     ;wpav = dim_sum_n(w,0)
     wpav = sqrt(upav^2 + vpav^2)
-    printVarSummary(upav) 
-;      print(uzav)
 ;************************************************
 ; create plot
 ;************************************************
@@ -177,12 +228,12 @@ begin
 ; range for the colors is chosen over the full data passed, and not the
 ; map limits.
       plot(i) = gsn_csm_vector_scalar_map_polar(wks,upav,vpav,wpav,res)
-      i = i + 1
+      i = i + 2
     ;end do
   end do
   resP	= True
   resP@gsnFrame	= False
-  resP@gsnPanelMainString = "vertical integrated asymmetric wind"
+  resP@gsnPanelMainString = "vertical integrated asymmetric wind 0900-analysis"
 ;  resP@gsnPanelLabelBar	  = True
   resP@lbLabelFontHeightF = 0.007
   resP@gsnPanelLeft	  = 0.005

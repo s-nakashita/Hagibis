@@ -8,21 +8,17 @@ import librotate
 
 #Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_uv.py
 param = sys.stdin.readline().strip("\n").split(" ")
-yyyymmddhh = param[0]
-ddirname   = param[1]
-trackname  = param[2]
-nlon       = int(param[3])
-nlat       = int(param[4])
-latmax     = float(param[5]) #degree
-dlat       = latmax/nlat #degree
+ddirname   = param[0]
+trackname  = param[1]
+nlon       = int(param[2])
+nlat       = int(param[3])
+latmax     = float(param[4]) #degree
+dlat = latmax/nlat #degree
 
 datadir = Path(ddirname)
-outdir  = Path('./')
-mmddhh  = yyyymmddhh[4:]
-#innc    = mmddhh + '_mean.nc'
-#outnc   = 'np_ve_' + yyyymmddhh + '_mean.nc'
-innc    = 'anl.nc'
-outnc   = 'np_ve_anl.nc'
+outdir = Path('./')
+innc    = 'init.nc'
+outnc   = 'np_ve_init.nc'
 trackf  = Path(trackname)
 
 var_sfc = ['UGRD_10maboveground','VGRD_10maboveground']

@@ -20,8 +20,8 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../../netcdf/tigge/2019/jma/100900_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
+  a = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
+  b = addfile("../../netcdf/tigge/2019/jma/100912_26.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -37,7 +37,7 @@ begin
   t12      = b->TMP(:,:,:,:)
   q12      = b->SPFH(:,:,:,:)
   ps12     = b->PRES_meansealevel(:,:,:)
-  z12      = b->HGT(:,:,:,:)
+  z12      = a->HGT(:,:,:,:)
   lat_uv   = a->lat
   lon_uv   = a->lon
   plev     = a->level
@@ -46,18 +46,16 @@ begin
   date_00  = cd_string(time_00, "%Y%N%D%H")
   date_12  = cd_string(time_12, "%Y%N%D%H")
   
-  wks = gsn_open_wks("png","incr_100912-100900")
+  wks = gsn_open_wks("png","prtb_mem26")
   plot = new(4,graphic)
   cmap = read_colormap_file("hotcold_18lev")
     
   vdate = 2019100912
   ind_00 = ind(date_00.eq.vdate)
   ind_12 = ind(date_12.eq.vdate)
-  print(ind_00)
-  print(ind_12)
   ps = ps12(ind_12,:,:)
   ps = ps12(ind_12,:,:) - ps00(ind_00,:,:)
-  pful = ps12(ind_12,:,:)
+  pful = ps00(ind_12,:,:)
   resps                = True               ; plot mods desired
   resps@gsnDraw	      = False
   resps@gsnFrame	      = False
@@ -88,9 +86,9 @@ begin
 
   resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-  resps@cnMinLevelValF       = -500.0               ; set min contour level
-  resps@cnMaxLevelValF       = 500.0                 ; set max contour level
-  resps@cnLevelSpacingF      = 50.0               ; set contour spacing
+  resps@cnMinLevelValF       = -300.0               ; set min contour level
+  resps@cnMaxLevelValF       = 300.0                 ; set max contour level
+  resps@cnLevelSpacingF      = 30.0               ; set contour spacing
 
   plotp = gsn_csm_contour_map(wks, ps, resps)
 
@@ -158,9 +156,9 @@ begin
 
       res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-      res@cnMinLevelValF       = -3.0               ; set min contour level
-      res@cnMaxLevelValF       = 3.0                 ; set max contour level
-      res@cnLevelSpacingF      = 0.5               ; set contour spacing
+      res@cnMinLevelValF       = -2.0               ; set min contour level
+      res@cnMaxLevelValF       = 2.0                 ; set max contour level
+      res@cnLevelSpacingF      = 0.25               ; set contour spacing
 
       res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
       res@vcRefLengthF              = 0.045           ; define length of vec ref
@@ -180,26 +178,26 @@ begin
   
       plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
 
-;      res@cnFillOn             = False             ; turn on color for contours
-;      res@cnLinesOn            = True              ; turn off contour lines
-;      res@cnLineLabelsOn       = True
-;      res@cnLineColor          = "blue"
-;      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-;      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
-;      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
-;;     res@cnMaxLevelCount	   = 10
-;      res@cnMinLevelValF       = -3.0             ; set min contour level
-;      res@cnMaxLevelValF       = 3.0                 ; set max contour level
-;      res@cnLevelSpacingF      = 0.5               ; set contour spacing
-;; when using the gsn_csm plot templates and overlay, it is necessary to
-;; turn off the automatic label strings so that you don't get text on 
-;; top of text
-;      res@gsnRightString   = ""    
-;      res@gsnLeftString    = ""
-;      res@gsnCenterString  = ""
+      res@cnFillOn             = False             ; turn on color for contours
+      res@cnLinesOn            = True              ; turn off contour lines
+      res@cnLineLabelsOn       = True
+      res@cnLineColor          = "blue"
+      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+;     res@cnMaxLevelCount	   = 10
+      res@cnMinLevelValF       = -3.0             ; set min contour level
+      res@cnMaxLevelValF       = 3.0                 ; set max contour level
+      res@cnLevelSpacingF      = 0.5               ; set contour spacing
+; when using the gsn_csm plot templates and overlay, it is necessary to
+; turn off the automatic label strings so that you don't get text on 
+; top of text
+      res@gsnRightString   = ""    
+      res@gsnLeftString    = ""
+      res@gsnCenterString  = ""
       
-;      plotq = gsn_csm_contour(wks,q,res)
-;      overlay(plott,plotq)
+      plotq = gsn_csm_contour(wks,q,res)
+      overlay(plott,plotq)
 
       res@cnFillOn             = False             ; turn on color for contours
       res@cnLinesOn            = True              ; turn off contour lines
@@ -235,11 +233,11 @@ begin
       overlay(plott,plotz)
       plot(k+1) = plott
       delete(plott)
-;      delete(plotq)
+      delete(plotq)
       delete(plotz)
    end do
 
    resP	                   = True
-   resP@gsnPanelMainString	   = "increment T&wind,slp "+vdate
+   resP@gsnPanelMainString	   = "perturbation member 26 T&Q&wind,slp "+vdate
    gsn_panel(wks,plot,(/1,4/),resP)
 end

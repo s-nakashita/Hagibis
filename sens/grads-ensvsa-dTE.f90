@@ -7,7 +7,7 @@ program grads_ensvsa_TE
   integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
-  integer,parameter :: nv3d=4,nv2d=2,nlev=3
+  integer,parameter :: nv3d=3,nv2d=2,nlev=3
   integer,parameter :: nvar=nv3d*nlev+nv2d-1 
   integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
@@ -22,7 +22,7 @@ program grads_ensvsa_TE
   logical :: ex
   
   real ::  ps(imax,jmax),ug(imax,jmax,nlev),vg(imax,jmax,nlev)
-  real ::  T(imax,jmax,nlev),q(imax,jmax,nlev)!,rh(imax,jmax,nlev)
+  real ::  T(imax,jmax,nlev)
   real ::  zv3(0:imax-1,jmax,kmax),zv(0:imax-1,jmax)
   real ::  z0(imax,jmax,nvar),zm(imax,jmax,nvar)
   real,allocatable ::  ze(:,:,:,:)
@@ -38,9 +38,9 @@ program grads_ensvsa_TE
       
   character rdf*100,rdw*100,wd*100
   character dir*30,dira*33,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
-  character(len=17) :: vname(5)
+  character(len=17) :: vname(4)
   !character(len=4) :: vnamea(5)
-  data vname/'UGRD','VGRD','TMP','SPFH','PRES_meansealevel'/
+  data vname/'UGRD','VGRD','TMP','PRES_meansealevel'/
   !data vnamea/'air','uwnd','vwnd','shum','slp'/
      !|----/----/----/----/----/----/----/----/----/----| 
   dir='/Users/nakashita/netcdf/tigge/'
@@ -57,13 +57,13 @@ program grads_ensvsa_TE
    mm=yyyymmddhh(5:6)
    mmddhh=yyyymmddhh(5:10)
    print*,yyyy,mmddhh
-   wd='./ensvsa-TE-m1-jma-'//yyyymmddhh//'_a-gr'
+   wd='./ensvsa-dTE-m1-jma-'//yyyymmddhh//'_n-gr'
    open(21,file=wd,status='replace',access='direct',&
           &        convert='big_endian',&
           &        form='unformatted', recl=4*imax*jmax)
   
    mem=memn 
-   rdw='./weight-TE-jma-'//yyyymmddhh//'_a.grd'
+   rdw='./weight-dTE-jma-'//yyyymmddhh//'_n.grd'
    open(10,file=rdw,status='old',access='direct',&
           &        convert='big_endian',&
           &        form='unformatted', recl=4*mem)
@@ -111,40 +111,35 @@ program grads_ensvsa_TE
          !print*,rdf
          inquire(file=rdf, exist=ex)
          if(ex)then
-            do id=1,4
+            do id=1,3
                call fread3(rdf,vname(id),ip,zv3)
-               if(mod(id,4)==1)then
+               if(mod(id,3)==1)then
                   ug=zv3(:,:,1:3)
                   print*,ug(1,1,1)
-               elseif(mod(id,4)==2)then
+               elseif(mod(id,3)==2)then
                   vg=zv3(:,:,1:3)
                   print*,vg(1,1,1)
-               elseif(mod(id,4)==3)then
+               else
                   T=zv3(:,:,1:3)
                   print*,T(1,1,1)
-               else
-                  q=zv3(:,:,1:3)
-                  print*,q(1,1,1)
                endif
             enddo
            
-            call fread(rdf,vname(5),ip,zv)
+            call fread(rdf,vname(4),ip,zv)
             ps=zv/100     !Pa->hPa
             print*,ps(1,1)
            
             ze(:,:,1:3,imem)=ug
             ze(:,:,4:6,imem)=vg
             ze(:,:,7:9,imem)=T
-            ze(:,:,10:12,imem)=q
-            ze(:,:,13,imem)=ps
-            !ze(:,:,10,imem)=ps
+            ze(:,:,10,imem)=ps
            
             !print*,ze(1,1,:,imem)
          endif
       enddo
      
-      idate=2019100900
-      call calc_steps(idate,edate,12,ip)
+      idate=2019100912
+      call calc_steps(idate,edate,6,ip)
       ip=ip+1
       print *, "ip=",ip
       !ip=fday+2
@@ -153,43 +148,31 @@ program grads_ensvsa_TE
       ilu=0
       ilv=0
       ilq=0
-      !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
+      rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
       !rdf=dir//yyyy//'/jma/100900_mean.nc'
-      rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
+      !rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
       inquire(file=rdf, exist=ex)
       if(ex)then
-         do id=1,4
+         do id=1,3
             !print*,rdf
             !print*,vname(id)
             call fread3(rdf,vname(id),ip,zv3)
             !call fread3a(rdf,vnamea(id),ip,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
             !print*,maxval(zv),minval(zv)
-            if(mod(id,4)==1)then
+            if(mod(id,3)==1)then
                ug=zv3(:,:,1:3)
                print*,ug(1,1,1)
-            elseif(mod(id,4)==2)then
+            elseif(mod(id,3)==2)then
                vg=zv3(:,:,1:3)
                print*,vg(1,1,1)
-            elseif(mod(id,4)==3)then
+            else
                T=zv3(:,:,1:3)
                print*,T(1,1,1)
-            else
-               q=zv3(:,:,1:3)
-               !rh=zv3(:,:,1:3)
-               !print*,"rh",rh(1,1,1)
-               !do k=1,kmax
-               !   do j=1,jmax
-               !      do i=1,imax
-               !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
-               !      enddo
-               !   enddo
-               !enddo
-               print*,q(1,1,1)
             endif
          enddo
      
-         rdf=dir//yyyy//'/jma/anl.nc' !_a
-         call fread(rdf,vname(5),ip,zv)
+         !rdf=dir//yyyy//'/jma/anl.nc' !_a
+         call fread(rdf,vname(4),ip,zv)
          !call freada(rdf,vnamea(5),ip,zv,90.0d0,180.0d0,0.0d0,80.0d0)
          ps=zv/100        !Pa->hPa
          print*,ps(1,1)
@@ -198,9 +181,7 @@ program grads_ensvsa_TE
          z0(:,:,1:3)=ug
          z0(:,:,4:6)=vg
          z0(:,:,7:9)=T
-         z0(:,:,10:12)=q
-         z0(:,:,13)=ps
-         !z0(:,:,10)=ps
+         z0(:,:,10)=ps
       endif
       !print*,z0(1,1,:)
      
@@ -251,7 +232,7 @@ program grads_ensvsa_TE
      !enddo
      
       do ilev=1,3            !850,500,300hPa
-         do ivar=1,4         !ug,vg,T,q
+         do ivar=1,3         !ug,vg,T
             ze(:,:,3*(ivar-1)+ilev,:)=ze(:,:,3*(ivar-1)+ilev,:)*sigma(ilev)
          enddo
       enddo
@@ -259,10 +240,7 @@ program grads_ensvsa_TE
      !T
       ze(:,:,7:9,:)=ze(:,:,7:9,:)*sqrt(cp/Tr)
      !ps
-      ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
-     !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
-     !q
-      ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
+      ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
      
       do imem=1,mem
          print*,imem

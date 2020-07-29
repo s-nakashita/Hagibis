@@ -8,27 +8,24 @@ import librotate
 
 #Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_scalar.py
 param = sys.stdin.readline().strip("\n").split(" ")
-yyyymmddhh = param[0]
-ddirname   = param[1]
-trackname  = param[2]
-nlon       = int(param[3])
-nlat       = int(param[4])
-latmax     = float(param[5]) #degree
+ddirname   = param[0]
+trackname  = param[1]
+nlon       = int(param[2])
+nlat       = int(param[3])
+latmax     = float(param[4]) #degree
 dlat = latmax/nlat #degree
 
 datadir = Path(ddirname)
 outdir = Path('./')
-mmddhh = yyyymmddhh[4:]
-#innc = mmddhh+'_mean.nc'
-#outnc = 'np_sc_'+yyyymmddhh+'_mean.nc'
-innc = 'anl.nc'
-outnc = 'np_sc_anl.nc'
+innc = 'init.nc'
+outnc = 'np_sc_init.nc'
 trackf = Path(trackname)
 
-var_sfc = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground']
+var_sfc = ['PRMSL_meansealevel','PRES_surface','TMP_2maboveground','RH_2maboveground',\
+            'LCDC_surface','MCDC_surface','HCDC_surface','TCDC_surface']
 #var_sfc = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground']
 #var_pl = ['TMP_000mb','SPFH_000mb','HGT_000mb']
-var_pl = ['TMP','SPFH','HGT']
+var_pl = ['TMP','RH','HGT','VVEL']
 
 lonin,latin = librotate.generate_points(nlon,nlat,dlat)
 print(lonin)

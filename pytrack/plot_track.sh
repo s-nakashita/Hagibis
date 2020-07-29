@@ -1,20 +1,22 @@
 #!/bin/bash
 CDIR=`pwd`
-datadir=rjtd
+#datadir=rjtd
+datadir=jma
 bstfile=$CDIR/bst_hagibis.txt
-outfile=track.ps
+outfile=track_anl.ps
 
 cd $datadir
 pwd
 function plot_track() {
-    tracktxt=track${1}.txt
+    #tracktxt=track${1}.txt
+    tracktxt=track_anl.txt
     yyyy=`echo ${1:0:4}`
     mm=`echo ${1:4:2}`
     dd=`echo ${1:6:2}`
     hh=`echo ${1:8:2}`
     if [ -f ${tracktxt} ]; then
 	echo "exist"
-	time=$(date -d "$yyyy/$mm/$dd $hh:00:00" +%s)
+	time=$(date -jf "%Y/%m/%d %H:%M:%S" "$yyyy/$mm/$dd $hh:00:00" +%s)
 	awk '{s=(100000-$7)/20000+0.1;print($5, $6,'${time}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp.txt
 	pencol=$(awk '$1~'${time}'{print $2}' $CDIR/track.cpt)
 	gmt psxy -R -J -O tmp.txt -i0,1 -W1p,${pencol} -K >> ${outfile} 

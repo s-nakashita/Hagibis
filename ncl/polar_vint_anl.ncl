@@ -34,8 +34,8 @@ begin
 ;************************************************
   yyyymmddhh = "2019100912"
   ds = 0 ;start
-  de = 11 ;end
-  a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
+  de = 5 ;end
+  a = addfile("../../netcdf/tigge/2019/jma/rotate/np_anl.nc","r")
   t = a->time
   lat = a->lat
   lon = a->lon
@@ -45,15 +45,26 @@ begin
   hour	     = str_get_cols(yyyymmddhh,8,9)
   sec = cd_inv_calendar(toint(year),toint(month),toint(day),toint(hour),0,0,t@units,0)
   ssec 	= sec
-  ssec  = sec + 6*60*60*ds
+  ssec  = sec + 12*60*60*ds
   esec 	= sec
-  esec	= sec + 6*60*60*de
+  esec	= sec + 12*60*60*de
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
-  wks = gsn_open_wks("png","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
+  wks = gsn_open_wks("png","asym_anl_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
   gsn_define_colormap(wks, "sunshine_9lev")
   plot = new(4*3,"graphic")
 
+; vertical integrate 1000hPa -> 300hPa
+  ;sig = new(8,float)
+  ;sig(0) = 1./21.
+  ;sig(1) = 2./21.
+  ;sig(2) = 1./7. + 1./21.
+  ;sig(3) = 2./21. + 1./14.
+  ;sig(4) = 1./7.
+  ;sig(5) = 1./7.
+  ;sig(6) = 1./7.
+  ;sig(7) = 1./14.
+  ;print(sig)
   sig = new(3,float)
   sig(0) = 3./7. + 4./49.
   sig(1) = 10./49. + 1./7.
@@ -62,15 +73,15 @@ begin
   i = 0
   do d = ds,de
     dsec = sec
-    dsec = sec + 6*60*60*d
+    dsec = sec + 12*60*60*d
     index = ind(t.eq.dsec)
     day   = cd_string(dsec, "%Y%N%D%H")
     print(day)
     ;do lev = 0,3
 ;      print(i)
-    u = a->UGRD(index,:2,:,:)
-    v = a->VGRD(index,:2,:,:)
-;      print(u@level)
+    u = a->UGRD(index,(/2,4,5/),:,:)
+    v = a->VGRD(index,(/2,4,5/),:,:)
+    print(u@level)
 ;  t = a->PRES_meansealevel(0,:,:)
 ;************************************************
 ; this data only has an missing_value, so we are
@@ -177,12 +188,12 @@ begin
 ; range for the colors is chosen over the full data passed, and not the
 ; map limits.
       plot(i) = gsn_csm_vector_scalar_map_polar(wks,upav,vpav,wpav,res)
-      i = i + 1
+      i = i + 2
     ;end do
   end do
   resP	= True
   resP@gsnFrame	= False
-  resP@gsnPanelMainString = "vertical integrated asymmetric wind"
+  resP@gsnPanelMainString = "vertical integrated asymmetric wind analysis"
 ;  resP@gsnPanelLabelBar	  = True
   resP@lbLabelFontHeightF = 0.007
   resP@gsnPanelLeft	  = 0.005

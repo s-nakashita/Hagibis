@@ -27,8 +27,12 @@ begin
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  z00      = a->HGT(:,:,:,:)
+;  pres00   = a->HGT(2,:,:,:)
   z12      = b->HGT(:,:,:,:)
+  u00      = a->UGRD(:,:,:,:)
+  v00      = a->VGRD(:,:,:,:)
+  u12      = b->UGRD(:,:,:,:)
+  v12      = b->VGRD(:,:,:,:)
   lat_uv   = b->lat
   lon_uv   = b->lon
   level    = b->level
@@ -57,9 +61,9 @@ begin
   newsec = sec
   newsec = sec + 6*60*60*ds
   vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-  wks = gsn_open_wks("png","hgt_0912-0900_"+level(l)+"hPa_"+date_12(ds)+"to"+date_12(de))
+  wks = gsn_open_wks("png","wind_0912-0900_"+level(l)+"hPa_"+date_12(ds)+"to"+date_12(de))
   plot = new(6,graphic)
-  cmap = read_colormap_file("BlueDarkRed18")
+  cmap = read_colormap_file("sunshine_9lev")
     
   do d = 0,5
      print(vdate)
@@ -68,10 +72,15 @@ begin
      print(ind_00)
      print(ind_12)
 
-     dz = z00(ind_00,l,:,:)
-     dz = z12(ind_12,l,:,:) - z00(ind_00,l,:,:)
-     dz@_FillValue = default_fillvalue("float")
-     printVarSummary(dz)
+     u = u00(ind_00,l,:,:)
+     v = v00(ind_00,l,:,:)
+     u = u12(ind_12,l,:,:) - u00(ind_00,l,:,:)
+     v = v12(ind_12,l,:,:) - v00(ind_00,l,:,:)
+     u@_FillValue = default_fillvalue("float")
+     v@_FillValue = default_fillvalue("float")
+     w = u
+     w = sqrt(u^2+v^2)
+     printVarSummary(w)
      ;printMinMax(pres,1)
 ;---Create plot
      res                      = True               ; plot mods desired
@@ -84,7 +93,7 @@ begin
      res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
-     res@cnLinesOn            = False               ; turn off contour lines
+     res@cnLinesOn            = True               ; turn off contour lines
      res@cnLineLabelsOn       = False              ; turn off contour line labels
      res@gsnScalarContour     = True               ; (for gsn_csm_vector_scalar_map)draw contours
      res@cnFillPalette        = cmap
@@ -104,50 +113,27 @@ begin
 ; you must manually set those levels.
 
      res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-     res@cnMaxLevelCount	   = 20
-     res@cnMinLevelValF       = -50.0               ; set min contour level
-     res@cnMaxLevelValF       = 50.0                 ; set max contour level
-     res@cnLevelSpacingF      = 5.0               ; set contour spacing
+     res@cnMaxLevelCount	   = 10
+     res@cnMinLevelValF       = 2.0               ; set min contour level
+     res@cnMaxLevelValF       = 20.0                 ; set max contour level
+     res@cnLevelSpacingF      = 2.0               ; set contour spacing
 
-     plotdz = gsn_csm_contour_map_ce(wks,dz,res)
-     z = z12(ind_12,l,:,:)
-     if (l.eq.0) then
-      res@cnMinLevelValF       = 1200.0               ; set min contour level
-      res@cnMaxLevelValF       = 1500.0                 ; set max contour level
-      res@cnLevelSpacingF      = 30.0               ; set contour spacing
-     else if (l.eq.1) then 
-      res@cnMinLevelValF       = 5200.0               ; set min contour level
-      res@cnMaxLevelValF       = 5800.0                 ; set max contour level
-      res@cnLevelSpacingF      = 50.0               ; set contour spacing
-     else if (l.eq.2) then
-      res@cnMinLevelValF       = 8800.0               ; set min contour level
-      res@cnMaxLevelValF       = 9600.0                 ; set max contour level
-      res@cnLevelSpacingF      = 80.0               ; set contour spacing
-     else if (l.eq.3) then
-      res@cnMinLevelValF       = 9600.0               ; set min contour level
-      res@cnMaxLevelValF       = 11000.0                 ; set max contour level
-      res@cnLevelSpacingF      = 100.0               ; set contour spacing
-     else if (l.eq.4) then
-      res@cnMinLevelValF       = 11000.0               ; set min contour level
-      res@cnMaxLevelValF       = 13000.0                 ; set max contour level
-      res@cnLevelSpacingF      = 100.0               ; set contour spacing
-     end if
-     end if
-     end if
-     end if
-     end if
-     res@cnFillOn             = False               ; turn on color for contours
-     res@cnLinesOn            = True                ; turn off contour lines
-     res@cnLineLabelsOn        = True
-     res@cnLineColor          = "blue"
-     res@gsnRightString   = ""    
-     res@gsnLeftString    = ""
-     res@gsnCenterString  = ""
-     plotz = gsn_csm_contour(wks,z,res)
-     overlay(plotdz,plotz)
-     plot(d) = plotdz
-     delete(plotdz)
-     delete(plotz)
+     res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
+     res@vcRefLengthF              = 0.045           ; define length of vec ref
+     res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
+     res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
+     res@vcRefAnnoArrowUseVecColor = False           ; don't use vec color for ref
+
+;     res@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
+     res@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
+     res@vcLineArrowColor        = "black"           ; change vector color
+     res@vcLineArrowThicknessF   = 2.0               ; change vector thickness
+     res@vcMinDistanceF	      = 0.02
+     res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
+
+     u = where(w.lt.1, u@_FillValue, u)
+  
+     plot(d) = gsn_csm_vector_scalar_map_ce(wks,u,v,w,res)
 
      year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
      month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
@@ -157,11 +143,11 @@ begin
      newsec = sec
      newsec = sec + 6*60*60
      vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-     delete(dz)
-     delete(z)
+     delete(u)
+     delete(v)
    end do
    resP	                   = True
-   resP@gsnPanelMainString	   = "hgt difference 100912-100900 @"+level(l)+"hPa"
+   resP@gsnPanelMainString	   = "wind difference 100912-100900 @"+level(l)+"hPa"
    gsn_panel(wks,plot,(/2,3/),resP)
    delete(plot)
    end do

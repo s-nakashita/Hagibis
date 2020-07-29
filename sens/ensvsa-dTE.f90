@@ -7,7 +7,7 @@ program ensvsa_TE
   integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
-  integer,parameter :: nvar=3*4+1 
+  integer,parameter :: nvar=3*3+1 
   integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
   real,parameter :: cp=1005.7, R=287.04, Lh=2.5104*10**6 
@@ -20,7 +20,7 @@ program ensvsa_TE
   
   real ::  tmp, score, crate
   real ::  ps(imax,jmax),ug(imax,jmax,3),vg(imax,jmax,3)
-  real ::  T(imax,jmax,3),q(imax,jmax,3)!,rh(imax,jmax,3)
+  real ::  T(imax,jmax,3)
   real ::  zv3(0:imax-1,jmax,kmax),zv(0:imax-1,jmax)
   real ::  z0(nlon,nlat,nvar)
   real,allocatable ::  ze(:,:,:,:)
@@ -36,9 +36,9 @@ program ensvsa_TE
   
   character rdf*100,wd*100
   character dir*30,dira*33,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
-  character(len=17) :: vname(5)
+  character(len=17) :: vname(4)
   !character(len=4) :: vnamea(5)
-  data vname/'UGRD','VGRD','TMP','SPFH','PRES_meansealevel'/
+  data vname/'UGRD','VGRD','TMP','PRES_meansealevel'/
   !data vnamea/'air','uwnd','vwnd','shum','slp'/
   
      !|----/----/----/----/----/----/----/----/----/----/----/----| 
@@ -65,14 +65,13 @@ program ensvsa_TE
   print*,ip
   ip = ip+1
   !ip=13
-  wd='./weight-TE-jma-'//yyyymmddhh//'_a.grd'
+  wd='./weight-dTE-jma-'//yyyymmddhh//'_n.grd'
   open(21,file=wd,status='replace',access='direct',&
        &        convert='big_endian',&
        &        form='unformatted', recl=4*mem)
   
   ! 配列の割付
   l=min(mem,narea*nvar)
-  print*,l
   allocate(ze(nlon,nlat,nvar,mem))
   allocate(z(narea*nvar,mem))
   allocate(zT(mem,narea*nvar))
@@ -98,24 +97,21 @@ program ensvsa_TE
      !print*,rdf
      inquire(file=rdf, exist=ex)
      if(ex)then
-        do id=1,4
+        do id=1,3
            call fread3(rdf,vname(id),ip,zv3)
-           if(mod(id,4)==1)then
+           if(mod(id,3)==1)then
               ug=zv3(:,:,1:3)
               print*,ug(1,1,1)
-           elseif(mod(id,4)==2)then
+           elseif(mod(id,3)==2)then
               vg=zv3(:,:,1:3)
               print*,vg(1,1,1)
-           elseif(mod(id,4)==3)then
+           else
               T=zv3(:,:,1:3)
               print*,T(1,1,1)
-           else
-              q=zv3(:,:,1:3)
-              print*,q(1,1,1)
            endif
         enddo
         
-        call fread(rdf,vname(5),ip,zv)
+        call fread(rdf,vname(4),ip,zv)
         ps=zv/100     !Pa->hPa
         
         do i=1,nlon
@@ -125,9 +121,7 @@ program ensvsa_TE
               ze(i,j,1:3,imem)=ug(ilon,ilat,:)
               ze(i,j,4:6,imem)=vg(ilon,ilat,:)
               ze(i,j,7:9,imem)=T(ilon,ilat,:)
-              ze(i,j,10:12,imem)=q(ilon,ilat,:)
-              ze(i,j,13,imem)=ps(ilon,ilat)
-              !ze(i,j,10,imem)=ps(ilon,ilat)
+              ze(i,j,10,imem)=ps(ilon,ilat)
            enddo
         enddo
         print*,imem!ze(1,1,:,imem)
@@ -138,50 +132,38 @@ program ensvsa_TE
   ilu=0
   ilv=0
   ilq=0
-  !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
+  rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
   !rdf=dir//yyyy//'/jma/100900_mean.nc'
-  rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
+  !rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
   !ip = ip+2 !nomark
-  idate=2019100900
-  call calc_steps(idate,edate,12,ip)
+  idate=2019100912
+  call calc_steps(idate,edate,6,ip)
   print*,ip
   ip = ip+1
   !ip = 8 !_a
   inquire(file=rdf, exist=ex)
   if(ex)then
-     do id=1,4
+     do id=1,3
         !print*,rdf
         !print*,vname(id)
          call fread3(rdf,vname(id),ip,zv3)
          !call fread3a(rdf,vnamea(id),ip,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
         !print*,maxval(zv),minval(zv)
-         if(mod(id,4)==1)then
+         if(mod(id,3)==1)then
             ug=zv3(:,:,1:3)
             print*,ug(1,1,1)
-         elseif(mod(id,4)==2)then
+         elseif(mod(id,3)==2)then
             vg=zv3(:,:,1:3)
             print*,vg(1,1,1)
-         elseif(mod(id,4)==3)then
+         else
             T=zv3(:,:,1:3)
             print*,T(1,1,1)
-         else
-            q=zv3(:,:,1:3)
-            !rh=zv3(:,:,1:3)
-            !print*,"rh",rh(1,1,1)
-            !do k=1,kmax
-            !   do j=1,jmax
-            !      do i=1,imax
-            !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
-            !      enddo
-            !   enddo
-            !enddo
-            print*,q(1,1,1)
          endif
       enddo
      
       !rdf=dira//yyyy//'/'//mm//'/init.nc' !_a
-      rdf=dir//yyyy//'/jma/anl.nc' !_a
-      call fread(rdf,vname(5),ip,zv)
+      !rdf=dir//yyyy//'/jma/anl.nc' !_a
+      call fread(rdf,vname(4),ip,zv)
       !call freada(rdf,vnamea(5),ip+2,zv,90.0d0,180.0d0,0.0d0,80.0d0)
       ps=zv/100        !Pa->hPa
       print*,ps(1,1)
@@ -194,9 +176,7 @@ program ensvsa_TE
             z0(i,j,1:3)=ug(ilon,ilat,:)
             z0(i,j,4:6)=vg(ilon,ilat,:)
             z0(i,j,7:9)=T(ilon,ilat,:)
-            z0(i,j,10:12)=q(ilon,ilat,:)
-            z0(i,j,13)=ps(ilon,ilat)
-            !z0(i,j,10)=ps(ilon,ilat)
+            z0(i,j,10)=ps(ilon,ilat)
          enddo
       enddo
    endif
@@ -214,7 +194,7 @@ program ensvsa_TE
   enddo
       
   do ilev=1,3            !850,500,300hPa
-     do ivar=1,4         !ug,vg,T,q
+     do ivar=1,3         !ug,vg,T
         ze(:,:,3*(ivar-1)+ilev,:)=ze(:,:,3*(ivar-1)+ilev,:)*sigma(ilev)
      enddo
   enddo
@@ -222,10 +202,7 @@ program ensvsa_TE
   !T
   ze(:,:,7:9,:)=ze(:,:,7:9,:)*sqrt(cp/Tr)
   !ps
-  ze(:,:,13,:)=ze(:,:,13,:)*sqrt(R*Tr)/pr
-  !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
-  !q
-  ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
+  ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
   
   do imem=1,mem
      print*,imem

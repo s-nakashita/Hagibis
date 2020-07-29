@@ -1,0 +1,21 @@
+CC = gfortran
+LDFLAGS = -L/opt/local/lib
+LIBS = -lnetcdff -llapack
+
+OBJS = read_netcdf.o
+TEFILES = reg-prtb
+
+.SUFFIXES: .f90 .o
+
+.f90.o:
+	$(CC) $(LDFLAGS) $(LIBS) -c $<
+
+all:	$(TEFILES)
+
+reg-prtb:		$(OBJS) reg-prtb.o
+	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
+
+read_netcdf.o:	read_netcdf.f90
+reg-prtb.o:	reg-prtb.f90
+
+clean:;		rm -f *.o reg-prtb

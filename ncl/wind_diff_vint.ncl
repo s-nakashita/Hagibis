@@ -48,12 +48,23 @@ begin
   sig(1) = 10./49. + 1./7.
   sig(2) = 1./7.
   print(sig)
-  ;do l = 0,4 ; level
-  wks = gsn_open_wks("png","wind_100912-100900_vint");+level(l)+"hPa")
-  plot = new(6,graphic)
-  cmap = read_colormap_file("ViBlGrWhYeOrRe")
-    
+
+  ds = 6
+  de = 11
   vdate = 2019100912
+  year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
+  month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
+  day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
+  hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
+  sec = cd_inv_calendar(year,month,day,hour,0,0, time_12@units, 0)
+  newsec = sec
+  newsec = sec + 6*60*60*ds
+  vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
+  ;do l = 0,4 ; level
+  wks = gsn_open_wks("png","wind_0912-0900_vint_"+date_12(ds)+"to"+date_12(de));+level(l)+"hPa")
+  plot = new(6,graphic)
+  cmap = read_colormap_file("sunshine_9lev")
+    
   do d = 0,5
      print(vdate)
      ind_00   = ind(date_00.eq.vdate)
@@ -79,7 +90,7 @@ begin
      up00!1 = "lon"
      up00&lat = lat_uv
      up00&lon = lon_uv
-     up00@_FillValue = u00@_FillValue
+     up00@_FillValue = default_fillvalue("float")
      vp00 = up00
      vp00 = dim_sum_n(v,0)
      delete(u)
@@ -100,7 +111,7 @@ begin
      up12!1 = "lon"
      up12&lat = lat_uv
      up12&lon = lon_uv
-     up12@_FillValue = u12@_FillValue
+     up12@_FillValue = default_fillvalue("float")
      vp12 = up12
      vp12 = dim_sum_n(v,0)
      delete(u)
@@ -109,7 +120,9 @@ begin
      u = up12 - up00
      v = vp12
      v = vp12 - vp00
-     ;printVarSummary(pres)
+     w = u
+     w = sqrt(u^2+v^2)
+     printVarSummary(w)
      ;printMinMax(pres,1)
 ;---Create plot
      res                      = True               ; plot mods desired
@@ -117,17 +130,18 @@ begin
      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = "ft="+vdate
+     res@gsnCenterString	   = vdate
      res@gsnLeftString	   = ""
      res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnAddCyclic	      = False
-;     res@cnFillOn             = True               ; turn on color for contours
-;     res@cnLinesOn            = False              ; turn off contour lines
-;     res@cnLineLabelsOn       = False              ; turn off contour line labels
-;     res@gsnScalarContour     = True               ; contours desired
-;     res@cnFillPalette        = cmap
+     res@cnFillOn             = True               ; turn on color for contours
+     res@cnLinesOn            = True               ; turn off contour lines
+     res@cnLineLabelsOn       = False              ; turn off contour line labels
+     res@gsnScalarContour     = True               ; (for gsn_csm_vector_scalar_map)draw contours
+     res@cnFillPalette        = cmap
 
-     res@mpLandFillColor      = "gray"            ; set land to be gray
+     res@mpFillOn             = False 
+;     res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpMinLonF            =  120.               ; select a subregion
      res@mpMaxLonF            =  160.
      res@mpMinLatF            =  10. 
@@ -140,40 +154,39 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-;      res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-;     res@cnMaxLevelCount	   = 10
-;      res@cnMinLevelValF       = -50.0               ; set min contour level
-;      res@cnMaxLevelValF       = 50                 ; set max contour level
-;      res@cnLevelSpacingF      = 10.0               ; set contour spacing
+     res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+     res@cnMaxLevelCount	   = 10
+     res@cnMinLevelValF       = 2.0               ; set min contour level
+     res@cnMaxLevelValF       = 20.0                 ; set max contour level
+     res@cnLevelSpacingF      = 2.0               ; set contour spacing
 
-      res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
-      res@vcRefLengthF              = 0.045           ; define length of vec ref
-      res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
-      res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
-      res@vcRefAnnoArrowUseVecColor = False           ; don't use vec color for ref
+     res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
+     res@vcRefLengthF              = 0.045           ; define length of vec ref
+     res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
+     res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
+     res@vcRefAnnoArrowUseVecColor = False           ; don't use vec color for ref
 
 ;     res@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
-      res@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
-      res@vcLineArrowColor        = "black"           ; change vector color
-      res@vcLineArrowThicknessF   = 2.0               ; change vector thickness
-      res@vcMinDistanceF	      = 0.02
-      res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
+     res@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
+     res@vcLineArrowColor        = "black"           ; change vector color
+     res@vcLineArrowThicknessF   = 2.0               ; change vector thickness
+     res@vcMinDistanceF	      = 0.02
+     res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
-      wind = sqrt(u^2+v^2)
-      u = where(wind.lt.1, u@_FillValue, u)
+     u = where(w.lt.1, u@_FillValue, u)
   
-      plot(d) = gsn_csm_vector_map_ce(wks,u,v,res)
+     plot(d) = gsn_csm_vector_scalar_map_ce(wks,u,v,w,res)
 
-      year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
-      month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
-      day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
-      hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
-      sec = cd_inv_calendar(year,month,day,hour,0,0, time_12@units, 0)
-      newsec = sec
-      newsec = sec + 6*60*60
-      vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-      delete(u)
-      delete(v)
+     year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
+     month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
+     day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
+     hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
+     sec = cd_inv_calendar(year,month,day,hour,0,0, time_12@units, 0)
+     newsec = sec
+     newsec = sec + 6*60*60
+     vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
+     delete(u)
+     delete(v)
    end do
    resP	                   = True
    resP@gsnPanelMainString	   = "wind difference 100912-100900 vertical integrated";@"+level(l)+"hPa"

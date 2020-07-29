@@ -28,9 +28,11 @@ for m in range(Mem):
         init = t0.strftime("%m%d%H") # -> 2019100600
         year = t0.strftime("%Y")
         print(init)
-        outfile = orig+"/track" + year + init + "_" + str(m+1).zfill(2) + ".txt"
+        #outfile = orig+"/track" + year + init + "_" + str(m+1).zfill(2) + ".txt"
+        outfile = orig+"/track_anl.txt"
         track = open(outfile, "w")
-        infile = "../../netcdf/tigge/"+year+"/"+orig+"/"+init+"_" + str(m+1).zfill(2) + ".nc"
+        #infile = "../../netcdf/tigge/"+year+"/"+orig+"/"+init+"_" + str(m+1).zfill(2) + ".nc"
+        infile = "../../netcdf/tigge/"+year+"/"+orig+"/anl.nc"
         nc = netCDF4.Dataset(infile, 'r')
         lon = nc.variables['lon'][:]
         lat = nc.variables['lat'][:]
