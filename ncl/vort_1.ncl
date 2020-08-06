@@ -10,15 +10,16 @@ begin
 ;************************************************
 ; variable and file handling
 ;************************************************
-  in  = addfile("../../netcdf/gsm/gl/2019/10/init.nc","r")  ; open netcdf file
-  u   = in->UGRD(:,:,180:360,180:360)                       ; pull u off file
-  v   = in->VGRD(:,:,180:360,180:360)                       ; pull v off file
+  in  = addfile("../../netcdf/tigge/2019/jma/100900_mean.nc","r")  ; open netcdf file
+  u   = in->UGRD;(:,:,180:360,180:360)                       ; pull u off file
+  v   = in->VGRD;(:,:,180:360,180:360)                       ; pull v off file
   t0  = in->time
   lev0 = in->level
   lat0 = in->lat
   lon0 = in->lon
+  print(t0)
   printVarSummary(u)
-  ofile = "../../netcdf/gsm/gl/2019/10/init_vort.nc"
+  ofile = "../../netcdf/tigge/2019/jma/100900_mean_v.nc"
 ;  setfileoption("nc", "format", "netcdf4")
 ;  setfileoption("nc", "headerReserveSpace", 64000)
 ;  setfileoption("nc", "preFill", False)
@@ -32,7 +33,9 @@ begin
 ;************************************************
   scale = 1.e05                                  
   vrt   = u                                      ; retain coordinates
-  vrt   = uv2vrF_Wrap(u,v) ;* scale
+  vrt   = uv2dv_cfd(v, -u, lat0, lon0, 2);uv2vrF_Wrap(u,v) ;* scale
+  vrt@standard_name = "Vorticity"
+  vrt@units = "/s"
   printVarSummary(vrt)
 ;************************************************
 ; create netcdf4 file
@@ -66,22 +69,22 @@ begin
 
   print("Defining file variable attributes")
   tatts = True
-  tatts@standard_name = t0@standard_name
+  tatts@standard_name = "time";t0@standard_name
   tatts@units = t0@units
   filevarattdef(out,"time",tatts)
 
   levatts = True
-  levatts@long_name = lev0@long_name
+  levatts@long_name = "pressure levels";lev0@long_name
   levatts@units = lev0@units
   filevarattdef(out,"level",levatts)
 
   latatts = True
-  latatts@long_name = lat0@long_name
+  latatts@long_name = "lattitude";lat0@long_name
   latatts@units = lat0@units
   filevarattdef(out,"lat",latatts)
 
   lonatts = True
-  lonatts@long_name = lon0@long_name
+  lonatts@long_name = "longitude";lon0@long_name
   lonatts@units = lon0@units
   filevarattdef(out,"lon",lonatts)
 
@@ -93,8 +96,8 @@ begin
 
   time  = t0
   level = lev0
-  lat   = lat0(180:360)
-  lon   = lon0(180:360)
+  lat   = lat0;(180:360)
+  lon   = lon0;(180:360)
   out->level = (/level/)
   out->lat   = (/lat/)
   out->lon   = (/lon/)

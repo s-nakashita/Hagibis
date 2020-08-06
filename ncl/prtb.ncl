@@ -21,7 +21,7 @@ begin
 
 ;---Open netCDF file
   a = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_26.nc","r")
+  b = addfile("../../netcdf/tigge/2019/jma/100912_05.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -32,12 +32,13 @@ begin
   t00      = a->TMP(:,:,:,:)
   q00      = a->SPFH(:,:,:,:)
   ps00     = a->PRES_meansealevel(:,:,:)
+  z00      = a->HGT(:,:,:,:)
   u12      = b->UGRD(:,:,:,:)
   v12      = b->VGRD(:,:,:,:)
   t12      = b->TMP(:,:,:,:)
   q12      = b->SPFH(:,:,:,:)
   ps12     = b->PRES_meansealevel(:,:,:)
-  z12      = a->HGT(:,:,:,:)
+  z12      = b->HGT(:,:,:,:)
   lat_uv   = a->lat
   lon_uv   = a->lon
   plev     = a->level
@@ -45,8 +46,12 @@ begin
   time_12   = b->time
   date_00  = cd_string(time_00, "%Y%N%D%H")
   date_12  = cd_string(time_12, "%Y%N%D%H")
+  lon0 = 120.
+  lon1 = 160.
+  lat0 = 0.
+  lat1 = 50.
   
-  wks = gsn_open_wks("png","prtb_mem26")
+  wks = gsn_open_wks("png","prtb_mem05")
   plot = new(4,graphic)
   cmap = read_colormap_file("hotcold_18lev")
     
@@ -72,10 +77,10 @@ begin
   resps@cnFillPalette        = cmap
 
   resps@mpLandFillColor      = "gray"            ; set land to be gray
-  resps@mpMinLonF            =  120.               ; select a subregion
-  resps@mpMaxLonF            =  160.
-  resps@mpMinLatF            =  10. 
-  resps@mpMaxLatF            =  60.
+  resps@mpMinLonF            =  lon0               ; select a subregion
+  resps@mpMaxLonF            =  lon1
+  resps@mpMinLatF            =  lat0
+  resps@mpMaxLatF            =  lat1
 
   resps@lbOrientation            = "Vertical"     ; vertical label bar
   resps@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
@@ -86,9 +91,9 @@ begin
 
   resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-  resps@cnMinLevelValF       = -300.0               ; set min contour level
-  resps@cnMaxLevelValF       = 300.0                 ; set max contour level
-  resps@cnLevelSpacingF      = 30.0               ; set contour spacing
+  resps@cnMinLevelValF       = -150.              ; set min contour level
+  resps@cnMaxLevelValF       = 150.                 ; set max contour level
+  resps@cnLevelSpacingF      = 10.             ; set contour spacing
 
   plotp = gsn_csm_contour_map(wks, ps, resps)
 
@@ -122,7 +127,8 @@ begin
      q = q12(ind_12,k,:,:)
      q = q12(ind_12,k,:,:) - q00(ind_00,k,:,:)
      q = q*10^3
-     z = z12(ind_12,k,:,:)
+     z = z00(ind_00,k,:,:);z12(ind_12,k,:,:)
+     ;z = z12(ind_12,k,:,:) - z00(ind_00,k,:,:)
      hgt = plev(k)
 ;---Create plot
      res                = True               ; plot mods desired
@@ -142,10 +148,10 @@ begin
 
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpFillOn	      = False
-     res@mpMinLonF            =  120.               ; select a subregion
-     res@mpMaxLonF            =  160.
-     res@mpMinLatF            =  10. 
-     res@mpMaxLatF            =  60.
+     res@mpMinLonF            =  lon0               ; select a subregion
+     res@mpMaxLonF            =  lon1
+     res@mpMinLatF            =  lat0
+     res@mpMaxLatF            =  lat1
 
      res@lbOrientation            = "Vertical"     ; vertical label bar
      res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
@@ -160,7 +166,7 @@ begin
       res@cnMaxLevelValF       = 2.0                 ; set max contour level
       res@cnLevelSpacingF      = 0.25               ; set contour spacing
 
-      res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
+      res@vcRefMagnitudeF           = 5.0             ; define vector ref mag
       res@vcRefLengthF              = 0.045           ; define length of vec ref
       res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
       res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
@@ -174,7 +180,7 @@ begin
       res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
       wind = sqrt(u^2+v^2)
-      u = where(wind.lt.0.1, u@_FillValue, u)
+      u = where(wind.lt.0.5, u@_FillValue, u)
   
       plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
 
@@ -238,6 +244,6 @@ begin
    end do
 
    resP	                   = True
-   resP@gsnPanelMainString	   = "perturbation member 26 T&Q&wind,slp "+vdate
+   resP@gsnPanelMainString	   = "perturbation member 05 T&Q&wind,slp "+vdate
    gsn_panel(wks,plot,(/1,4/),resP)
 end

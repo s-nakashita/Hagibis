@@ -20,60 +20,75 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../../netcdf/tigge/2019/jma/100900_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
+  init   = 2019100900
+  mmddhh = str_get_cols(sprinti("%0.10d",init), 4, 9)
+  a = addfile("../../netcdf/tigge/2019/jma/"+mmddhh+"_mean.nc","r")
+;  b = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  z00      = a->HGT(:,:,:,:)
-  z12      = b->HGT(:,:,:,:)
-  lat_uv   = b->lat
-  lon_uv   = b->lon
-  level    = b->level
-  time_00  = a->time
-  time_12  = b->time
-  date_00  = cd_string(time_00, "%Y%N%D%H")
-  date_12  = cd_string(time_12, "%Y%N%D%H")
-  print(date_00)
-  print(date_12)
-
+;  pres00   = a->HGT(2,:,:,:)
+;  z00    = a->HGT(:,:,:,:)
+  u00    = a->UGRD(:,0:2,:,:)
+  v00    = a->VGRD(:,0:2,:,:)
+  lat_uv = a->lat
+  lon_uv = a->lon
+  level  = a->level
+  time   = a->time
+  date   = cd_string(time, "%Y%N%D%H")
+  print(date)
+  
   sig = new(3,float)
   sig(0) = 3./7. + 4./49.
   sig(1) = 10./49. + 1./7.
   sig(2) = 1./7.
   print(sig)
-
-  do l = 0,4 ; level
-  ds = 0
-  de = 5
+  
+  ds = 7
+  de = 13
   nd = de - ds + 1
-  vdate = 2019100912
+  vdate = init
   year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
   month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
   day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
   hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
-  sec = cd_inv_calendar(year,month,day,hour,0,0, time_12@units, 0)
+  sec = cd_inv_calendar(year,month,day,hour,0,0, time@units, 0)
   newsec = sec
   newsec = sec + 6*60*60*ds
   vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-  wks = gsn_open_wks("png","hgt_0912-0900_"+level(l)+"hPa_"+date_12(ds)+"to"+date_12(de))
+  wks = gsn_open_wks("png","wind_vint_"+mmddhh+"_"+date(ds)+"to"+date(de))
   plot = new(nd,graphic)
-  cmap = read_colormap_file("BlueDarkRed18")
+  cmap = read_colormap_file("sunshine_9lev")
     
   do d = 0,nd-1
      print(vdate)
-     ind_00   = ind(date_00.eq.vdate)
-     ind_12   = ind(date_12.eq.vdate)
-     print(ind_00)
-     print(ind_12)
+     id   = ind(date.eq.vdate)
+     print(id)
 
-     dz = z00(ind_00,l,:,:)
-     dz = z12(ind_12,l,:,:) - z00(ind_00,l,:,:)
-     dz@_FillValue = default_fillvalue("float")
-     printVarSummary(dz)
-     ;printMinMax(pres,1)
+     u = u00(id,:,:,:)
+     v = v00(id,:,:,:)
+     ndim = dimsizes(u)
+     do ilev=0,ndim(0)-1
+      do ilat=0,ndim(1)-1
+        do ilon=0,ndim(2)-1
+          u(ilev,ilat,ilon) = u(ilev,ilat,ilon)*sig(ilev)
+          v(ilev,ilat,ilon) = v(ilev,ilat,ilon)*sig(ilev)
+        end do
+      end do
+     end do
+     up = dim_sum_n(u,0)
+     up!0 = "lat"
+     up!1 = "lon"
+     up&lat = lat_uv
+     up&lon = lon_uv
+     up@_FillValue = default_fillvalue("float")
+     vp = up
+     vp = dim_sum_n(v,0)
+     w = up
+     w = sqrt(up^2+vp^2)
+     printVarSummary(w)
 ;---Create plot
      res                      = True               ; plot mods desired
      res@gsnDraw	      = False
@@ -103,70 +118,43 @@ begin
 ; note, when doing a subregion, NCL determines the range of the data from
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
-
      res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-     res@cnMaxLevelCount	   = 20
-     res@cnMinLevelValF       = -50.0               ; set min contour level
+     ;res@cnMaxLevelCount	     = 10
+     res@cnMinLevelValF       = 5.0               ; set min contour level
      res@cnMaxLevelValF       = 50.0                 ; set max contour level
      res@cnLevelSpacingF      = 5.0               ; set contour spacing
 
-     plotdz = gsn_csm_contour_map_ce(wks,dz,res)
-     z = z12(ind_12,l,:,:)
-     ;if (l.eq.0) then
-     ; res@cnMinLevelValF       = 1200.0               ; set min contour level
-     ; res@cnMaxLevelValF       = 1500.0                 ; set max contour level
-     ; res@cnLevelSpacingF      = 30.0               ; set contour spacing
-     ;else if (l.eq.1) then 
-     ; res@cnMinLevelValF       = 5200.0               ; set min contour level
-     ; res@cnMaxLevelValF       = 5800.0                 ; set max contour level
-     ; res@cnLevelSpacingF      = 50.0               ; set contour spacing
-     ;else if (l.eq.2) then
-     ; res@cnMinLevelValF       = 8800.0               ; set min contour level
-     ; res@cnMaxLevelValF       = 9600.0                 ; set max contour level
-     ; res@cnLevelSpacingF      = 80.0               ; set contour spacing
-     ;else if (l.eq.3) then
-     ; res@cnMinLevelValF       = 9600.0               ; set min contour level
-     ; res@cnMaxLevelValF       = 11000.0                 ; set max contour level
-     ; res@cnLevelSpacingF      = 100.0               ; set contour spacing
-     ;else if (l.eq.4) then
-     ; res@cnMinLevelValF       = 11000.0               ; set min contour level
-     ; res@cnMaxLevelValF       = 13000.0                 ; set max contour level
-     ; res@cnLevelSpacingF      = 100.0               ; set contour spacing
-     ;end if
-     ;end if
-     ;end if
-     ;end if
-     ;end if
-     resz                      = True               ; plot mods desired
-     resz@gsnDraw	      = False
-     resz@gsnFrame	      = False
-     resz@cnFillOn             = False               ; turn on color for contours
-     resz@cnLinesOn            = True                ; turn off contour lines
-     resz@cnLineLabelsOn        = True
-     resz@cnLineColor          = "blue"
-     resz@gsnRightString   = ""    
-     resz@gsnLeftString    = ""
-     resz@gsnCenterString  = ""
-     plotz = gsn_csm_contour(wks,z,resz)
-     overlay(plotdz,plotz)
-     plot(d) = plotdz
-     delete(plotdz)
-     delete(plotz)
+     res@vcRefMagnitudeF           = 20.0             ; define vector ref mag
+     res@vcRefLengthF              = 0.045           ; define length of vec ref
+     res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
+     res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
+     res@vcRefAnnoArrowUseVecColor = False           ; don't use vec color for ref
 
+;     res@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
+     res@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
+     res@vcLineArrowColor        = "black"           ; change vector color
+     res@vcLineArrowThicknessF   = 3.0               ; change vector thickness
+     res@vcMinDistanceF	        = 0.05
+     res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
+
+     up = where(w.lt.5., up@_FillValue, up)
+  
+     plot(d) = gsn_csm_vector_scalar_map(wks,up,vp,w,res)
+     
      year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
      month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
      day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
      hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
-     sec = cd_inv_calendar(year,month,day,hour,0,0, time_12@units, 0)
+     sec = cd_inv_calendar(year,month,day,hour,0,0, time@units, 0)
      newsec = sec
      newsec = sec + 6*60*60
      vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-     delete(dz)
-     delete(z)
+     delete(u)
+     delete(v)
+     delete(res)
    end do
    resP	                   = True
-   resP@gsnPanelMainString	   = "hgt difference 100912-100900 @"+level(l)+"hPa"
+   resP@gsnPanelMainString	   = "vertical integrated wind "+mmddhh
    gsn_panel(wks,plot,(/2,(nd+1)/2/),resP)
    delete(plot)
-   end do
 end

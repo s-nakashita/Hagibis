@@ -7,13 +7,36 @@
 ;----------------------------------------------------------------------
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/cd_string.ncl"
 begin
-  f     = addfile ("../../netcdf/gsm/gl/2019/10/rotate/np_init_vort.nc","r")
-  wks   = gsn_open_wks ("png", "vor_h_lat" )          ; send graphics to PNG file
-  plot = new(8,graphic)
-do d=0,7
-  vrt   = f->vort(d,:,:,:)                             ; get u for January
-  time  = f->time(d)
-  date  = cd_string(time, "%Y%N%D%H")
+  ;f     = addfile ("../../netcdf/gsm/gl/2019/10/rotate/np_init_vort.nc","r")
+  f     = addfile ("../../netcdf/tigge/2019/jma/rotate/np_100900_mean_v.nc","r")
+  wks   = gsn_open_wks ("png", "vor_h_lat_00Zmean" )          ; send graphics to PNG file
+  yyyy = 2019
+  mm   = 10
+  dd   = 12
+  hh   = 12
+  v    = f->vort(:,:,:,:)                             ; get u for January
+  t    = f->time
+  units= t@units
+  opt  = 0
+  opt@calendar = t@calendar
+  vt   = cd_inv_calendar(yyyy, mm, dd, hh, 0, 0, units, opt)
+  print(vt)
+  id   = ind(t.eq.vt)
+  print(id)
+  plot_num = id/2 + 1
+  plot = new(plot_num,graphic)
+  ft = tofloat(t)
+  ft@units = units
+  ft@calendar = t@calendar
+  date  = cd_string(ft, "%Y%N%D%H")
+  print(date)
+do d=0,plot_num-1
+  vrt   = v(2*d,:,:,:)                             ; get u for January
+  time  = t(2*d)
+  print(time)
+  ;date  = cd_calendar(time, -3)
+  ;date  = cd_string(time, "%Y%N%D%H")
+  vrt&level@units = "hPa"
   vrt_zm = vrt(:,:,0)
   printVarSummary(vrt_zm)
   vrt_zm = zonalAve(vrt)
@@ -34,7 +57,7 @@ do d=0,7
   res@cnFillPalette        = "sunshine_9lev"             ; choose colormap
   res@tiYAxisString        = "pressure (" + vrt&level@units + ")"   
   res@gsnRightString       = "1.0e-4 /s"
-  res@tiMainString      = date
+  res@tiMainString         = date(2*d)
   
 ; Note: u is already on pressure levels. If this were model data, it
 ; would be necessary to interpolate from the hybrid coordinates to 
