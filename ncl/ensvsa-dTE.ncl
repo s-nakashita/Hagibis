@@ -20,7 +20,7 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../sens/ensvsa-TE-m"+mode+"-"+orig+"-"+yyyymmddhh+"_n.nc","r")
+  a = addfile("../sens/ensvsa-dTE-m"+mode+"-"+orig+"-"+yyyymmddhh+"_n.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -29,20 +29,17 @@ begin
   ;d = 0
   mmddhh = str_get_cols(yyyymmddhh, 4, 9)
   if (d.eq.0) then
-      out = "ensvsa-TE_m"+mode+"_t+wind_n_"+orig+"_"+mmddhh
+      out = "ensvsa-dTE_m"+mode+"_t+wind_n_"+orig+"_"+mmddhh
   else
-      out = "ensvsa-TE_m"+mode+"_t+wind_n_"+orig+"_"+mmddhh+"_v"
+      out = "ensvsa-dTE_m"+mode+"_t+wind_n_"+orig+"_"+mmddhh+"_v"
   end if
   ug       = a->ugrd(d,:,:,:)
   vg       = a->vgrd(d,:,:,:)
   temp     = a->t(d,:,:,:)
-  spfh	   = a->q(d,:,:,:)
   ps       = a->pres_meansealev(d,:,:)
-; 00Z -> *(-1)
   ug = (/-1*ug/)
   vg = (/-1*vg/)
   temp = (/-1*temp/)
-  spfh = (/-1*spfh/)
   ps = (/-1*ps/)
   te       = a->te(d,:,:)
   lat_uv   = a->lat
@@ -50,19 +47,17 @@ begin
   plev     = a->lev
   time     = a->time
   
-;  out = "ensvsa_00Zv";"ensvsa_m1_t+wind_n_100912"
-;  dev = "png"
+  
   wks = gsn_open_wks("png",out)
   plot = new(6,graphic)
   cmap = read_colormap_file("hotcold_18lev")
     
   vdate  = cd_string(time(d), "%Y%N%D%H")
-
 ;************************************************
 ; create points for box
 ;************************************************
  ypts = (/ 37.0, 37.0, 33.0, 33.0, 37.0/)
- xpts = (/137.0,142.0,142.0,137.0,137.0/)
+ xpts = (/136.0,142.0,142.0,136.0,136.0/)
 ;************************************************
 ; add the box
 ;************************************************
@@ -71,12 +66,10 @@ begin
   resp@gsLineThicknessF = 3.0                       ; thickness of lines
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
-  do k = 0, 2
+  do k = 0,2
      u = ug(2-k,:,:)
      v = vg(2-k,:,:)
      t = temp(2-k,:,:)
-     q = spfh(2-k,:,:)
-     q = q*1000
      hgt = plev(2-k)
      ;wks = gsn_open_wks(dev,out+"_"+hgt)
 ;---Create plot
@@ -85,7 +78,7 @@ begin
      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
+     res@gsnCenterString	   = "T+wind_"+hgt+"hPa"
      res@gsnCenterStringFontHeightF = 0.025
      res@gsnCenterStringOrthogonalPosF = 0.04
      ;res@gsnCenterStringParallelPosF   = 0.45
@@ -152,35 +145,6 @@ begin
   
       plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
 
-      res@cnFillOn             = False             ; turn on color for contours
-      res@cnLinesOn            = True              ; turn off contour lines
-      res@cnLineLabelsOn       = True
-      res@cnLineColor          = "blue"
-      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
-      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
-;     res@cnMaxLevelCount	   = 10
-      if (d.eq.0) then
-;  d=0
-      res@cnMinLevelValF       = -5.               ; set min contour level
-      res@cnMaxLevelValF       = 5.                 ; set max contour level
-      res@cnLevelSpacingF      = 1.               ; set contour spacing
-   else if (d.ge.6) then 
-;  d=6
-      res@cnMinLevelValF       = -50.               ; set min contour level
-      res@cnMaxLevelValF       = 50.                 ; set max contour level
-      res@cnLevelSpacingF      = 5.               ; set contour spacing
-   end if
-   end if
-; when using the gsn_csm plot templates and overlay, it is necessary to
-; turn off the automatic label strings so that you don't get text on 
-; top of text
-      res@gsnRightString   = ""    
-      res@gsnLeftString    = ""
-      res@gsnCenterString  = ""
-      
-      plotq = gsn_csm_contour(wks,q,res)
-      overlay(plott,plotq)
 ; create array of dummy graphic variables. This is required, b/c each line
 ; must be associated with a unique dummy variable.
       dum = new(4,graphic)  
@@ -192,7 +156,6 @@ begin
       ;draw(plott)
       ;frame(wks)
       delete(plott)
-      delete(plotq)
       delete(dum)
    end do
 
@@ -204,7 +167,7 @@ begin
    reste@gsnFrame	      = False
 ;   res@cnInfoLabelOn	      = False
      
-   reste@gsnCenterString	   = "Total moist energy + slp"
+   reste@gsnCenterString	   = "Total dry energy + slp"
    reste@gsnCenterStringOrthogonalPosF = 0.04
    ;reste@gsnCenterStringParallelPosF   = 0.55
    reste@gsnCenterStringFontHeightF    = 0.025
@@ -241,14 +204,14 @@ begin
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
-      reste@cnMinLevelValF       = 10.               ; set min contour level
-      reste@cnMaxLevelValF       = 100.0                 ; set max contour level
-      reste@cnLevelSpacingF      = 10.               ; set contour spacing
+      reste@cnMinLevelValF       = .5               ; set min contour level
+      reste@cnMaxLevelValF       = 5.0                 ; set max contour level
+      reste@cnLevelSpacingF      = .5               ; set contour spacing
    else if (d.ge.6) then 
 ;  d=6
-      reste@cnMinLevelValF       = 100.               ; set min contour level
+      reste@cnMinLevelValF       = 50.               ; set min contour level
       reste@cnMaxLevelValF       = 1000.0                 ; set max contour level
-      reste@cnLevelSpacingF      = 100.               ; set contour spacing
+      reste@cnLevelSpacingF      = 50.               ; set contour spacing
    end if
    end if
    plote = gsn_csm_contour_map(wks, te, reste)
@@ -306,6 +269,6 @@ begin
    ;frame(wks)
 
    resP	                   = True
-   resP@gsnPanelMainString	   = "ensvsa-TE T&wind,slp,TE "+vdate+" "+orig
+   resP@gsnPanelMainString	   = "ensvsa-dTE T&wind,slp,TE "+vdate+" "+orig
    gsn_panel(wks,plot,(/2,3/),resP)
 end

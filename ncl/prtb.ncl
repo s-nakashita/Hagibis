@@ -20,8 +20,9 @@
 begin
 
 ;---Open netCDF file
+  mem = "05"
   a = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_05.nc","r")
+  b = addfile("../../netcdf/tigge/2019/jma/100912_"+mem+".nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -47,12 +48,13 @@ begin
   date_00  = cd_string(time_00, "%Y%N%D%H")
   date_12  = cd_string(time_12, "%Y%N%D%H")
   lon0 = 120.
-  lon1 = 160.
+  lon1 = 180.
   lat0 = 0.
-  lat1 = 50.
+  lat1 = 60.
   
-  wks = gsn_open_wks("png","prtb_mem05")
-  plot = new(4,graphic)
+  out = "prtb_mem"+mem
+;  wks = gsn_open_wks("png","prtb_mem26")
+;  plot = new(4,graphic)
   cmap = read_colormap_file("hotcold_18lev")
     
   vdate = 2019100912
@@ -61,6 +63,7 @@ begin
   ps = ps12(ind_12,:,:)
   ps = ps12(ind_12,:,:) - ps00(ind_00,:,:)
   pful = ps00(ind_12,:,:)
+  wks = gsn_open_wks("pdf",out+"_slp")
   resps                = True               ; plot mods desired
   resps@gsnDraw	      = False
   resps@gsnFrame	      = False
@@ -69,6 +72,7 @@ begin
   resps@gsnCenterString	   = "slp"
   resps@gsnCenterStringOrthogonalPosF = 0.02
   resps@gsnLeftString	    = ""
+  resps@gsnRightString	    = ""
   resps@gsnAddCyclic	      = False
   resps@cnFillOn             = True               ; turn on color for contours
   resps@cnLinesOn            = False              ; turn off contour lines
@@ -114,7 +118,9 @@ begin
       
   plotpf = gsn_csm_contour(wks,pful,resps)
   overlay(plotp,plotpf)
-  plot(0) = plotp
+  ;plot(0) = plotp
+  draw(plotp)
+  frame(wks)
   delete(plotp)
   delete(plotpf)
   do k = 0,2
@@ -130,15 +136,17 @@ begin
      z = z00(ind_00,k,:,:);z12(ind_12,k,:,:)
      ;z = z12(ind_12,k,:,:) - z00(ind_00,k,:,:)
      hgt = plev(k)
+     wks = gsn_open_wks("pdf",out+"_"+hgt)
 ;---Create plot
      res                = True               ; plot mods desired
      res@gsnDraw	      = False
      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = "T+wind_"+hgt+"hPa"
+     res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
      res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnLeftString	    = ""
+     res@gsnRightString	    = ""
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False              ; turn off contour lines
@@ -237,13 +245,15 @@ begin
       
       plotz = gsn_csm_contour(wks,z,res)
       overlay(plott,plotz)
-      plot(k+1) = plott
+      draw(plott)
+      frame(wks)
+      ;plot(k+1) = plott
       delete(plott)
       delete(plotq)
       delete(plotz)
    end do
 
-   resP	                   = True
-   resP@gsnPanelMainString	   = "perturbation member 05 T&Q&wind,slp "+vdate
-   gsn_panel(wks,plot,(/1,4/),resP)
+;   resP	                   = True
+;   resP@gsnPanelMainString	   = "perturbation member 26 T&Q&wind,slp "+vdate
+;   gsn_panel(wks,plot,(/1,4/),resP)
 end

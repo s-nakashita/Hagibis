@@ -32,7 +32,7 @@ begin
 ;************************************************
 ; read in atmospheric data
 ;************************************************
-  yyyymmddhh = "2019100900"
+  yyyymmddhh = "2019100912"
   a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
   t = a->time
   lat = a->lat
@@ -52,9 +52,9 @@ begin
   esec	= sec + 6*60*60*de
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
-  wks = gsn_open_wks("pdf","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
+  wks = gsn_open_wks("png","steer_ini"+yyyymmddhh+"_"+sday+"_to_"+eday)             ; send graphics to PNG file
   gsn_define_colormap(wks, "sunshine_9lev")
-  plot = new(3,"graphic")
+  plot = new(nd,"graphic")
 
   sig = new(3,float)
   ;sig(0) = 3./7. + 4./49.
@@ -65,7 +65,7 @@ begin
   sig(2) = 2./11.
   print(sig)
   i = 0
-  do d = ds,de,2
+  do d = ds,de
     dsec = sec
     dsec = sec + 6*60*60*d
     index = ind(t.eq.dsec)
@@ -100,15 +100,6 @@ begin
     print(ndim)
     u_ = u_ * conform_dims(dimsizes(u_), sig, 0)
     v_ = v_ * conform_dims(dimsizes(v_), sig, 0)
-    ;do lev=0,ndim(0)-1
-    ;  do ilat=0,ndim(1)-1
-    ;    do ilon=0,ndim(2)-1
-    ;      u_(lev,ilat,ilon) = u_(lev,ilat,ilon)*sig(lev)
-    ;      v_(lev,ilat,ilon) = v_(lev,ilat,ilon)*sig(lev)
-    ;      w(lev,ilat,ilon) = w(lev,ilat,ilon)*sig(lev)
-    ;    end do
-    ;  end do
-    ;end do
     upav = dim_sum_n(u_,0)
     upav!0 = "lat"
     upav!1 = "lon"
@@ -120,32 +111,41 @@ begin
     ;wpav = dim_sum_n(w,0)
     wpav = sqrt(upav^2 + vpav^2)
     printVarSummary(upav) 
+    ;mask out center
+    minlatF = 87.
+    ustr = upav
+    ustr({:minlatF},:) = upav@_FillValue
+    vstr = vpav
+    vstr({:minlatF},:) = vpav@_FillValue
+    wstr = wpav
+    wstr({:minlatF},:) = wpav@_FillValue
 ;      print(uzav)
 ;************************************************
 ; create plot
 ;************************************************
 
-      res            = True                         ; plot mods desired
-      res@gsnDraw    = False
-      res@gsnFrame   = False
-      res@gsnPolar   = "NH"                         ; specify the hemisphere
-      res@mpMinLatF  = 82                           ; minimum lat to plot
-      res@mpFillOn   = False
-      res@mpOutlineOn = False
-      res@mpGridAndLimbOn = False
-      res@lbLabelBarOn = False
+    res            = True                         ; plot mods desired
+    res@gsnDraw    = False
+    res@gsnFrame   = False
+    res@gsnPolar   = "NH"                         ; specify the hemisphere
+    res@mpMinLatF  = 82                           ; minimum lat to plot
+    res@mpFillOn   = False
+    res@mpOutlineOn = False
+    ;res@mpGridAndLimbOn = False
+    res@mpGridLatSpacingF = 2.
+    res@lbLabelBarOn = False
 
-      res@cnFillOn	       = True                  ; color fill
-      res@cnLevelSelectionMode = "ManualLevels"
+    res@cnFillOn	       = True                  ; color fill
+    res@cnLevelSelectionMode = "ManualLevels"
 ;      if (lev.eq.0) then
 ;      	res@cnLevels = (/1.,2.,4.,6.,8.,10.,12.,14.,16./)
 ;	res@cnMinLevelValF = 1.
 ;	res@cnMaxLevelValF = 16.
 ;      elseif (lev.eq.1) then
 ;       res@cnLevels = (/2.,4.,6.,8.,10.,12.,14.,16.,18./)
-	    res@cnLevelSpacingF   = 2.
-      res@cnMinLevelValF = 2.
-	    res@cnMaxLevelValF = 20.
+    res@cnLevelSpacingF   = 2.
+    res@cnMinLevelValF = 2.
+    res@cnMaxLevelValF = 20.
 ;      elseif (lev.eq.2) then
 ;      	res@cnLevels = (/3.,6.,9.,12.,15.,18.,21.,24.,27.,30./)
 ;	res@cnMinLevelValF = 3.
@@ -155,38 +155,38 @@ begin
 ;	res@cnMinLevelValF = 6.
 ;	res@cnMaxLevelValF = 34.
 ;      end if
-      res@cnLinesOn            = True                 ; no contour lines
+    res@cnLinesOn            = True                 ; no contour lines
 ;      res@lbLabelBarOn	       = False
     
-      res@gsnSpreadColorEnd     = -3
-      res@gsnScalarContour      = True              ; vectors over scalars
-      res@vcRefMagnitudeF       = 20.0              ; vec magnitude
-      res@vcRefLengthF          = 0.05              ; size of ref vector
-      res@vcLineArrowColor      = "black"           ; white vectors
-      res@vcMinDistanceF        = 0.04              ; thins arrows near pole  
-      res@vcGlyphStyle          = "LineArrow"     ; turns on curly vectors
-      res@vcLineArrowThicknessF = 2.
-      res@vcMinMagnitudeF       = 5.0
+    res@gsnSpreadColorEnd     = -3
+    res@gsnScalarContour      = True              ; vectors over scalars
+    res@vcRefMagnitudeF       = 20.0              ; vec magnitude
+    res@vcRefLengthF          = 0.05              ; size of ref vector
+    res@vcLineArrowColor      = "black"           ; white vectors
+    res@vcMinDistanceF        = 0.04              ; thins arrows near pole  
+    res@vcGlyphStyle          = "LineArrow"     ; turns on curly vectors
+    res@vcLineArrowThicknessF = 2.
+    res@vcMinMagnitudeF       = 5.0
 
-      res@vcRefAnnoArrowLineColor   = "black"       ; black ref vector
-      res@vcRefAnnoArrowUseVecColor = False
-      res@gsnCenterStringFontHeightF = 0.05
-      res@gsnLeftStringFontHeightF = 0.02
-      res@gsnRightStringFontHeightF = 0.02
-      ;if(d.eq.ds) then
+    res@vcRefAnnoArrowLineColor   = "black"       ; black ref vector
+    res@vcRefAnnoArrowUseVecColor = False
+    res@gsnCenterStringFontHeightF = 0.05
+    res@gsnLeftStringFontHeightF = 0.02
+    res@gsnRightStringFontHeightF = 0.02
+    ;if(d.eq.ds) then
       ;  res@gsnCenterString     = u_@level+"mb"
-    	res@gsnLeftString       = "Wind Velocity"
+  	;res@gsnLeftString       = "Wind Velocity"
       ;else
-	    res@gsnCenterString	= day
-	    res@gsnLeftString	= ""
+    res@gsnCenterString	= day
+    ;res@gsnLeftString	= ""
       ;end if
 ; because this is ice data, which has a gap in the tropics, we need to
 ; explicitly pass the range of the data to plot.  Since we are coloring 
 ; the vectors, this range should also match the MinLatF above, since the
 ; range for the colors is chosen over the full data passed, and not the
 ; map limits.
-      plot(i) = gsn_csm_vector_scalar_map_polar(wks,upav,vpav,wpav,res)
-      i = i + 1
+    plot(i) = gsn_csm_vector_scalar_map_polar(wks,ustr,vstr,wstr,res)
+    i = i + 1
     ;end do
   end do
   resP	= True

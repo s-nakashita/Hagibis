@@ -4,21 +4,23 @@ program grads_ensvsa_TE
   
   implicit none
  
-  integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
+  !integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
+  integer,parameter :: dslon=275, delon=285, dslat=247, delat=255
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
   integer,parameter :: nv3d=4,nv2d=2,nlev=3
   integer,parameter :: nvar=nv3d*nlev+nv2d-1 
-  integer,parameter :: memo=50, memn=26 
+  !integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
   real,parameter :: cp=1005.7, R=287.04, Lh=2.5104*10**6 
   real,parameter :: Tr=270.0, pr=1000.0 
       
   integer :: i,j,k,n
   integer :: imem,id,it,irec
-  integer :: ilt,ilu,ilv,ilq,ilev,ivar,ip,fday,imode
-  integer :: mem
-  integer :: idate,edate
+  integer :: ilt,ilu,ilv,ilq,ilev,ivar,ip,fday
+  integer :: imode
+  !integer :: mem
+  !integer :: idate,edate
   logical :: ex
   
   real ::  ps(imax,jmax),ug(imax,jmax,nlev),vg(imax,jmax,nlev)
@@ -28,7 +30,7 @@ program grads_ensvsa_TE
   real,allocatable ::  ze(:,:,:,:)
   real ::  sigma(3),ssg
   real :: plev(3)
-  data plev/850.0,500.0,300.0/
+  data plev/300.0,500.0,850.0/
   real,allocatable ::  z(:,:),zT(:,:)
   real,allocatable :: sg(:),p(:),w(:,:)
   real :: TE(imax,jmax)
@@ -36,34 +38,51 @@ program grads_ensvsa_TE
   real :: v2d(imax,jmax,nv2d) !ps,TE
   real :: buf4(imax,jmax)
       
+  character(len=5) :: orig="jma"
+  integer :: mem=26 
+  integer :: idate=2019100912
+  integer :: edate=2019101212
+  integer :: smode=1
+  integer :: emode=1
+  namelist /sens_nml/ orig, mem, idate, edate, smode, emode
+
   character rdf*100,rdw*100,wd*100
-  character dir*30,dira*33,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
-  character(len=17) :: vname(5)
+  character dir*30,dira*33,nmode*1,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
+  character(len=3) :: vname(5)
   !character(len=4) :: vnamea(5)
-  data vname/'UGRD','VGRD','TMP','SPFH','PRES_meansealevel'/
+  !data vname/'UGRD','VGRD','TMP','SPFH','PRES_meansealevel'/
+  data vname/'u','v','t','q','msl'/
   !data vnamea/'air','uwnd','vwnd','shum','slp'/
      !|----/----/----/----/----/----/----/----/----/----| 
   dir='/Users/nakashita/netcdf/tigge/'
  !dira='/Users/nakashita/netcdf/nc-reanl/'
 
-   sigma(1)=8.0/7.0*300.0/pr
+   sigma(1)=200.0/pr
    sigma(2)=6.0/7.0*300.0/pr
-   sigma(3)=200.0/pr
+   sigma(3)=8.0/7.0*300.0/pr
    print*,sigma
       
   !  データの設定 
-   yyyymmddhh="2019100912"
+   open(11,file="sens.nml")
+   read(11,nml=sens_nml)
+   write(*,nml=sens_nml)
+   close(11)
+   !yyyymmddhh="2019100912"
+   write(yyyymmddhh,'(I10)') idate
    yyyy=yyyymmddhh(1:4)
    mm=yyyymmddhh(5:6)
    mmddhh=yyyymmddhh(5:10)
    print*,yyyy,mmddhh
-   wd='./ensvsa-TE-m1-jma-'//yyyymmddhh//'_a-gr'
+   !smode=1
+   !emode=1
+   write(nmode,'(I1)') emode
+   wd='./ensvsa-TE-m'//nmode//'-'//trim(orig)//'-'//yyyymmddhh//'_n-gr'
    open(21,file=wd,status='replace',access='direct',&
           &        convert='big_endian',&
           &        form='unformatted', recl=4*imax*jmax)
   
-   mem=memn 
-   rdw='./weight-TE-jma-'//yyyymmddhh//'_a.grd'
+   !mem=memn 
+   rdw='./weight-TE-'//trim(orig)//'-'//yyyymmddhh//'_n.grd'
    open(10,file=rdw,status='old',access='direct',&
           &        convert='big_endian',&
           &        form='unformatted', recl=4*mem)
@@ -85,18 +104,19 @@ program grads_ensvsa_TE
   
    do imode=1,10
       it=imode+1
-      read(10,rec=it) p
-      w(:,imode)=p(:)
+      read(10,rec=it) w(:,imode)
       print*,imode,w(:,imode)
    enddo
   
    close(10)
 
    irec=1
-   edate=2019100912
+   !edate=2019100912
+   read(yyyymmddhh, *) edate
    print*,"edate=",edate
-   do fday=0,6 !every 12 hours
-      idate=2019100912
+   do fday=0,7 !every 12 hours
+      !idate=2019100912
+      read(yyyymmddhh,*) idate
       call calc_steps(idate,edate,6,ip)
       ip=ip+1
       print *, "ip=",ip
@@ -107,30 +127,35 @@ program grads_ensvsa_TE
          ilu=0
          ilv=0
          ilq=0
-         rdf=dir//yyyy//'/jma/'//mmddhh//'_'//nmem//'.nc'
+         !rdf=dir//yyyy//'/jma/'//mmddhh//'_'//nmem//'.nc'
+         rdf=dir//yyyy//'/'//trim(orig)//'/glb_'//yyyymmddhh//'_'//nmem//'.nc'
          !print*,rdf
          inquire(file=rdf, exist=ex)
          if(ex)then
             do id=1,4
                call fread3(rdf,vname(id),ip,zv3)
                if(mod(id,4)==1)then
-                  ug=zv3(:,:,1:3)
-                  print*,ug(1,1,1)
+                  !ug=zv3(:,:,1:3)
+                  ug=zv3(:,:,3:)
+                  !print*,ug(1,1,1)
                elseif(mod(id,4)==2)then
-                  vg=zv3(:,:,1:3)
-                  print*,vg(1,1,1)
+                  !vg=zv3(:,:,1:3)
+                  vg=zv3(:,:,3:)
+                  !print*,vg(1,1,1)
                elseif(mod(id,4)==3)then
-                  T=zv3(:,:,1:3)
-                  print*,T(1,1,1)
+                  !T=zv3(:,:,1:3)
+                  T=zv3(:,:,3:)
+                  !print*,T(1,1,1)
                else
-                  q=zv3(:,:,1:3)
-                  print*,q(1,1,1)
+                  !q=zv3(:,:,1:3)
+                  q=zv3(:,:,3:)
+                  !print*,q(1,1,1)
                endif
             enddo
            
             call fread(rdf,vname(5),ip,zv)
             ps=zv/100     !Pa->hPa
-            print*,ps(1,1)
+            !print*,ps(1,1)
            
             ze(:,:,1:3,imem)=ug
             ze(:,:,4:6,imem)=vg
@@ -139,14 +164,14 @@ program grads_ensvsa_TE
             ze(:,:,13,imem)=ps
             !ze(:,:,10,imem)=ps
            
-            !print*,ze(1,1,:,imem)
+            print*,imem
          endif
       enddo
      
-      idate=2019100900
-      call calc_steps(idate,edate,12,ip)
-      ip=ip+1
-      print *, "ip=",ip
+      !idate=2019100900 !nomark,_a
+      !call calc_steps(idate,edate,6,ip) !_a->12,nomark&_n->6
+      !ip=ip+1
+      !print *, "ip=",ip
       !ip=fday+2
       !print*,ip
       ilt=0
@@ -154,8 +179,9 @@ program grads_ensvsa_TE
       ilv=0
       ilq=0
       !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
+      rdf=dir//yyyy//'/'//trim(orig)//'/glb_'//yyyymmddhh//'_mean.nc'   !_n
       !rdf=dir//yyyy//'/jma/100900_mean.nc'
-      rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
+      !rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
       inquire(file=rdf, exist=ex)
       if(ex)then
          do id=1,4
@@ -165,34 +191,29 @@ program grads_ensvsa_TE
             !call fread3a(rdf,vnamea(id),ip,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
             !print*,maxval(zv),minval(zv)
             if(mod(id,4)==1)then
-               ug=zv3(:,:,1:3)
-               print*,ug(1,1,1)
+               !ug=zv3(:,:,1:3)
+               ug=zv3(:,:,3:)
+               !print*,ug(1,1,1)
             elseif(mod(id,4)==2)then
-               vg=zv3(:,:,1:3)
-               print*,vg(1,1,1)
+               !vg=zv3(:,:,1:3)
+               vg=zv3(:,:,3:)
+               !print*,vg(1,1,1)
             elseif(mod(id,4)==3)then
-               T=zv3(:,:,1:3)
-               print*,T(1,1,1)
+               !T=zv3(:,:,1:3)
+               T=zv3(:,:,3:)
+               !print*,T(1,1,1)
             else
-               q=zv3(:,:,1:3)
-               !rh=zv3(:,:,1:3)
-               !print*,"rh",rh(1,1,1)
-               !do k=1,kmax
-               !   do j=1,jmax
-               !      do i=1,imax
-               !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
-               !      enddo
-               !   enddo
-               !enddo
-               print*,q(1,1,1)
+               !q=zv3(:,:,1:3)
+               q=zv3(:,:,3:)
+               !print*,q(1,1,1)
             endif
          enddo
      
-         rdf=dir//yyyy//'/jma/anl.nc' !_a
+         !rdf=dir//yyyy//'/jma/anl.nc' !_a
          call fread(rdf,vname(5),ip,zv)
          !call freada(rdf,vnamea(5),ip,zv,90.0d0,180.0d0,0.0d0,80.0d0)
          ps=zv/100        !Pa->hPa
-         print*,ps(1,1)
+         !print*,ps(1,1)
          !print*,maxval(ps),minval(ps)
         
          z0(:,:,1:3)=ug
@@ -212,19 +233,19 @@ program grads_ensvsa_TE
 
       !2.conserve weighted perturbation
       ssg=0.0
-      do imode=1,1
+      do imode=smode,emode
          ssg=ssg+sg(imode)
       enddo
      
-      zm=0.0
+      !zm=0.0
       do n = 1,nv3d
          do k = 1,nlev
             ivar = (n-1)*nlev + k
             do j = 1,jmax
                do i = 1,imax      
-                  do imode=1,1
+                  do imode=smode,emode
                      do imem=1,mem
-                        v3d(i,j,k,n)=ze(i,j,ivar,imem)*w(imem,imode)*sg(imode)/ssg
+                        v3d(i,j,k,n)=v3d(i,j,k,n)+ze(i,j,ivar,imem)*w(imem,imode)*sg(imode)/ssg
                      enddo
                   enddo
                enddo
@@ -233,9 +254,9 @@ program grads_ensvsa_TE
       enddo
       do j=1,jmax
          do i=1,imax
-            do imode = 1,1
+            do imode = smode,emode
                do imem=1,mem
-                  v2d(i,j,1) = ze(i,j,nvar,imem)*w(imem,imode)*sg(imode)/ssg
+                  v2d(i,j,1) = v2d(i,j,1)+ze(i,j,nvar,imem)*w(imem,imode)*sg(imode)/ssg
                enddo
             enddo
          enddo
@@ -250,7 +271,7 @@ program grads_ensvsa_TE
      !   enddo
      !enddo
      
-      do ilev=1,3            !850,500,300hPa
+      do ilev=1,3            !300,500,850hPa
          do ivar=1,4         !ug,vg,T,q
             ze(:,:,3*(ivar-1)+ilev,:)=ze(:,:,3*(ivar-1)+ilev,:)*sigma(ilev)
          enddo
@@ -264,17 +285,17 @@ program grads_ensvsa_TE
      !q
       ze(:,:,10:12,:)=ze(:,:,10:12,:)*Lh/sqrt(cp*Tr)
      
-      do imem=1,mem
-         print*,imem
-         print*,ze(1,1,:,imem)
-      enddo
+      !do imem=1,mem
+      !   print*,imem
+      !   print*,ze(1,1,:,imem)
+      !enddo
 
      !4.calcurate TE
       TE=0.0
       zm=0.0
-      do imode=1,1
+      do imode=smode,emode
          do imem=1,mem
-            zm=ze(:,:,:,imem)*w(imem,imode)*sg(imode)/ssg
+            zm=zm+ze(:,:,:,imem)*w(imem,imode)*sg(imode)/ssg
          enddo
       enddo
      
@@ -282,7 +303,7 @@ program grads_ensvsa_TE
          TE=TE+zm(:,:,ivar)**2/2
       enddo
          
-      print*,"max",maxval(TE),"min",minval(TE)
+      !print*,"max",maxval(TE),"min",minval(TE)
 
       v2d(:,:,2) = TE
 

@@ -20,7 +20,7 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../sens/ensvsa-TE-m1_n.nc","r")
+  a = addfile("../sens/ensvsa-TE-m1-"+orig+"-"+yyyymmddhh+"_n.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -32,13 +32,22 @@ begin
   temp     = a->t(d,:,:,:)
   spfh	   = a->q(d,:,:,:)
   ps       = a->pres_meansealev(d,:,:)
+; 00Z -> *(-1)
+  ug = (/-1*ug/)
+  vg = (/-1*vg/)
+  temp = (/-1*temp/)
+  spfh = (/-1*spfh/)
+  ps = (/-1*ps/)
   te       = a->te(d,:,:)
   lat_uv   = a->lat
   lon_uv   = a->lon
   plev     = a->lev
   time     = a->time
   
-  wks = gsn_open_wks("pdf","ensvsa_m_t+wind_n_100912")
+;  out = "ensvsa_00Zv";"ensvsa_m1_t+wind_n_100912"
+;  dev = "png"
+  mmddhh = str_get_cols(yyyymmddhh, 4, 9)
+  wks = gsn_open_wks("png","ensvsa-TE_m1_t+wind_n_"+orig+"_"+mmddhh)
   plot = new(6,graphic)
   cmap = read_colormap_file("hotcold_18lev")
     
@@ -48,7 +57,7 @@ begin
 ; create points for box
 ;************************************************
  ypts = (/ 37.0, 37.0, 33.0, 33.0, 37.0/)
- xpts = (/136.0,142.0,142.0,136.0,136.0/)
+ xpts = (/137.0,142.0,142.0,137.0,137.0/)
 ;************************************************
 ; add the box
 ;************************************************
@@ -64,6 +73,7 @@ begin
      q = spfh(k,:,:)
      q = q*1000
      hgt = plev(k)
+     ;wks = gsn_open_wks(dev,out+"_"+hgt)
 ;---Create plot
      res                = True               ; plot mods desired
      res@gsnDraw	      = False
@@ -71,13 +81,13 @@ begin
 ;     res@cnInfoLabelOn	      = False
      
      res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
-     res@gsnCenterStringFontHeightF = 0.04
+     res@gsnCenterStringFontHeightF = 0.025
      res@gsnCenterStringOrthogonalPosF = 0.04
-     res@gsnCenterStringParallelPosF   = 0.45
+     ;res@gsnCenterStringParallelPosF   = 0.45
      res@gsnLeftString	    = "K"
-     res@gsnLeftStringFontHeightF = 0.03
+     res@gsnLeftStringFontHeightF = 0.02
      res@gsnRightString   = "10^(-3)kg/kg"
-     res@gsnRightStringFontHeightF = 0.03
+     res@gsnRightStringFontHeightF = 0.02
      res@gsnRightStringParallelPosF = 1.1    
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
@@ -92,9 +102,9 @@ begin
      res@mpMaxLonF            =  160.
    if (d.eq.0) then
      res@mpMinLatF            =  0. 
-     res@mpMaxLatF            =  40.
+     res@mpMaxLatF            =  60.
    else
-     res@mpMinLatF            =  10. 
+     res@mpMinLatF            =  20. 
      res@mpMaxLatF            =  60.
    end if
      res@lbOrientation            = "Vertical"     ; vertical label bar
@@ -108,16 +118,16 @@ begin
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
-      res@cnMinLevelValF       = -.5              ; set min contour level
-      res@cnMaxLevelValF       = .5                ; set max contour level
-      res@cnLevelSpacingF      = 0.05               ; set contour spacing
-      res@vcRefMagnitudeF      = 3.0
-   else if (d.eq.6) then 
-;  d=6
-      res@cnMinLevelValF       = -2.               ; set min contour level
-      res@cnMaxLevelValF       = 2.                 ; set max contour level
+      res@cnMinLevelValF       = -2.              ; set min contour level
+      res@cnMaxLevelValF       = 2.                ; set max contour level
       res@cnLevelSpacingF      = .2               ; set contour spacing
       res@vcRefMagnitudeF      = 10.0
+   else if (d.ge.6) then 
+;  d=6
+      res@cnMinLevelValF       = -20.               ; set min contour level
+      res@cnMaxLevelValF       = 20.                 ; set max contour level
+      res@cnLevelSpacingF      = 2.               ; set contour spacing
+      res@vcRefMagnitudeF      = 100.0
    end if
    end if
       res@vcRefLengthF              = 0.045           ; define length of vec ref
@@ -147,14 +157,14 @@ begin
 ;     res@cnMaxLevelCount	   = 10
       if (d.eq.0) then
 ;  d=0
-      res@cnMinLevelValF       = -1.               ; set min contour level
-      res@cnMaxLevelValF       = 1.                 ; set max contour level
-      res@cnLevelSpacingF      = 0.1               ; set contour spacing
-   else if (d.eq.6) then 
+      res@cnMinLevelValF       = -5.               ; set min contour level
+      res@cnMaxLevelValF       = 5.                 ; set max contour level
+      res@cnLevelSpacingF      = 1.               ; set contour spacing
+   else if (d.ge.6) then 
 ;  d=6
-      res@cnMinLevelValF       = -1.5               ; set min contour level
-      res@cnMaxLevelValF       = 1.5                 ; set max contour level
-      res@cnLevelSpacingF      = 0.25               ; set contour spacing
+      res@cnMinLevelValF       = -50.               ; set min contour level
+      res@cnMaxLevelValF       = 50.                 ; set max contour level
+      res@cnLevelSpacingF      = 5.               ; set contour spacing
    end if
    end if
 ; when using the gsn_csm plot templates and overlay, it is necessary to
@@ -174,6 +184,8 @@ begin
          dum(i)=gsn_add_polyline(wks,plott,xpts(i:i+1),ypts(i:i+1),resp)      
       end do   
       plot(k) = plott
+      ;draw(plott)
+      ;frame(wks)
       delete(plott)
       delete(plotq)
       delete(dum)
@@ -181,6 +193,7 @@ begin
 
    delete(cmap)
    cmap = read_colormap_file("spread_15lev")
+   ;wks = gsn_open_wks(dev,out+"_te")
    reste                = True               ; plot mods desired
    reste@gsnDraw	      = False
    reste@gsnFrame	      = False
@@ -188,13 +201,13 @@ begin
      
    reste@gsnCenterString	   = "Total moist energy + slp"
    reste@gsnCenterStringOrthogonalPosF = 0.04
-   reste@gsnCenterStringParallelPosF   = 0.55
-   reste@gsnCenterStringFontHeightF    = 0.04
+   ;reste@gsnCenterStringParallelPosF   = 0.55
+   reste@gsnCenterStringFontHeightF    = 0.025
    reste@gsnLeftString	    = "J/kg/m^2"
-   reste@gsnLeftStringFontHeightF = 0.03
+   reste@gsnLeftStringFontHeightF = 0.02
    reste@gsnLeftStringParallelPosF = -0.1
    reste@gsnRightString	    = "hPa"
-   reste@gsnRightStringFontHeightF = 0.03
+   reste@gsnRightStringFontHeightF = 0.02
    reste@gsnRightStringParallelPosF = 1.1
    reste@gsnAddCyclic	      = False
    reste@cnFillOn             = True               ; turn on color for contours
@@ -207,9 +220,9 @@ begin
    reste@mpMaxLonF            =  160.
    if (d.eq.0) then
      reste@mpMinLatF            =  0. 
-     reste@mpMaxLatF            =  40.
+     reste@mpMaxLatF            =  60.
    else
-     reste@mpMinLatF            =  10. 
+     reste@mpMinLatF            =  20. 
      reste@mpMaxLatF            =  60.
    end if
    reste@lbOrientation            = "Vertical"     ; vertical label bar
@@ -223,14 +236,14 @@ begin
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
-      reste@cnMinLevelValF       = 0.1               ; set min contour level
-      reste@cnMaxLevelValF       = 1.0                 ; set max contour level
-      reste@cnLevelSpacingF      = 0.1               ; set contour spacing
-   else if (d.eq.6) then 
+      reste@cnMinLevelValF       = 10.               ; set min contour level
+      reste@cnMaxLevelValF       = 100.0                 ; set max contour level
+      reste@cnLevelSpacingF      = 10.               ; set contour spacing
+   else if (d.ge.6) then 
 ;  d=6
-      reste@cnMinLevelValF       = 2.               ; set min contour level
-      reste@cnMaxLevelValF       = 20.0                 ; set max contour level
-      reste@cnLevelSpacingF      = 2.               ; set contour spacing
+      reste@cnMinLevelValF       = 100.               ; set min contour level
+      reste@cnMaxLevelValF       = 1000.0                 ; set max contour level
+      reste@cnLevelSpacingF      = 100.               ; set contour spacing
    end if
    end if
    plote = gsn_csm_contour_map(wks, te, reste)
@@ -263,14 +276,14 @@ begin
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
-      resps@cnMinLevelValF       = -1.0               ; set min contour level
-      resps@cnMaxLevelValF       = 1.                 ; set max contour level
-      resps@cnLevelSpacingF      = 0.1               ; set contour spacing
-   else if (d.eq.6) then 
+      resps@cnMinLevelValF       = -5.0               ; set min contour level
+      resps@cnMaxLevelValF       = 5.                 ; set max contour level
+      resps@cnLevelSpacingF      = 0.5               ; set contour spacing
+   else if (d.ge.6) then 
 ;  d=6
-      resps@cnMinLevelValF       = -10.0               ; set min contour level
-      resps@cnMaxLevelValF       = 10.                 ; set max contour level
-      resps@cnLevelSpacingF      = 1.               ; set contour spacing
+      resps@cnMinLevelValF       = -100.0               ; set min contour level
+      resps@cnMaxLevelValF       = 100.                 ; set max contour level
+      resps@cnLevelSpacingF      = 10.               ; set contour spacing
    end if
    end if
    
@@ -284,9 +297,10 @@ begin
       dum(i)=gsn_add_polyline(wks,plote,xpts(i:i+1),ypts(i:i+1),resp)      
    end do   
    plot(4) = plote
-
+   ;draw(plote)
+   ;frame(wks)
 
    resP	                   = True
-   resP@gsnPanelMainString	   = "ensvsa-TE T&wind,slp,TE "+vdate
+   resP@gsnPanelMainString	   = "ensvsa-TE T&wind,slp,TE "+vdate+" "+orig
    gsn_panel(wks,plot,(/2,3/),resP)
 end

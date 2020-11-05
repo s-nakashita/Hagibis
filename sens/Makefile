@@ -11,6 +11,7 @@ FILES = ensvsa-TE grads-ensvsa-TE plot-ensvsa-TE
 	$(CC) $(LDFLAGS) $(LIBS) -c $<
 
 all:	$(FILES)
+TE:		ensvsa-TE grads-ensvsa-TE
 dTE:		ensvsa-dTE grads-ensvsa-dTE
 KE:		ensvsa-KE grads-ensvsa-KE
 reg:	reg-prtb reg-mul-prtb
