@@ -12,10 +12,10 @@ yyyymmddhh = param[0]
 
 datadir = Path('./')
 outdir  = Path('./')
-#nc_scl  = Path('np_sc_' + yyyymmddhh + '_mean.nc')
-#nc_vec  = Path('np_ve_' + yyyymmddhh + '_mean.nc')
-nc_scl  = Path('np_sc_anl.nc')
-nc_vec  = Path('np_ve_anl.nc')
+nc_scl  = Path('np_sc_' + yyyymmddhh + '_mean.nc')
+nc_vec  = Path('np_ve_' + yyyymmddhh + '_mean.nc')
+#nc_scl  = Path('np_sc_anl.nc')
+#nc_vec  = Path('np_ve_anl.nc')
 
 outvar = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground',\
           'UGRD_10maboveground','VGRD_10maboveground',\
@@ -33,15 +33,15 @@ outvar_dict = {}
 start = datetime.strptime(yyyymmddhh, '%Y%m%d%H')
 dt = timedelta(hours=6)
 
-#outnc = netCDF4.Dataset(outdir/Path('np_'+yyyymmddhh+'_mean.nc'), 'w')
-outnc = netCDF4.Dataset(outdir/Path('np_anl.nc'), 'w')
+outnc = netCDF4.Dataset(outdir/Path('np_'+yyyymmddhh+'_mean.nc'), 'w')
+#outnc = netCDF4.Dataset(outdir/Path('np_anl.nc'), 'w')
 in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
 nlat = in_scl.variables["latitude"][:].size
 nlon = in_scl.variables["longitude"][:].size
 print(nlat,nlon)
 
 time = outnc.createDimension('time',None)
-level = outnc.createDimension('level',8)
+level = outnc.createDimension('level',5)
 lat = outnc.createDimension('lat',nlat)
 lon = outnc.createDimension('lon',nlon)
 

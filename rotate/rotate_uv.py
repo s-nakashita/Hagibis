@@ -14,15 +14,15 @@ trackname  = param[2]
 nlon       = int(param[3])
 nlat       = int(param[4])
 latmax     = float(param[5]) #degree
-dlat       = latmax/nlat #degree
+dlat       = latmax/(nlat-1) #degree
 
 datadir = Path(ddirname)
 outdir  = Path('./')
 mmddhh  = yyyymmddhh[4:]
-#innc    = mmddhh + '_mean.nc'
-#outnc   = 'np_ve_' + yyyymmddhh + '_mean.nc'
-innc    = 'anl.nc'
-outnc   = 'np_ve_anl.nc'
+innc    = mmddhh + '_mean.nc'
+outnc   = 'np_ve_' + yyyymmddhh + '_mean.nc'
+#innc    = 'anl.nc'
+#outnc   = 'np_ve_anl.nc'
 trackf  = Path(trackname)
 
 var_sfc = ['UGRD_10maboveground','VGRD_10maboveground']
