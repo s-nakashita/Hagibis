@@ -81,13 +81,14 @@ logging.debug(outvar_dict)
 
 in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
 logging.debug(in_scl.variables["time"].units)
+logging.debug(in_scl.variables["level"][:])
 outvar_dict["level"][:] = in_scl.variables["level"][:]
 outvar_dict["lat"][:] = in_scl.variables["latitude"][:]
 outvar_dict["lon"][:] = in_scl.variables["longitude"][:]
 for t in range(len(in_scl.variables["time"][:])):
     date = netCDF4.num2date(in_scl.variables["time"][t],in_scl.variables["time"].units)
     t0 = netCDF4.date2num(date,outvar_dict["time"].units)
-    logging.debug(date,t0)
+    #logging.debug(f"date {date}, t0 {t0}")
     outvar_dict["time"][t] = t0
     for name in in_scl.variables.keys():
         if(name == "time" or name == "latitude" \
@@ -102,6 +103,7 @@ for t in range(len(in_scl.variables["time"][:])):
             exit
 
 in_vec = netCDF4.Dataset(datadir/nc_vec,'r')
+logging.debug(in_vec.variables["level"][:])
 for t in range(len(in_vec.variables["time"][:])):
     for name in in_vec.variables.keys():
         if(name == "time" or name == "latitude" \
@@ -116,5 +118,6 @@ for t in range(len(in_vec.variables["time"][:])):
             exit
 
 logging.info(outnc.variables["time"][:])
+logging.info(outnc.variables["level"][:])
 logging.info(outnc.variables["lat"][:])
 logging.info(outnc.variables["lon"][:])

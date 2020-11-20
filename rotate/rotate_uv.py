@@ -131,6 +131,7 @@ with trackf.open() as track:
         uname = var_pl[0]
         vname = var_pl[1]
         #print(data[uname])
+        level = []
         for l in range(nlev):
             u = data[uname].values[l]
             v = data[vname].values[l] 
@@ -196,7 +197,7 @@ with trackf.open() as track:
                         print(vdata)
                         daout.append(udata)
                         daout.append(vdata)
-
+                        
         da_np.append(xr.merge(daout))
 data_np = xr.merge(da_np)
 print(data_np)

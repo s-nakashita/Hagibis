@@ -7,7 +7,7 @@ import xarray as xr
 import pandas as pd
 import librotate
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 #Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_uv.py
 param = sys.stdin.readline().strip("\n").split(" ")
@@ -62,6 +62,7 @@ with trackf.open() as track:
         lat = data["latitude"].values
         lev = data["level"].values
         nlev = len(lev)
+        logging.debug(f"level: {lev}")
         newlon = xr.DataArray(lonout,dims='np_lonlat')
         newlat = xr.DataArray(latout,dims='np_lonlat')
         daout = []
@@ -137,15 +138,16 @@ with trackf.open() as track:
         uname = var_pl[0]
         vname = var_pl[1]
         #print(data[uname])
+        attrs_u = data[uname].attrs
+        attrs_v = data[vname].attrs
         for l in range(nlev):
-            u = data[uname].values[l]
-            v = data[vname].values[l] 
-            attrs_u = data[uname].attrs
-            attrs_v = data[vname].attrs
+            print(lev[l])
+            u = data[uname].sel(level=lev[l]).values
+            v = data[vname].sel(level=lev[l]).values
+            #u = data[uname].values[l]
+            #v = data[vname].values[l] 
             #missing values need to be searched
-            dfu = data[uname][l,:].to_pandas()
-            dfv = data[vname][l,:].to_pandas()
-            if(dfu.isnull().values.sum() != 0 or dfv.isnull().values.sum() != 0):
+            if(np.isnan(u).sum() != 0 or np.isnan(v).sum() != 0):
                 logging.warning("missing value exists in input")
                 continue
             lon2d = lon.reshape(1,-1)

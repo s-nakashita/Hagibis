@@ -79,6 +79,7 @@ print(outvar_dict)
 
 in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
 print(in_scl.variables["time"].units)
+print(in_scl.variables["level"][:])
 outvar_dict["level"][:] = in_scl.variables["level"][:]
 outvar_dict["lat"][:] = in_scl.variables["latitude"][:]
 outvar_dict["lon"][:] = in_scl.variables["longitude"][:]
@@ -129,6 +130,7 @@ for t in range(len(in_scl.variables["time"][:])):
                 print("error")
 
 in_vec = netCDF4.Dataset(datadir/nc_vec,'r')
+print(in_vec.variables["level"][:])
 for t in range(len(in_vec.variables["time"][:])):
     for name in in_vec.variables.keys():
         if(name == "time" or name == "latitude" \

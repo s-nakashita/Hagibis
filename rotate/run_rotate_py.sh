@@ -27,11 +27,11 @@ if [ ! -d $outdir ]; then
     mkdir $outdir
 fi
 
-echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_scalar.py
+#echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_scalar.py
 
-echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_uv.py
+echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_uv_v2.py
 
-echo $yyyymmddhh | python create_netcdf.py
+#echo $yyyymmddhh | python create_netcdf.py
 
 #mv np_${yyyymmddhh}_mean.nc ${outdir}/
 #rm np_*_${yyyymmddhh}_mean.nc
