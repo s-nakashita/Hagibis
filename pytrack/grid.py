@@ -24,7 +24,7 @@ def __set_stencil(g, i0, j0):
 
 def find_minimum(g, lon, lat, lon0, lat0, sigma=0):
     gg = g if sigma==0 else ndimage.gaussian_filter(g, sigma)
-    print(np.min(gg),np.max(gg))
+    #print(np.min(gg),np.max(gg))
     loc_min = np.where( \
         ndimage.filters.minimum_filter( \
             gg, size=(3,3), mode=('nearest', 'wrap')) == gg)
@@ -35,6 +35,8 @@ def find_minimum(g, lon, lat, lon0, lat0, sigma=0):
     n = np.argmin(d)
     imin = loc_min[1][n]
     jmin = loc_min[0][n]
+    print("grid center")
+    print(lon[imin],lat[jmin])
     f = __set_stencil(g, imin, jmin)
     x, y, gmin = biquadratic.interpolate(f)
     dlon = lon[1] - lon[0]

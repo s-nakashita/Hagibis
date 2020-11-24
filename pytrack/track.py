@@ -17,8 +17,8 @@ dc = 5
 pc = 101000
 latc = 40
 sigma = 0.0
-orig = "jma"
-Mem = 26
+orig = "ukmo"
+Mem = 17
 #outdir = Path("../ecmwf")
 #outdir.mkdir(0o755, True, True)
 for m in range(Mem):
@@ -28,11 +28,13 @@ for m in range(Mem):
         init = t0.strftime("%m%d%H") # -> 2019100600
         year = t0.strftime("%Y")
         print(init)
-        #outfile = orig+"/track" + year + init + "_" + str(m+1).zfill(2) + ".txt"
-        outfile = orig+"/track_anl.txt"
+    #outfile = orig+"/track" + year + init + "_mean.txt"
+        outfile = orig+"/track" + year + init + "_" + str(m+1).zfill(2) + ".txt"
+    #outfile = orig+"/track_anl.txt"
         track = open(outfile, "w")
-        #infile = "../../netcdf/tigge/"+year+"/"+orig+"/"+init+"_" + str(m+1).zfill(2) + ".nc"
-        infile = "../../netcdf/tigge/"+year+"/"+orig+"/anl.nc"
+    #infile = "../../netcdf/tigge/"+year+"/"+orig+"/"+init+"_mean.nc"
+        infile = "../../netcdf/tigge/"+year+"/"+orig+"/"+init+"_" + str(m+1).zfill(2) + ".nc"
+    #infile = "../../netcdf/tigge/"+year+"/"+orig+"/anl.nc"
         nc = netCDF4.Dataset(infile, 'r')
         lon = nc.variables['lon'][:]
         lat = nc.variables['lat'][:]
@@ -44,9 +46,12 @@ for m in range(Mem):
             index_t0 = btime.index(t)
             lon0 = bst[index_t0, 4]
             lat0 = bst[index_t0, 5]
+            print("best track center")
             print(lon0, lat0)
             slp = nc.variables['PRES_meansealevel'][i,]
             lonmin, latmin, slpmin = grid.find_minimum(slp, lon, lat, lon0, lat0, sigma)
+            print("estimated center")
+            print(lonmin, latmin)
             print(slpmin)
 #        y0 = np.deg2rad(lat0)
 #        y1 = np.deg2rad(latmin)

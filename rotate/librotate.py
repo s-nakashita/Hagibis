@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import xarray as xr
 
+global pi, dtheta
 pi = np.pi
 dtheta = pi/180.0
 #lon,lat is degree
@@ -31,9 +32,11 @@ def uv2xyzd(u,v,lon,lat):
     zd = v*np.cos(lat*dtheta)
     return xd,yd,zd
 
-def xyzd2uv(xd,yd,zd,lon):
+#def xyzd2uv(xd,yd,zd,lon):
+def xyzd2uv(xd,yd,zd,lon,lat):
     u = -xd*np.sin(lon*dtheta) + yd*np.cos(lon*dtheta)
-    v = sgn(zd) * np.sqrt((xd*np.cos(lon*dtheta) + yd*np.sin(lon*dtheta))**2 + zd**2)
+    #v = sgn(zd) * np.sqrt((xd*np.cos(lon*dtheta) + yd*np.sin(lon*dtheta))**2 + zd**2)
+    v = -xd*np.sin(lat*dtheta)*np.cos(lon*dtheta) - yd*np.sin(lat*dtheta)*np.sin(lon*dtheta) + zd*np.cos(lat*dtheta)
     return u,v
 
 def generate_points(nlon,nlat,dlat):
@@ -77,6 +80,35 @@ def rotate_lonlat(lonc,latc,lon,lat):
             lonout[ij],latout[ij] = xyz2lonlat(xx,yy,zz)
             ij += 1
     return lonout,latout
+
+def rotate_lonlat1d(lonc, latc, lon, lat, dir):
+    lonout = np.zeros_like(lon)
+    latout = np.zeros_like(lat)
+    for i in range(lon.size):
+        x,y,z = lonlat2xyz(lon[i], lat[i])
+        if dir >= 0:
+            xx,yy,zz = np2tc(lonc, latc, x, y, z)
+        else:
+            xx,yy,zz = tc2np(lonc, latc, x, y, z)
+        lonout[i], latout[i] = xyz2lonlat(xx, yy, zz)
+    return lonout, latout
+
+def mask_lonlat(dcolat, lonc, latc, lon, lat):
+    nlon = lon.size
+    nlat = lat.size
+    msk = np.zeros((nlat,nlon))>0 #logical
+    for j in range(nlat):
+        for i in range(nlon):
+            msk[j, i] = dist_sphere(lonc, latc, lon[i], lat[j]) <= dcolat*dtheta
+    return msk
+    
+def dist_sphere(lon1, lat1, lon2, lat2):
+    l1 = lon1*dtheta
+    l2 = lon2*dtheta
+    p1 = lat1*dtheta
+    p2 = lat2*dtheta
+    return np.arccos(np.cos(l2 - l1) * np.cos(p2) * np.cos(p1) \
+        + np.sin(p2) * np.sin(p1))
 
 def sgn(x):
     return (x>0).astype(np.int) - (x<0).astype(np.int)

@@ -7,7 +7,7 @@ import xarray as xr
 import pandas as pd
 import librotate
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 #Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_scalar.py
 param = sys.stdin.readline().strip("\n").split(" ")
