@@ -58,24 +58,32 @@ with trackf.open() as track:
         data = xr.open_dataset(datadir / innc).sel(time=date)
         logging.debug(data)
         
-        lon = data["longitude"].values
-        lat = data["latitude"].values
-        lev = data["level"].values
+        # add cyclic
+        databc = data.sel(longitude=0.0)
+        databc["longitude"] = 360.0
+        logging.debug(databc)
+        datain = xr.concat([data, databc], dim="longitude")
+        logging.debug(datain)
+        
+        lon = datain["longitude"].values
+        lat = datain["latitude"].values
+        lev = datain["level"].values
         nlev = len(lev)
         logging.debug(f"level: {lev}")
+        
         newlon = xr.DataArray(lonout,dims='np_lonlat')
         newlat = xr.DataArray(latout,dims='np_lonlat')
         daout = []
         
         #sfc
-        u = data[var_sfc[0]].values
-        v = data[var_sfc[1]].values 
-        attrs_u = data[var_sfc[0]].attrs
-        attrs_v = data[var_sfc[1]].attrs
+        u = datain[var_sfc[0]].values
+        v = datain[var_sfc[1]].values 
+        attrs_u = datain[var_sfc[0]].attrs
+        attrs_v = datain[var_sfc[1]].attrs
         #missing values need to be searched
-        dfu = data[var_sfc[0]].to_pandas()
-        dfv = data[var_sfc[1]].to_pandas()
-        if(dfu.isnull().values.sum() != 0 or dfv.isnull().values.sum() != 0):
+        #dfu = data[var_sfc[0]].to_pandas()
+        #dfv = data[var_sfc[1]].to_pandas()
+        if(np.isnan(u).sum() != 0 or np.isnan(v).sum() != 0):
             logging.warning("missing value exists in input")
             continue
         lon2d = lon.reshape(1,-1)
@@ -159,10 +167,10 @@ with trackf.open() as track:
         uname = var_pl[0]
         vname = var_pl[1]
         #print(data[uname])
-        u = data[uname].values
-        v = data[vname].values
-        attrs_u = data[uname].attrs
-        attrs_v = data[vname].attrs
+        u = datain[uname].values
+        v = datain[vname].values
+        attrs_u = datain[uname].attrs
+        attrs_v = datain[vname].attrs
         #for l in range(nlev):
         #    print(lev[l])
         #    u = data[uname].sel(level=lev[l]).values

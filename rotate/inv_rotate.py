@@ -30,7 +30,13 @@ logging.debug(trackf)
 var_scl = ['msl']
 var_pl  = ['u','v']
 
-da = xr.open_dataset(datadir / innc) # Dataset
+dain = xr.open_dataset(datadir / innc) # Dataset
+# add cyclic
+dabc = dain.sel(lon=0.0)
+dabc["lon"] = 360.0
+logging.debug(dabc)
+da = xr.concat([dain, dabc], dim="lon")
+logging.debug(da)
 lonin = da["lon"].values
 latin = da["lat"].values
 level = da["level"].values
@@ -73,7 +79,7 @@ with trackf.open() as track:
         logging.info(f"TC center ({lonc},{latc})")
 
         data = da.sel(time=date)
-        logging.debug(data)
+        logging.debug(data["lat"])
         
         # create interpolated grid
         msk = librotate.mask_lonlat(50.0, lonc, latc, lon, lat)
@@ -100,7 +106,8 @@ with trackf.open() as track:
         
         newlon = xr.DataArray(lonnp,dims='np_lonlat')
         newlat = xr.DataArray(latnp,dims='np_lonlat')
-
+        #exit()
+        
         # mask data
         # msl
         msl = data["msl"].values

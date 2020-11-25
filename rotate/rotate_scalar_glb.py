@@ -7,7 +7,7 @@ import xarray as xr
 import pandas as pd
 import librotate
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 #Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_scalar.py
 param = sys.stdin.readline().strip("\n").split(" ")
@@ -69,19 +69,22 @@ with trackf.open() as track:
         #print(lon,lat)
         newlon = xr.DataArray(lonout,dims='np_lonlat')
         newlat = xr.DataArray(latout,dims='np_lonlat')
-        vname = var_sfc[0]
+        databc = data.sel(longitude=0.0)
+        databc["longitude"] = 360.0
+        logging.debug(databc)
+        datain = xr.concat([data, databc], dim="longitude")
+        logging.debug(datain)
         daout=[]
         for vname in var_sfc:
-            datain = data[vname]
-            logging.debug(datain)
+            din = datain[vname]
             ##missing values need to be searched
-            df = datain.to_pandas()
-            if(df.isnull().values.sum() != 0):
+            df = din.values
+            if(np.isnan(df).sum() != 0):
                 logging.warning("missing value exists in input data.")
                 continue
-            inattrs = datain.attrs
+            inattrs = din.attrs
             #print(inattrs)
-            data_interp = datain.interp(longitude=newlon, latitude=newlat)
+            data_interp = din.interp(longitude=newlon, latitude=newlat)
             logging.debug(data_interp)
             ##missing value
             #df = data_interp.to_pandas()
@@ -104,19 +107,15 @@ with trackf.open() as track:
             daout.append(dataout)
             
         for vname in var_pl:
-            #for lev in ['200','250','300','500','850']:
-            #    vname_pl = vname.replace('000',lev)
-            datain = data[vname]
-            logging.debug(datain)
+            din = datain[vname]
             ##missing value
-            df = datain[0,:].to_pandas()
-            if(df.isnull().values.sum() != 0):
+            df = din.values
+            if(np.isnan(df).sum() != 0):
                 logging.warning("missing value exists in input data.")
                 continue
-            inattrs = datain.attrs
+            inattrs = din.attrs
             #print(inattrs)
-            data_interp = \
-                datain.interp(longitude=newlon, latitude=newlat)
+            data_interp = din.interp(longitude=newlon, latitude=newlat)
             ##missing value
             #df = data_interp.to_pandas()
             value = data_interp.values
