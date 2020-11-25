@@ -33,7 +33,7 @@ var_sfc = ['u10','v10']
 var_pl  = ['u','v']
 
 lonin,latin = librotate.generate_points(nlon,nlat,dlat)
-logging.info(f"input coordinate lon:{lonin} lat:{latin}")
+logging.info(f"input coordinate lon:{lonin} \n lat:{latin}")
 
 da_np = []
 with trackf.open() as track:
@@ -100,12 +100,17 @@ with trackf.open() as track:
         yd_interp = da_yd.interp(longitude=newlon, latitude=newlat)
         zd_interp = da_zd.interp(longitude=newlon, latitude=newlat)
         #missing value
-        dfx = xd_interp.to_pandas()
-        dfy = yd_interp.to_pandas()
-        dfz = zd_interp.to_pandas()
-        if(dfx.isnull().values.sum() != 0 or dfy.isnull().values.sum() != 0\
-            or dfz.isnull().values.sum() != 0):
+        dfx = xd_interp.values
+        dfy = yd_interp.values
+        dfz = zd_interp.values
+        if(np.isnan(dfx).sum() != 0 or np.isnan(dfy).sum() != 0\
+            or np.isnan(dfz).sum() != 0):
             logging.warning("missing value exists in interpolation")
+            msk = np.isnan(dfx[0,:])
+            mislon = newlon.values[msk]
+            mislat = newlat.values[msk]
+            for i in range(len(mislon)):
+                logging.warning("missing at lon{} lat{}".format(mislon[i],mislat[i]))
             continue
         xdtc = xd_interp.values.reshape(nlat,nlon)
         ydtc = yd_interp.values.reshape(nlat,nlon)
@@ -205,13 +210,17 @@ with trackf.open() as track:
         #    dfx = xd_interp.to_pandas()
         #    dfy = yd_interp.to_pandas()
         #    dfz = zd_interp.to_pandas()
-        dfx = np.isnan(xd_interp).astype(np.int)
-        dfy = np.isnan(yd_interp).astype(np.int)
-        dfz = np.isnan(zd_interp).astype(np.int)
-        #    if(dfx.isnull().values.sum() != 0 or dfy.isnull().values.sum() != 0\
-        #        or dfz.isnull().values.sum() != 0):
-        if(np.sum(dfx) != 0 or np.sum(dfy) != 0 or np.sum(dfz) != 0):
+        dfx = xd_interp.values
+        dfy = yd_interp.values
+        dfz = zd_interp.values
+        if(np.isnan(dfx).sum() != 0 or np.isnan(dfy).sum() != 0\
+            or np.isnan(dfz).sum() != 0):
             logging.warning("missing value exists in interpolation")
+            msk = np.isnan(dfx[0,:])
+            mislon = newlon.values[msk]
+            mislat = newlat.values[msk]
+            for i in range(len(mislon)):
+                logging.warning("missing at lon{} lat{}".format(mislon[i],mislat[i]))
             continue
         xdtc = xd_interp.values.reshape(1,nlev,nlat,nlon)
         ydtc = yd_interp.values.reshape(1,nlev,nlat,nlon)
@@ -232,6 +241,11 @@ with trackf.open() as track:
         latnp = latin[None, None, :, None]
             #unp,vnp = librotate.xyzd2uv(xdnp,ydnp,zdnp,lonnp)
         unp,vnp = librotate.xyzd2uv(xdnp,ydnp,zdnp,lonnp,latnp)
+        #debug
+        xb, yb, zb = librotate.uv2xyzd(unp,vnp,lonnp,latnp)
+        logging.debug(f"xyzd2uv x {np.max(np.abs(xdnp-xb))}")
+        logging.debug(f"xyzd2uv y {np.max(np.abs(ydnp-yb))}")
+        logging.debug(f"xyzd2uv z {np.max(np.abs(zdnp-zb))}")
         #missing value
         if(np.isnan(unp).sum() != 0 or np.isnan(vnp).sum() != 0):
             logging.warning("missing value exists in xyzd2uv")

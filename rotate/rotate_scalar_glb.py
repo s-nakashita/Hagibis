@@ -33,7 +33,7 @@ var_sfc = ['msl','t2m','d2m']
 var_pl = ['t','q','gh']
 
 lonin,latin = librotate.generate_points(nlon,nlat,dlat)
-logging.info(f"input coordinate lon:{lonin} lat:{latin}")
+logging.info(f"input coordinate lon:{lonin} \n lat:{latin}")
 #print(lonin)
 #print(latin)
 
@@ -56,7 +56,8 @@ with trackf.open() as track:
     
         lonout,latout = librotate.rotate_lonlat(lonc,latc,lonin,latin)
         logging.debug(\
-            f"output coordinate lon:max{lonout.max():.3f}, min{lonout.min():.3f} \n lat:max{latout.max():.3f},min{latout.min():.3f}")
+            f"output coordinate lon:max{lonout.max():.3f}, min{lonout.min():.3f} \n \
+                 lat:max{latout.max():.3f},min{latout.min():.3f}")
     
         data = xr.open_dataset(datadir / innc).sel(time=date)
         logging.debug(data)
@@ -81,13 +82,19 @@ with trackf.open() as track:
             inattrs = datain.attrs
             #print(inattrs)
             data_interp = datain.interp(longitude=newlon, latitude=newlat)
-            #print(data_interp)
+            logging.debug(data_interp)
             ##missing value
-            df = data_interp.to_pandas()
-            if(df.isnull().values.sum() != 0):
-                logging.warning("missing value exists in interpolation data.")
-                continue
+            #df = data_interp.to_pandas()
             value = data_interp.values
+            if(np.isnan(value).sum() != 0):
+                logging.warning("#{} missing value exists in interpolation data.".format\
+                (np.isnan(value).sum()))
+                msk = np.isnan(value)
+                mislon = newlon[msk]
+                mislat = newlat[msk]
+                for i in range(len(mislon)):
+                    logging.warning("missing at lon{} lat{}".format(mislon[i].values,mislat[i].values))
+                continue
             #print(value)
             dataout = xr.DataArray(value.reshape(1,nlat,nlon),\
                                    [('time',pd.date_range(date,periods=1)),\
@@ -111,11 +118,11 @@ with trackf.open() as track:
             data_interp = \
                 datain.interp(longitude=newlon, latitude=newlat)
             ##missing value
-            df = data_interp.to_pandas()
-            if(df.isnull().values.sum() != 0):
+            #df = data_interp.to_pandas()
+            value = data_interp.values
+            if(np.isnan(value).sum() != 0):
                 logging.warning("missing value exists in interpolation data.")
                 continue
-            value = data_interp.values
             dataout = xr.DataArray(value.reshape(1,nlev,nlat,nlon),\
                                    [('time',pd.date_range(date,periods=1)),\
                                     ('level',lev),\
