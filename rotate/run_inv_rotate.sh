@@ -28,7 +28,7 @@ fi
 
 #echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_scalar.py
 
-python inv_rotate.py $yyyymmddhh $datadir $trackf $dcolat
+python inv_rotate_1d.py $yyyymmddhh $datadir $trackf $dcolat
 
 #echo $yyyymmddhh | python create_netcdf.py
 
