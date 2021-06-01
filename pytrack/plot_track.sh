@@ -1,15 +1,16 @@
-#!/bin/bash
+#!/bin/zsh
+alias gmt
 CDIR=`pwd`
 #datadir=rjtd
-datadir=jma
+datadir=`pwd` #jma
 bstfile=$CDIR/bst_hagibis.txt
-outfile=track_anl.ps
+outfile=track_gsm.ps
 
 cd $datadir
 pwd
 function plot_track() {
-    #tracktxt=track${1}.txt
-    tracktxt=track_anl.txt
+    tracktxt=track${1}_gsm.txt
+    #tracktxt=track_merra2.txt
     yyyy=`echo ${1:0:4}`
     mm=`echo ${1:4:2}`
     dd=`echo ${1:6:2}`
@@ -26,9 +27,10 @@ function plot_track() {
 }
 
 gmt pscoast -R125/165/12/45 -JQ12c -Bag -Dh -Gburlywood -Sazure -Wthinnest -A100 -P -K > ${outfile}
-for init in $(cat $CDIR/init.txt); do
-  plot_track ${init}
-done
+#for init in $(cat $CDIR/init.txt); do
+#  plot_track ${init}
+#done
+plot_track 2019100900
 #gmt psxy -R -J -O ${bstfile} -i4,5 -W3p -K >> ${outfile} 
 #gmt psxy -R -J -O ${bstfile} -i4,5 -Sc0.1i -Gblack >> ${outfile} 
 # best track

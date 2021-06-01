@@ -5,7 +5,8 @@ program ensvsa_dTE
   implicit none
     
   !integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
-  integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
+  !integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
+  integer,parameter :: dslon=271, delon=281, dslat=247, delat=255 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
   integer,parameter :: nvar=3*3+1 ! u,v,T and ps 

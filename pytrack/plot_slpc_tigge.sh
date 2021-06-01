@@ -1,17 +1,19 @@
 #!/bin/bash
-init0=2019101200
-init1=2019101212
+init0=2019100812
+init1=2019100812
 CDIR=`pwd`
 
 rm init_*.txt
 dh=$((12 * 3600))
-./makecpt.sh ${init0} ${init1} ${dh}
-./makecpt2.sh
+cptfile=track_tigge1d.cpt
+#./makecpt.sh ${init0} ${init1} ${dh}
+#./makecpt2.sh
 ./init.sh ${init0} ${init1} ${dh} > init_tmp.txt
 ./init2.sh ${init0} ${init1} ${dh} > init_c.txt
-./legend2.sh
+rm legend2.txt
+./legend2.sh ${cptfile} 
 bstfile=bst_hagibis.txt
-outfile=slpc_tigge_${init0:4:4}.ps
+outfile=slpc_tigge_${init0:4:6}.ps
 
 function plot_slpc() {
     line=$2
@@ -27,7 +29,7 @@ function plot_slpc() {
 	    echo "exist $center"
 	    time=$(date -j -f "%Y%m%d%H%M%S" "${1}0000" "+%s")
 	    awk '{print $1 "-" $2 "-" $3 "T" $4, $7*0.01, '${time}'}' ${tracktxt} > tmp.txt
-	    pencol=$(cat track_tigge.cpt | awk -v awk_var=$line '{if(NR == awk_var) {print $2}}' )
+	    pencol=$(cat ${cptfile} | awk -v awk_var=$line '{if(NR == awk_var) {print $2}}' )
 	    echo $pencol
 	    gmt psxy -R -J -O tmp.txt -i0,1 -W1p,${pencol} -K >> ${outfile} 
 	    if [ $line -lt 5 ]; then

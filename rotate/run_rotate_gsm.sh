@@ -5,9 +5,9 @@
 #fi
 
 #yyyymmddhh=${1}
-nlon=${nlon:-100}
-nlat=${nlat:-50}
-latmax=${latmax:-8}
+nlon=${nlon:-360}
+nlat=${nlat:-181}
+latmax=${latmax:-90}
 
 #center=${2}
 #case $center in
@@ -28,7 +28,7 @@ echo $datadir $trackf $nlon $nlat $latmax | python rotate_scalar_gsm.py
 
 echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_uv_gsm.py
 
-#python create_netcdf_v.py
+python create_netcdf_gsm.py
 
 #mv np_*.nc ${outdir}/
 #rm np_*_${yyyymmddhh}_mean.nc

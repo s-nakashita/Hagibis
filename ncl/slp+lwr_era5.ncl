@@ -20,13 +20,15 @@
 begin
 
 ;---Open netCDF file
-  ;hh = 12
-  cmap = read_colormap_file("BlueDarkRed18")
-  wks = gsn_open_wks("png","slp+lwr_era5")
-  plot = new(4*4,graphic)
   
   id = 0
   idate = 2019100900
+  edate = 2019101012
+  sday  = str_get_cols(sprinti("%0.10d",idate), 4, 9)
+  eday  = str_get_cols(sprinti("%0.10d",edate), 4, 9)
+  cmap  = read_colormap_file("BlueDarkRed18")
+  wks   = gsn_open_wks("png","slp+lwr_era5_"+sday+"-"+eday)
+  plot  = new(2*2,graphic)
   yyyymmdd = str_get_cols(sprinti("%0.10d",idate), 0, 7)
   yyyy     = str_get_cols(sprinti("%0.10d",idate), 0, 3)
   mm       = str_get_cols(sprinti("%0.10d",idate), 4, 5)
@@ -35,19 +37,25 @@ begin
   lat     = a->latitude
   lon     = a->longitude
   time    = a->time
+  date = cd_string(time, "%Y%N%D%H")
+  ds = ind(date.eq.sprinti("%0.10d",idate))
+  de = ind(date.eq.sprinti("%0.10d",edate))
+  print(ds)
+  print(de)
+  delete(date)
   date    = cd_string(time, "%N%D %H UTC")
   print(date)
   
-  do d = 0, 15
+  do d = ds, de, 2
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-     ps      = short2flt(a->msl(d,:,:));PRMSL_meansealevel(:,180:340,180:360)
+     ps      = a->msl(d,:,:);PRMSL_meansealevel(:,180:340,180:360)
      ps = ps/100
      ps@units = "hPa"
-     lwr     = short2flt(a->mtnlwrf(d,:,:))
+     lwr     = a->mtnlwrf(d,:,:)
      lwr = -1.0*lwr
 ;---Create plot
      res                  = True               ; plot mods desired
@@ -56,8 +64,9 @@ begin
 ;     res@cnInfoLabelOn	      = False
      
      res@gsnCenterString	   = date(d)
+     res@gsnCenterStringFontHeightF = 0.02
      res@gsnLeftString	   = ""
-     res@gsnCenterStringOrthogonalPosF = 0.02
+     res@gsnCenterStringOrthogonalPosF = 0.01
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False               ; turn off contour lines
@@ -97,7 +106,7 @@ begin
      resp@cnFillOn             = False               ; turn on color for contours
      resp@cnLinesOn            = True                ; turn off contour lines
      resp@cnLineLabelsOn        = True
-     resp@cnLineColor          = "blue"
+     resp@cnLineColor          = "black"
      resp@gsnRightString   = ""    
      resp@gsnLeftString    = ""
      resp@gsnCenterString  = ""
@@ -110,8 +119,8 @@ begin
 
    end do
    resP	                   = True
-   resP@gsnPanelMainString	   = "SLP + "+lwr@long_name
+   ;resP@gsnPanelMainString	   = "SLP + "+lwr@long_name
    resP@gsnPanelLabelBar     = True
-   gsn_panel(wks,plot,(/4,4/),resP)
+   gsn_panel(wks,plot,(/2,2/),resP)
    delete(plot)
 end

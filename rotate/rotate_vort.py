@@ -13,12 +13,15 @@ trackname  = param[1]
 nlon       = int(param[2])
 nlat       = int(param[3])
 latmax     = float(param[4]) #degree
+yyyymmddhh = param[5]
+mem        = param[6]
 dlat = latmax/nlat #degree
+mmddhh  = yyyymmddhh[4:]
 
 datadir = Path(ddirname)
 outdir = Path('./')
-innc = 'init_vort.nc'
-outnc = 'np_init_vort.nc'
+innc = mmddhh + '_' + mem + '_v.nc'#'init_vort.nc'
+outnc = 'np_' + mmddhh + '_' + mem + '_v.nc'#'np_init_vort.nc'
 trackf = Path(trackname)
 
 #var_sfc = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground']

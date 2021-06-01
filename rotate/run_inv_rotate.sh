@@ -6,7 +6,7 @@ fi
 
 yyyymmddhh=${1}
 yyyy=${yyyymmddhh:0:4}
-dcolat=${dcolat:-12.5}
+dcolat=${dcolat:-6.0}
 
 center=${2}
 case $center in

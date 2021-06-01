@@ -19,6 +19,6 @@ t0=$(date -j -f "$fmt" "${init0}0000" "${outfmt}")
 t1=$(($(date -j -f "$fmt" "${init1}0000" "${outfmt}") + ${dt}))
 echo $t0
 echo $t1
-palette=polar
-cptfile=track2.cpt
+palette=red2green
+cptfile=track.cpt
 gmt makecpt -C${palette} -T${t0}/${t1}/${dt} > ${cptfile}

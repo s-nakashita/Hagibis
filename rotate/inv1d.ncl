@@ -20,11 +20,10 @@
   load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
   
 begin
-  yyyymmddhh = 2019100912
+  yyyymmddhh = 2019100900
   MDH = str_get_cols(sprinti("%0.10d",yyyymmddhh),4,9)
 ;---Open netCDF file
   a = addfile("./inv1d_"+yyyymmddhh+"_mean.nc","r")
-
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
@@ -34,41 +33,55 @@ begin
   time  = a->time
   print(time)
   print(time@units)
+  print(plev)
   ;date  = cd_string(time, "%Y%N%D%H")
   ;print(date)
-  
+  ;exit
+
   level = sprintf("%.0f", plev(l))
-  wks = gsn_open_wks("png","inv_"+yyyymmddhh)
+  wks = gsn_open_wks("png","inv_"+yyyymmddhh+"_101012_500")
   plot = new(8,graphic)
   cmap = read_colormap_file("BlAqGrYeOrReVi200")
   
   ; trackfile
   trackfile = "../pytrack/jma/gtrack"+yyyymmddhh+"_mean.txt"
   track = asciiread(trackfile, (/21, 7/), "float") 
-
+  
   sig = new(3, float)
   sig(0) = 7./22.
   sig(1) = 1./2.
   sig(2) = 2./11.
+  print(sig)
   ;vdate = time(0)
-  do d = 2, 2
-    ngrid = toint(a->GridSize(2*d))
+  i = 0
+  ;do d = 0, 12, 2
+  ;do d = 0, 7
+    d = 6
+    ;d = 4
+    ngrid = toint(a->GridSize(d))
     print(ngrid)
-    msl1d = a->msl(2*d,:ngrid-1)
-    u1d   = a->u(2*d,{850:300},:ngrid-1)
-    v1d   = a->v(2*d,{850:300},:ngrid-1)
-    lat1d = a->lat1d(2*d,:ngrid-1)
-    lon1d = a->lon1d(2*d,:ngrid-1)
+    msl1d = a->msl(d,:ngrid-1)
+    ;msl1d = a->PRMSL_meansealevel(d,:ngrid-1)
+    ;u1d   = a->u(d,{850:300},:ngrid-1)
+    u1d   = a->u(d,{500},:ngrid-1)
+    ;v1d   = a->v(d,{850:300},:ngrid-1)
+    v1d   = a->v(d,{500},:ngrid-1)
+    lat1d = a->lat1d(d,:ngrid-1)
+    lon1d = a->lon1d(d,:ngrid-1)
     printVarSummary(lat1d)
     printVarSummary(msl1d)
     printVarSummary(u1d)
     printVarSummary(v1d)
+    ;print(u1d&level)
+    ;exit
 
     ; vertical integrate
-    u1d = u1d * conform_dims(dimsizes(u1d), sig, 0)
-    v1d = v1d * conform_dims(dimsizes(v1d), sig, 0)
-    up  = dim_sum_n(u1d, 0)
-    vp  = dim_sum_n(v1d, 0)
+    ;u1d = u1d * conform_dims(dimsizes(u1d), sig, 0)
+    ;v1d = v1d * conform_dims(dimsizes(v1d), sig, 0)
+    ;up  = dim_sum_n(u1d, 0)
+    ;vp  = dim_sum_n(v1d, 0)
+    up = u1d
+    vp = v1d
 
     ; interpolate 2D grid
     lon0 = 110.
@@ -139,7 +152,7 @@ begin
     res@gsnFrame	      = False
 ;   res@cnInfoLabelOn	      = False
 
-    res@gsnCenterString      = "ft="+time(2*d)+"h"
+    res@gsnCenterString      = yyyymmddhh+"+"+time(d)+"h"
     ;res@gsnCenterStringOrthogonalPosF = 0.05
     res@gsnLeftString        = " "
     res@gsnAddCyclic	       = False
@@ -187,22 +200,24 @@ begin
     ; TC center
     mres = True
     mres@gsMarkerIndex = 12
-    mres@gsMarkerSizeF = 0.025
-    mres@gsMarkerColor = "black"
-    mres@gsMarkerThicknessF = 5.0
+    mres@gsMarkerSizeF = 0.02
+    mres@gsMarkerColor = "red"
+    mres@gsMarkerThicknessF = 3.0
     ;plot(d) = gsn_csm_contour_map(wks,mslt,res)
     plotd = gsn_csm_vector_scalar_map(wks,ut,vt,mslt,res)
     delete(ut)
     delete(vt)
     delete(mslt)
 
-    lonc = track(2*d, 4)
-    latc = track(2*d, 5)
-    print(track(2*d,:))
+    lonc = track(d, 4)
+    latc = track(d, 5)
+    print(track(d,:))
     dum = gsn_add_polymarker(wks, plotd, lonc, latc, mres)
 
-    plot(0) = plotd
+    plot(i) = plotd
     delete(plotd)
+    ;delete(dum)
+    i = i + 1
     ;year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
     ;month = toint(str_get_cols(sprinti("%0.10d",vdate), 4, 5))
     ;day   = toint(str_get_cols(sprinti("%0.10d",vdate), 6, 7))
@@ -211,10 +226,10 @@ begin
     ;newsec = sec
     ;newsec = sec + 6*60*60
     ;vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-  end do
+  ;end do
   ;resP	                   = True
-  ;;resP@gsnPanelMainString	   = "hgt anomaly at "+level+"mb JMA ensemble forecast from "+sprinti("%0.10d",yyyymmddhh)
-  ;gsn_panel(wks,plot,(/2,4/),resP)
+  ;resP@gsnPanelMainString	   = "hgt anomaly at "+level+"mb JMA ensemble forecast from "+sprinti("%0.10d",yyyymmddhh)
+  ;gsn_panel(wks,plot,(/4,2/),resP)
   draw(plot(0))
   frame(wks)
 end

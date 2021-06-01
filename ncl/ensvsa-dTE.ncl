@@ -20,7 +20,7 @@
 begin
 
 ;---Open netCDF file
-  a = addfile("../sens/ensvsa-dTE-m"+mode+"-"+orig+"-"+yyyymmddhh+"_n.nc","r")
+  a = addfile("../sens/"+ncfile,"r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -28,10 +28,16 @@ begin
 ;
   ;d = 0
   mmddhh = str_get_cols(yyyymmddhh, 4, 9)
+  lon0 = 120.
+  lon1 = 180.
   if (d.eq.0) then
-      out = "ensvsa-dTE_m"+mode+"_t+wind_n_"+orig+"_"+mmddhh
+      out = gfile
+      lat0 = -10.
+      lat1 = 60.
   else
-      out = "ensvsa-dTE_m"+mode+"_t+wind_n_"+orig+"_"+mmddhh+"_v"
+      out = gfile+"_v"
+      lat0 = 20.
+      lat1 = 60.
   end if
   ug       = a->ugrd(d,:,:,:)
   vg       = a->vgrd(d,:,:,:)
@@ -96,15 +102,10 @@ begin
 
      ;res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpFillOn             = False
-     res@mpMinLonF            =  120.               ; select a subregion
-     res@mpMaxLonF            =  160.
-   if (d.eq.0) then
-     res@mpMinLatF            =  0. 
-     res@mpMaxLatF            =  60.
-   else
-     res@mpMinLatF            =  20. 
-     res@mpMaxLatF            =  60.
-   end if
+     res@mpMinLonF            =  lon0               ; select a subregion
+     res@mpMaxLonF            =  lon1
+     res@mpMinLatF            =  lat0 
+     res@mpMaxLatF            =  lat1
      res@lbOrientation            = "Vertical"     ; vertical label bar
      res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 
@@ -116,8 +117,8 @@ begin
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
-      res@cnMinLevelValF       = -2.              ; set min contour level
-      res@cnMaxLevelValF       = 2.                ; set max contour level
+      res@cnMinLevelValF       = -1.6              ; set min contour level
+      res@cnMaxLevelValF       = 1.6                ; set max contour level
       res@cnLevelSpacingF      = .2               ; set contour spacing
       res@vcRefMagnitudeF      = 10.0
    else if (d.ge.6) then 
@@ -184,15 +185,10 @@ begin
    reste@cnFillPalette        = cmap
 
    reste@mpLandFillColor      = "gray"            ; set land to be gray
-   reste@mpMinLonF            =  120.               ; select a subregion
-   reste@mpMaxLonF            =  160.
-   if (d.eq.0) then
-     reste@mpMinLatF            =  0. 
-     reste@mpMaxLatF            =  60.
-   else
-     reste@mpMinLatF            =  20. 
-     reste@mpMaxLatF            =  60.
-   end if
+   reste@mpMinLonF            =  lon0               ; select a subregion
+   reste@mpMaxLonF            =  lon1
+   reste@mpMinLatF            =  lat0 
+   reste@mpMaxLatF            =  lat1
    reste@lbOrientation            = "Vertical"     ; vertical label bar
    reste@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 
@@ -200,18 +196,23 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-   reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+   ;reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+   reste@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
-      reste@cnMinLevelValF       = .5               ; set min contour level
-      reste@cnMaxLevelValF       = 5.0                 ; set max contour level
-      reste@cnLevelSpacingF      = .5               ; set contour spacing
+      ;reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+      reste@cnLevels = (/0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.,2.25,2.5,3.,4.,5.,7.5,10./)
+      ;reste@cnMinLevelValF       = .1               ; set min contour level
+      ;reste@cnMaxLevelValF       = 2.0                 ; set max contour level
+      ;reste@cnLevelSpacingF      = .1               ; set contour spacing
    else if (d.ge.6) then 
 ;  d=6
-      reste@cnMinLevelValF       = 50.               ; set min contour level
-      reste@cnMaxLevelValF       = 1000.0                 ; set max contour level
-      reste@cnLevelSpacingF      = 50.               ; set contour spacing
+      reste@cnLevelSelectionMode = "ExplicitLevels"
+      reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000.,1500.,2000./)
+      ;reste@cnMinLevelValF       = 25.               ; set min contour level
+      ;reste@cnMaxLevelValF       = 500.0                 ; set max contour level
+      ;reste@cnLevelSpacingF      = 25.               ; set contour spacing
    end if
    end if
    plote = gsn_csm_contour_map(wks, te, reste)

@@ -90,3 +90,25 @@ begin
     end do
   end do
 end
+
+procedure inv_rotate_lonlat(lonc, latc, lon, lat, lonout, latout)
+local x, y, z, xx, yy, zz
+begin
+  nlon = dimsizes(lon)
+  nlat = dimsizes(lat)
+  ij = 0
+  do j = 0, nlat(0) - 1
+    do i = 0, nlon(0) - 1
+      x = 0.0
+      y = 0.0
+      z = 0.0
+      lonlat2xyz(lon(i), lat(j), x, y, z)
+      xx = 0.0
+      yy = 0.0
+      zz = 0.0
+      tc2np(lonc, latc, x, y, z, xx, yy, zz)
+      xyz2lonlat(xx, yy, zz, lonout(ij), latout(ij))
+      ij = ij + 1
+    end do
+  end do
+end

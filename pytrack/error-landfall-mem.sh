@@ -7,7 +7,13 @@ dh=$((12 * 3600))
 ./init.sh ${init0} ${init1} ${dh} > init_tmp.txt
 
 function select_error() {
-  ln -fs ./rjtd/error${1}.txt error.txt
+  case ${2} in
+    ecmwf ) orig=ecmf ;;
+    jma ) orig=rjtd ;;
+    ncep ) orig=kwbc ;;
+    ukmo ) orig=egrr ;;
+  esac
+  ln -fs ./${orig}/error${1}.txt error.txt
   yyyy=`echo ${1:0:4}`
 	mm=`echo ${1:4:2}`
 	dd=`echo ${1:6:2}`
@@ -41,12 +47,18 @@ function select_error() {
   done
 }
 
-for center in jma; do
+for center in ecmwf ncep ukmo; do
   for init in 2019100900 2019100912; do
+    case $center in
+      ecmwf ) M=50 ;;
+      jma   ) M=26 ;;
+      ncep  ) M=20 ;;
+      ukmo  ) M=17 ;;
+    esac
     outfile=error${init}-${center}.txt
     rm ${outfile}
     touch ${outfile}
-    select_error ${init} ${center} 26 ${outfile}
+    select_error ${init} ${center} ${M} ${outfile}
   done
 done
 

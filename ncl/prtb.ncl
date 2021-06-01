@@ -20,39 +20,54 @@
 begin
 
 ;---Open netCDF file
+  rank = "best"
   mem = "05"
-  a = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/100912_"+mem+".nc","r")
+  orig = "jma"
+  dev = "pdf"
+  a = addfile("../../netcdf/tigge/2019/"+orig+"/glb_2019100912_mean.nc","r")
+  b = addfile("../../netcdf/tigge/2019/"+orig+"/glb_2019100912_"+mem+".nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-  u00      = a->UGRD(:,:,:,:)
-  v00      = a->VGRD(:,:,:,:)
-  t00      = a->TMP(:,:,:,:)
-  q00      = a->SPFH(:,:,:,:)
-  ps00     = a->PRES_meansealevel(:,:,:)
-  z00      = a->HGT(:,:,:,:)
-  u12      = b->UGRD(:,:,:,:)
-  v12      = b->VGRD(:,:,:,:)
-  t12      = b->TMP(:,:,:,:)
-  q12      = b->SPFH(:,:,:,:)
-  ps12     = b->PRES_meansealevel(:,:,:)
-  z12      = b->HGT(:,:,:,:)
-  lat_uv   = a->lat
-  lon_uv   = a->lon
+  ;u00      = a->UGRD(:,:,:,:)
+  ;v00      = a->VGRD(:,:,:,:)
+  ;t00      = a->TMP(:,:,:,:)
+  ;q00      = a->SPFH(:,:,:,:)
+  ;ps00     = a->PRES_meansealevel(:,:,:)
+  ;z00      = a->HGT(:,:,:,:)
+  ;u12      = b->UGRD(:,:,:,:)
+  ;v12      = b->VGRD(:,:,:,:)
+  ;t12      = b->TMP(:,:,:,:)
+  ;q12      = b->SPFH(:,:,:,:)
+  ;ps12     = b->PRES_meansealevel(:,:,:)
+  ;z12      = b->HGT(:,:,:,:)
+  u00      = a->u(:,:,:,:)
+  v00      = a->v(:,:,:,:)
+  t00      = a->t(:,:,:,:)
+  q00      = a->q(:,:,:,:)
+  ps00     = a->msl(:,:,:)
+  z00      = a->gh(:,:,:,:)
+  u12      = b->u(:,:,:,:)
+  v12      = b->v(:,:,:,:)
+  t12      = b->t(:,:,:,:)
+  q12      = b->q(:,:,:,:)
+  ps12     = b->msl(:,:,:)
+  z12      = b->gh(:,:,:,:)
+  lat_uv   = a->latitude
+  lon_uv   = a->longitude
   plev     = a->level
   time_00   = a->time
   time_12   = b->time
   date_00  = cd_string(time_00, "%Y%N%D%H")
   date_12  = cd_string(time_12, "%Y%N%D%H")
   lon0 = 120.
-  lon1 = 180.
+  lon1 = 160.
   lat0 = 0.
-  lat1 = 60.
+  lat1 = 40.
   
-  out = "prtb_mem"+mem
+  out = "prtb_"+orig+"_"+rank
 ;  wks = gsn_open_wks("png","prtb_mem26")
 ;  plot = new(4,graphic)
   cmap = read_colormap_file("hotcold_18lev")
@@ -60,16 +75,20 @@ begin
   vdate = 2019100912
   ind_00 = ind(date_00.eq.vdate)
   ind_12 = ind(date_12.eq.vdate)
+  print(ind_00)
+  print(ind_12)
   ps = ps12(ind_12,:,:)
   ps = ps12(ind_12,:,:) - ps00(ind_00,:,:)
+  ps = ps * 0.01 ; Pa->hPa
   pful = ps00(ind_12,:,:)
-  wks = gsn_open_wks("pdf",out+"_slp")
+  pful = pful * 0.01 ; Pa->hPa
+  wks = gsn_open_wks(dev,out+"_slp")
   resps                = True               ; plot mods desired
   resps@gsnDraw	      = False
   resps@gsnFrame	      = False
 ;   res@cnInfoLabelOn	      = False
      
-  resps@gsnCenterString	   = "slp"
+  resps@gsnCenterString	   = ""
   resps@gsnCenterStringOrthogonalPosF = 0.02
   resps@gsnLeftString	    = ""
   resps@gsnRightString	    = ""
@@ -87,7 +106,10 @@ begin
   resps@mpMaxLatF            =  lat1
 
   resps@lbOrientation            = "Vertical"     ; vertical label bar
-  resps@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
+  ;resps@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
+
+  resps@vpXF = 0.15
+  resps@vpWidthF = 0.7
 
 ; note, when doing a subregion, NCL determines the range of the data from
 ; the full domain. If you wish to just consider the domain you are plotting,
@@ -95,9 +117,9 @@ begin
 
   resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-  resps@cnMinLevelValF       = -150.              ; set min contour level
-  resps@cnMaxLevelValF       = 150.                 ; set max contour level
-  resps@cnLevelSpacingF      = 10.             ; set contour spacing
+  resps@cnMinLevelValF       = -1.5              ; set min contour level
+  resps@cnMaxLevelValF       = 1.5                 ; set max contour level
+  resps@cnLevelSpacingF      = 0.1             ; set contour spacing
 
   plotp = gsn_csm_contour_map(wks, ps, resps)
 
@@ -106,9 +128,9 @@ begin
   resps@cnLineLabelsOn       = True
   resps@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
    ;resps@cnMaxLevelCount	   = 10
-  resps@cnMinLevelValF       = 96000.0              ; set min contour level
-  resps@cnMaxLevelValF       = 108000.0                 ; set max contour level
-  resps@cnLevelSpacingF      = 400.0               ; set contour spacing
+  resps@cnMinLevelValF       = 960.0              ; set min contour level
+  resps@cnMaxLevelValF       = 1080.0                 ; set max contour level
+  resps@cnLevelSpacingF      = 4.0               ; set contour spacing
 ; when using the gsn_csm plot templates and overlay, it is necessary to
 ; turn off the automatic label strings so that you don't get text on 
 ; top of text
@@ -117,13 +139,13 @@ begin
   resps@gsnCenterString  = ""
       
   plotpf = gsn_csm_contour(wks,pful,resps)
-  overlay(plotp,plotpf)
+  ;overlay(plotp,plotpf)
   ;plot(0) = plotp
   draw(plotp)
   frame(wks)
   delete(plotp)
   delete(plotpf)
-  do k = 0,2
+  do k = 2, 4
      u = u12(ind_12,k,:,:)
      u = u12(ind_12,k,:,:) - u00(ind_00,k,:,:) 
      v = v12(ind_12,k,:,:)
@@ -136,7 +158,7 @@ begin
      z = z00(ind_00,k,:,:);z12(ind_12,k,:,:)
      ;z = z12(ind_12,k,:,:) - z00(ind_00,k,:,:)
      hgt = plev(k)
-     wks = gsn_open_wks("pdf",out+"_"+hgt)
+     wks = gsn_open_wks(dev,out+"_"+hgt)
 ;---Create plot
      res                = True               ; plot mods desired
      res@gsnDraw	      = False
@@ -163,6 +185,9 @@ begin
 
      res@lbOrientation            = "Vertical"     ; vertical label bar
      res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
+
+     res@vpXF = 0.15
+     res@vpWidthF = 0.7
 
 ; note, when doing a subregion, NCL determines the range of the data from
 ; the full domain. If you wish to just consider the domain you are plotting,
@@ -221,12 +246,12 @@ begin
       res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
       res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
       ;res@cnMaxLevelCount	   = 10
-      if (k .eq. 0) then
+      if (k .eq. 4) then
          res@cnMinLevelValF       = 1200.0              ; set min contour level
          res@cnMaxLevelValF       = 1500.0                 ; set max contour level
          res@cnLevelSpacingF      = 30.0               ; set contour spacing
       end if
-      if (k .eq. 1) then
+      if (k .eq. 3) then
          res@cnMinLevelValF       = 5200.0              ; set min contour level
          res@cnMaxLevelValF       = 5800.0                 ; set max contour level
          res@cnLevelSpacingF      = 50.0               ; set contour spacing
@@ -244,12 +269,12 @@ begin
       res@gsnCenterString  = ""
       
       plotz = gsn_csm_contour(wks,z,res)
-      overlay(plott,plotz)
+      ;overlay(plott,plotz)
       draw(plott)
       frame(wks)
       ;plot(k+1) = plott
       delete(plott)
-      delete(plotq)
+      ;delete(plotq)
       delete(plotz)
    end do
 

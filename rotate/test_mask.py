@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 
 lonc = 137.5 
 latc = 25.0 
-dcolat = 12.5 
+dcolat = 30.0
 
 lon = np.arange(360) 
-lat = -90.0 + np.arange(180)
+lat = -90.0 + np.arange(181)
 msk = mask_lonlat(dcolat, lonc, latc, lon, lat)
 nmsk = np.sum(msk.astype(np.int))
 print(nmsk)
@@ -24,7 +24,9 @@ for j in range(lat.size):
 print(mlon.min(),mlon.max())
 print(mlat.min(),mlat.max())
 lonnp, latnp = rotate_lonlat1d(lonc, latc, mlon, mlat, -1)
-
+print(f"output coordinate \n \
+lon:min{lonnp.min():.3f}, max{lonnp.max():.3f} \n \
+lat:min{latnp.min():.3f}, max{latnp.max():.3f}")
 fig, ax = plt.subplots(2)
 ax[0].scatter(mlon,mlat)
 ax[0].scatter(lonc, latc, marker="*")

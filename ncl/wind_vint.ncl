@@ -21,8 +21,12 @@ begin
 
 ;---Open netCDF file
   init   = 2019100900
+  yyyymmddhh = sprinti("%0.10d",init)
+  yyyy = str_get_cols(sprinti("%0.10d",init), 0, 3)
   mmddhh = str_get_cols(sprinti("%0.10d",init), 4, 9)
-  a = addfile("../../netcdf/tigge/2019/jma/"+mmddhh+"_mean.nc","r")
+  ;a = addfile("../../netcdf/tigge/2019/jma/"+mmddhh+"_mean.nc","r")
+  fu = addfile("../../netcdf/tigge/2019/jma/rotate/inv_glb_"+yyyymmddhh+"_mean_ug.nc","r")
+  fv = addfile("../../netcdf/tigge/2019/jma/rotate/inv_glb_"+yyyymmddhh+"_mean_vg.nc","r")
 ;  b = addfile("../../netcdf/tigge/2019/jma/100912_mean.nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
@@ -31,23 +35,23 @@ begin
 ;
 ;  pres00   = a->HGT(2,:,:,:)
 ;  z00    = a->HGT(:,:,:,:)
-  u00    = a->UGRD(:,0:2,:,:)
-  v00    = a->VGRD(:,0:2,:,:)
-  lat_uv = a->lat
-  lon_uv = a->lon
-  level  = a->level
-  time   = a->time
+  u00    = fu->var(:,2:,:,:) ; 300, 500, 850hPa
+  v00    = fv->var(:,2:,:,:)
+  lat_uv = fu->lat
+  lon_uv = fu->lon
+  level  = fu->level
+  time   = fu->time
   date   = cd_string(time, "%Y%N%D%H")
   print(date)
   
   sig = new(3,float)
-  sig(0) = 3./7. + 4./49.
+  sig(2) = 3./7. + 4./49.
   sig(1) = 10./49. + 1./7.
-  sig(2) = 1./7.
+  sig(0) = 1./7.
   print(sig)
   
-  ds = 7
-  de = 13
+  ds = ind(date.eq.yyyymmddhh)
+  de = ind(date.eq."2019101212")
   nd = de - ds + 1
   vdate = init
   year  = toint(str_get_cols(sprinti("%0.10d",vdate), 0, 3))
@@ -56,9 +60,9 @@ begin
   hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
   sec = cd_inv_calendar(year,month,day,hour,0,0, time@units, 0)
   newsec = sec
-  newsec = sec + 6*60*60*ds
+  newsec = sec + 6;*60*60*ds
   vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
-  wks = gsn_open_wks("png","wind_vint_"+mmddhh+"_"+date(ds)+"to"+date(de))
+  wks = gsn_open_wks("png","asymwind_vint_"+mmddhh+"_"+date(ds)+"to"+date(de))
   plot = new(nd,graphic)
   cmap = read_colormap_file("sunshine_9lev")
     
@@ -69,15 +73,17 @@ begin
 
      u = u00(id,:,:,:)
      v = v00(id,:,:,:)
+     u = u * conform_dims(dimsizes(u), sig, 0)
+     v = v * conform_dims(dimsizes(v), sig, 0)
      ndim = dimsizes(u)
-     do ilev=0,ndim(0)-1
-      do ilat=0,ndim(1)-1
-        do ilon=0,ndim(2)-1
-          u(ilev,ilat,ilon) = u(ilev,ilat,ilon)*sig(ilev)
-          v(ilev,ilat,ilon) = v(ilev,ilat,ilon)*sig(ilev)
-        end do
-      end do
-     end do
+     ;do ilev=0,ndim(0)-1
+     ; do ilat=0,ndim(1)-1
+     ;   do ilon=0,ndim(2)-1
+     ;     u(ilev,ilat,ilon) = u(ilev,ilat,ilon)*sig(ilev)
+     ;     v(ilev,ilat,ilon) = v(ilev,ilat,ilon)*sig(ilev)
+     ;   end do
+     ; end do
+     ;end do
      up = dim_sum_n(u,0)
      up!0 = "lat"
      up!1 = "lon"
@@ -109,8 +115,8 @@ begin
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpMinLonF            =  120.               ; select a subregion
      res@mpMaxLonF            =  160.
-     res@mpMinLatF            =  10. 
-     res@mpMaxLatF            =  60.
+     res@mpMinLatF            =  -10. 
+     res@mpMaxLatF            =  30.
 
      res@lbOrientation            = "Vertical"     ; vertical label bar
      res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
@@ -124,7 +130,7 @@ begin
      res@cnMaxLevelValF       = 50.0                 ; set max contour level
      res@cnLevelSpacingF      = 5.0               ; set contour spacing
 
-     res@vcRefMagnitudeF           = 20.0             ; define vector ref mag
+     res@vcRefMagnitudeF           = 10.0             ; define vector ref mag
      res@vcRefLengthF              = 0.045           ; define length of vec ref
      res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
      res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
@@ -133,11 +139,11 @@ begin
 ;     res@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
      res@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
      res@vcLineArrowColor        = "black"           ; change vector color
-     res@vcLineArrowThicknessF   = 3.0               ; change vector thickness
-     res@vcMinDistanceF	        = 0.05
+     res@vcLineArrowThicknessF   = 1.0               ; change vector thickness
+     res@vcMinDistanceF	        = 0.02
      res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
-     up = where(w.lt.5., up@_FillValue, up)
+     ;up = where(w.lt.5., up@_FillValue, up)
   
      plot(d) = gsn_csm_vector_scalar_map(wks,up,vp,w,res)
      
@@ -147,14 +153,14 @@ begin
      hour  = toint(str_get_cols(sprinti("%0.10d",vdate), 8, 9))
      sec = cd_inv_calendar(year,month,day,hour,0,0, time@units, 0)
      newsec = sec
-     newsec = sec + 6*60*60
+     newsec = sec + 6;*60*60
      vdate  = toint(cd_string(newsec, "%Y%N%D%H"))
      delete(u)
      delete(v)
      delete(res)
    end do
    resP	                   = True
-   resP@gsnPanelMainString	   = "vertical integrated wind "+mmddhh
-   gsn_panel(wks,plot,(/2,(nd+1)/2/),resP)
+   resP@gsnPanelMainString	   = "asymmetric vertical integrated wind "+mmddhh
+   gsn_panel(wks,plot,(/4,(nd+1)/4/),resP)
    delete(plot)
 end

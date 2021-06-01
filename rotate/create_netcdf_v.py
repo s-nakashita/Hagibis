@@ -7,8 +7,8 @@ import pandas as pd
 import librotate
 
 datadir = Path('./')
-outdir  = Path('../../netcdf/gsm/gl/2019/10/rotate')
-nc      = Path('np_init_vort.nc')
+outdir  = Path('../../netcdf/tigge/2019/jma/rotate')
+nc      = Path('np_100900_mean_v.nc')
 
 outvar = ['vort']
 #outvar = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground',\
@@ -21,14 +21,14 @@ outvar_dict = {}
 start = datetime.strptime("2019100900", '%Y%m%d%H')
 dt = timedelta(hours=6)
 
-outnc = netCDF4.Dataset(outdir/Path('np_init_vort.nc'), 'w')
+outnc = netCDF4.Dataset(outdir/Path('np_2019100900_mean_v.nc'), 'w')
 in_scl = netCDF4.Dataset(datadir/nc,'r')
 nlat = in_scl.variables["latitude"][:].size
 nlon = in_scl.variables["longitude"][:].size
 print(nlat,nlon)
 
 time = outnc.createDimension('time',None)
-level = outnc.createDimension('level',12)
+level = outnc.createDimension('level',5)
 lat = outnc.createDimension('lat',nlat)
 lon = outnc.createDimension('lon',nlon)
 

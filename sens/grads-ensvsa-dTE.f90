@@ -5,7 +5,8 @@ program grads_ensvsa_dTE
   implicit none
  
   !integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
-  integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
+  !integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
+  integer,parameter :: dslon=271, delon=281, dslat=247, delat=255 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
   integer,parameter :: nv3d=3,nv2d=2,nlev=3
@@ -17,7 +18,7 @@ program grads_ensvsa_dTE
       
   integer :: i,j,k,n
   integer :: imem,id,it,irec
-  integer :: ilt,ilu,ilv,ilev,ivar,ip,fday
+  integer :: ilt,ilu,ilv,ilev,ivar,ip,fday,tday
   integer :: imode
   !integer :: mem
   !integer :: idate,edate
@@ -47,7 +48,8 @@ program grads_ensvsa_dTE
   namelist /sens_nml/ orig, mem, idate, edate, smode, emode
 
   character rdf*100,rdw*100,wd*100
-  character dir*30,dira*33,nmode*1,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
+  character dir*30,dira*33,ns*1,ne*1,nmem*2
+  character yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
   character(len=3) :: vname(4)
   !character(len=4) :: vnamea(5)
   !data vname/'UGRD','VGRD','TMP','PRES_meansealevel'/
@@ -67,6 +69,9 @@ program grads_ensvsa_dTE
    read(11,nml=sens_nml)
    write(*,nml=sens_nml)
    close(11)
+   call calc_steps(idate,edate,12,tday)
+   print*,tday
+   tday = tday+1
    !yyyymmddhh="2019100912"
    write(yyyymmddhh,'(I10)') idate
    yyyy=yyyymmddhh(1:4)
@@ -75,8 +80,13 @@ program grads_ensvsa_dTE
    print*,yyyy,mmddhh
    !smode=1
    !emode=1
-   write(nmode,'(I1)') emode
-   wd='./ensvsa-dTE-m'//nmode//'-'//trim(orig)//'-'//yyyymmddhh//'_n-gr'
+   write(ns,'(I1)') smode
+   write(ne,'(I1)') emode
+   if (smode==emode) then
+      wd='./ensvsa-dTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'_n-gr'
+   else
+      wd='./ensvsa-dTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'_n-gr'
+   endif
    open(21,file=wd,status='new',access='direct',&
           &        convert='big_endian',&
           &        form='unformatted', recl=4*imax*jmax)
@@ -91,18 +101,18 @@ program grads_ensvsa_dTE
    allocate(ze(imax,jmax,nvar,mem))
    allocate(z(narea*nvar,mem))
    allocate(zT(mem,narea*nvar))
-   allocate(sg(10))
+   allocate(sg(smode:emode))
    allocate(p(mem))
-   allocate(w(mem,10))
+   allocate(w(mem,smode:emode))
 
   !singular value
    read(10,rec=1) p
-   do imode=1,10
+   do imode=smode,emode
       sg(imode)=p(imode)
    enddo
    print*, sg
   
-   do imode=1,10
+   do imode=smode,emode
       it=imode+1
       read(10,rec=it) w(:,imode)
       print*,imode,w(:,imode)
@@ -114,7 +124,7 @@ program grads_ensvsa_dTE
    !edate=2019100900
    read(yyyymmddhh,*) edate
    print*,"edate=",edate
-   do fday=0,7 !every 12 hours
+   do fday=0,tday !every 12 hours
       !idate=2019100900
       read(yyyymmddhh,*) idate
       call calc_steps(idate,edate,6,ip)

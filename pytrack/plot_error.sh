@@ -5,7 +5,7 @@ init1=2019100912
 dh=$((12 * 3600))
 ./makecpt.sh ${init0} ${init1} ${dh}
 ./init.sh ${init0} ${init1} ${dh} > init.txt
-./legend.sh
+./legend.sh track2.cpt init.txt
 bstfile=bst_hagibis.txt
 orig=rjtd
 outfile=$orig/error${init0:4:9}-${init1:4:9}.ps
@@ -35,7 +35,7 @@ function plot_error() {
 }
 
 
-gmt psbasemap -R0/90/0/300 -JX15c/10c -Y8c -Bxa12df6hg6d -Bya100f2g50 -K > ${outfile}
+gmt psbasemap -R0/90/0/300 -JX15c/10c -Y8c -BWeSn -Bxa12df6hg6d+l"Hour from 0000 UTC 09" -Bya100f2g50+l"error(km)" -K > ${outfile}
 dt=0
 for init in $(cat init.txt); do
   plot_error ${init} ${dt}
@@ -46,9 +46,9 @@ done
 #gmt psxy -R -J -O tmp.txt -i0,1 -W3p -K >> ${outfile}
 #gmt psxy -R -J -O tmp.txt -i0,1 -Sc0.1i -Gwhite -Wthin -K >> ${outfile}
 
-#gmt pslegend -R -J -Dn0.05/0.6+w0.2/0.5 -K -O < legend.txt >> ${outfile}
+tail -n +2 legend.txt | gmt pslegend -R -J -Dn0.7/0.8+w3.5c -F+gwhite+p -K -O >> ${outfile}
 #head -6 legend.txt  | gmt pslegend -Dx0c/-11c+w5c/10c -K -O >> ${outfile}
-tail -n +2 legend.txt | head -6 | gmt pslegend -Dx5c/-11c+w5c/10c -K -O >> ${outfile}
+#tail -n +2 legend.txt | head -6 | gmt pslegend -Dx5c/-11c+w5c/10c -K -O >> ${outfile}
 #tail -n +13 legend.txt | gmt pslegend -Dx10c/-11c+w5c/10c -O >> ${outfile}
 
 pstopdf ${outfile}

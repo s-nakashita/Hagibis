@@ -31,7 +31,7 @@ var_sfc = ['UGRD_10maboveground','VGRD_10maboveground']
 var_pl  = ['UGRD','VGRD']
 
 lonin,latin = librotate.generate_points(nlon,nlat,dlat)
-print(latin)
+print(lonin)
 
 da_np = []
 with trackf.open() as track:
@@ -113,7 +113,7 @@ with trackf.open() as track:
         zdtc = zd_interp.values.reshape(nlat,nlon)
         xdnp,ydnp,zdnp = librotate.tc2np(lonc,latc,xdtc,ydtc,zdtc)
         if debug:
-            print(zdnp[0,:])
+            #print(zdnp[0,:])
             xb,yb,zb = librotate.np2tc(lonc,latc,xdnp,ydnp,zdnp)
             print(f"debug:tc2np x {np.max(np.abs(xdtc-xb))}")
             print(f"debug:tc2np y {np.max(np.abs(ydtc-yb))}")
@@ -133,6 +133,10 @@ with trackf.open() as track:
             print(f"debug:xyzd2uv x {np.max(np.abs(xdnp-xb))}")
             print(f"debug:xyzd2uv y {np.max(np.abs(ydnp-yb))}")
             print(f"debug:xyzd2uv z {np.max(np.abs(zdnp-zb))}")
+            #ub, vb = librotate.xyzd2uv(xb,yb,zb,lonnp)
+            ub, vb = librotate.xyzd2uv(xb,yb,zb,lonnp,latnp)
+            print(f"debug:uv2xyzd u {np.max(np.abs(unp-ub))}")
+            print(f"debug:uv2xyzd v {np.max(np.abs(vnp-vb))}")
         #missing value
         if(np.isnan(unp).sum() != 0 or np.isnan(vnp).sum() != 0):
             print("missing value exists in xyzd2uv")
@@ -230,7 +234,7 @@ with trackf.open() as track:
             print(f"debug:tc2np x {np.max(np.abs(xdtc-xb))}")
             print(f"debug:tc2np y {np.max(np.abs(ydtc-yb))}")
             print(f"debug:tc2np z {np.max(np.abs(zdtc-zb))}")
-            print(f"debug:zdnp {zdnp[0,0,0,:]}")
+            #print(f"debug:zdnp {zdnp[0,0,0,:]}")
         #missing value
         if(np.isnan(xdnp).sum() != 0 or np.isnan(ydnp).sum() != 0 \
             or np.isnan(zdnp).sum() != 0):
@@ -249,6 +253,10 @@ with trackf.open() as track:
             print(f"debug:xyzd2uv x {np.max(np.abs(xdnp-xb))}")
             print(f"debug:xyzd2uv y {np.max(np.abs(ydnp-yb))}")
             print(f"debug:xyzd2uv z {np.max(np.abs(zdnp-zb))}")
+            #ub, vb = librotate.xyzd2uv(xb,yb,zb,lonnp)
+            ub, vb = librotate.xyzd2uv(xb,yb,zb,lonnp,latnp)
+            print(f"debug:uv2xyzd u {np.max(np.abs(unp-ub))}")
+            print(f"debug:uv2xyzd v {np.max(np.abs(vnp-vb))}")
         #missing value
         if(np.isnan(unp).sum() != 0 or np.isnan(vnp).sum() != 0):
             print("missing value exists in xyzd2uv")

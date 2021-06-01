@@ -1,14 +1,20 @@
 #!/bin/bash
-init0=2019100900
+init0=${1} # yyyymmddhh
 CDIR=`pwd`
 bstfile=$CDIR/bst_hagibis.txt
-outfile=track_jma_${init0}_mem.ps
+center=${2} # ecmwf, jma, ncep, ukmo
+outfile=track_${center}_${init0}_bw.ps
 
 function plot_track() {
 	orig=2
-    datadir=jma
+	center=${2}
+    datadir=${center}
 	MEM=1
-  	while test $MEM -le 26;do
+	M=${3}
+	b=${4}
+	w=${5}
+  	while test $MEM -le $M;do
+	  if [ $MEM -eq $b ] || [ $MEM -eq $w ]; then
       if [ $MEM -lt 10 ]; then
       	MEM=0$MEM
 	  fi
@@ -25,12 +31,18 @@ function plot_track() {
 	    awk '$3~12 && $4~12{s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp_p.txt
 	    pencol=lightgreen
 	    gmt psxy -R -J -O tmp.txt -i0,1 -W1p,${pencol} -K >> ${outfile} 
-	    gmt psxy -R -J -O tmp_n.txt -i0,1,2,3 -C$CDIR/track_mem.cpt -Scc -Wfaint -K >> ${outfile}
-	    gmt psxy -R -J -O tmp_p.txt -i0,1,2,3 -C$CDIR/track_mem.cpt -SA -Wfaint -K >> ${outfile} 
+	    gmt psxy -R -J -O tmp_n.txt -i0,1,2,3 -C$CDIR/track_mem_${center}.cpt -Scc -Wfaint -K >> ${outfile}
+	    gmt psxy -R -J -O tmp_p.txt -i0,1,2,3 -C$CDIR/track_mem_${center}.cpt -SA -Wfaint -K >> ${outfile} 
+	  fi
 	  fi
 	  MEM=`expr $MEM + 1`
     done
-	datadir=rjtd
+	case $center in
+		jma ) datadir=rjtd ;;
+		ecmwf ) datadir=ecmf ;;
+		ncep ) datadir=kwbc ;;
+		ukmo ) datadir=egrr ;;
+	esac
 	orig=1
 	tracktxt=$datadir/track${1}.txt
 	yyyy=`echo ${1:0:4}`
@@ -43,16 +55,22 @@ function plot_track() {
 	  awk '{s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp.txt
 	  awk '!($3~12 && $4~12){s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp_n.txt
 	  awk '$3~12 && $4~12{s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp_p.txt
-	  pencol=red
+	  pencol=$(awk '$1~1{print $2}' $CDIR/track_mem_${center}.cpt)
 	  gmt psxy -R -J -O tmp.txt -i0,1 -W1p,${pencol} -K >> ${outfile} 
-	  gmt psxy -R -J -O tmp_n.txt -i0,1,2,3 -C$CDIR/track_mem.cpt -Scc -Wfaint -K >> ${outfile}
-	  gmt psxy -R -J -O tmp_p.txt -i0,1,2,3 -C$CDIR/track_mem.cpt -SA -Wfaint -K >> ${outfile} 
+	  gmt psxy -R -J -O tmp_n.txt -i0,1,2,3 -C$CDIR/track_mem_${center}.cpt -Scc -Wfaint -K >> ${outfile}
+	  gmt psxy -R -J -O tmp_p.txt -i0,1,2,3 -C$CDIR/track_mem_${center}.cpt -SA -Wfaint -K >> ${outfile} 
 	fi
 }
 
 gmt pscoast -R125/150/12/45 -JQ12c -Bag -Dh -Gburlywood -Sazure -Wthinnest -A100 -P -K > ${outfile}
 #for init in $(cat $CDIR/init.txt); do
-plot_track ${init0}
+case $center in
+    ecmwf ) M=50 ; b=26 ; w=15 ;;
+    jma   ) M=26 ; b=5  ; w=26 ;;
+    ncep  ) M=20 ; b=16 ; w=1  ;;
+    ukmo  ) M=17 ; b=2  ; w=3  ;;
+esac
+plot_track ${init0} ${center} ${M} ${b} ${w}
 #done
 #gmt psxy -R -J -O ${bstfile} -i4,5 -W3p -K >> ${outfile} 
 #gmt psxy -R -J -O ${bstfile} -i4,5 -Sc0.1i -Gblack >> ${outfile} 

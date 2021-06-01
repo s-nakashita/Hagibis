@@ -6,6 +6,8 @@ program ensvsa_TE
     
   !integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
   integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
+  !integer,parameter :: dslon=271, delon=281, dslat=247, delat=255 
+  !integer,parameter :: dslon=273, delon=279, dslat=229, delat=235 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
   integer,parameter :: nvar=3*4+1 
@@ -44,7 +46,7 @@ program ensvsa_TE
   namelist /sens_nml/ orig, mem, idate, edate, smode, emode
 
   character rdf*100,wd*100,logf*100
-  character dir*30,dira*33,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
+  character dir*29,dira*33,nmem*2,yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
   character(len=3) :: vname(5)
   !character(len=4) :: vnamea(5)
   !data vname/'UGRD','VGRD','TMP','SPFH','PRES_meansealevel'/
@@ -52,7 +54,8 @@ program ensvsa_TE
   !data vnamea/'air','uwnd','vwnd','shum','slp'/
   
      !|----/----/----/----/----/----/----/----/----/----/----/----| 
-  dir='/Users/nakashita/netcdf/tigge/'
+  !dir='/Users/nakashita/netcdf/tigge/'
+  dir='/Volumes/pqi2TB/netcdf/tigge/'
  !dira='/Users/nakashita/netcdf/nc-reanl/'
 
   sigma(1)=200.0/pr

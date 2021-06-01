@@ -35,8 +35,10 @@ begin
   yyyymmddhh = "2019100912"
   ds = 0 ;start
   de = 11 ;end
-  a = addfile("../../netcdf/tigge/2019/jma/rotate/np_2019100912_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/jma/rotate/np_2019100900_mean.nc","r")
+  ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_2019100912_mean.nc","r")
+  a = addfile("../rotate/np_glb_2019100912_mean.nc","r")
+  ;b = addfile("../../netcdf/tigge/2019/jma/rotate/np_2019100900_mean.nc","r")
+  b = addfile("../rotate/np_glb_2019100900_mean.nc","r")
   t12 = a->time
   t00 = b->time
   lat = a->lat
@@ -52,29 +54,32 @@ begin
   esec	= sec + 6*60*60*de
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
-  wks = gsn_open_wks("png","asym_diff_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
+  wks = gsn_open_wks("png","asym_glb_diff_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
   gsn_define_colormap(wks, "sunshine_9lev")
   plot = new(4*3,"graphic")
 
   sig = new(3,float)
-  sig(0) = 3./7. + 4./49.
-  sig(1) = 10./49. + 1./7.
-  sig(2) = 1./7.
+  ;sig(0) = 3./7. + 4./49.
+  ;sig(1) = 10./49. + 1./7.
+  ;sig(2) = 1./7.
+  sig(0) = 7./22.
+  sig(1) = 1./2.
+  sig(2) = 2./11.
   print(sig)
   i = 0
   do d = ds,de
     dsec = sec
-    dsec = sec + 6*60*60*d
+    dsec = sec + 6*d
     ind12 = ind(t12.eq.dsec)
     ind00 = ind(t00.eq.dsec)
-    day   = cd_string(dsec, "%Y%N%D%H")
+    day   = cd_string(dsec, "%H UTC, %D")
     print(day)
     ;do lev = 0,3
 ;      print(i)
-    u12 = a->UGRD(ind12,:2,:,:)
-    v12 = a->VGRD(ind12,:2,:,:)
-    u00 = b->UGRD(ind00,:2,:,:)
-    v00 = b->VGRD(ind00,:2,:,:)
+    u12 = a->u(ind12,{850:300},:,:)
+    v12 = a->v(ind12,{850:300},:,:)
+    u00 = b->u(ind00,{850:300},:,:)
+    v00 = b->v(ind00,{850:300},:,:)
 ;      print(u@level)
 ;  t = a->PRES_meansealevel(0,:,:)
 ;************************************************

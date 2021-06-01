@@ -67,7 +67,7 @@ def tc2np(lonc,latc,x,y,z):
         + np.sin(latc*dtheta)*z
     return xx,yy,zz
 
-def rotate_lonlat(lonc,latc,lon,lat):
+def rotate_lonlat(lonc, latc, lon, lat, dir=0):
     nlon = lon.size
     nlat = lat.size
     lonout = np.zeros(nlon*nlat)
@@ -76,7 +76,10 @@ def rotate_lonlat(lonc,latc,lon,lat):
     for j in range(nlat):
         for i in range(nlon):
             x,y,z = lonlat2xyz(lon[i],lat[j])
-            xx,yy,zz = np2tc(lonc,latc,x,y,z)
+            if dir >= 0:
+                xx,yy,zz = np2tc(lonc,latc,x,y,z)
+            else:
+                xx,yy,zz = tc2np(lonc,latc,x,y,z)
             lonout[ij],latout[ij] = xyz2lonlat(xx,yy,zz)
             ij += 1
     return lonout,latout

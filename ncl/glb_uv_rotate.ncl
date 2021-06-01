@@ -32,41 +32,41 @@ begin
 ;************************************************
 ; variable and file handling
 ;************************************************
-  init = "2019100900"
+  ;init = "2019100900"
+  ;mem="mean"
   yyyy = str_get_cols(init, 0, 3)
+  mm   = str_get_cols(init, 4, 5)
   mmddhh = str_get_cols(init, 4, 9)
-  in  = addfile("../../netcdf/tigge/"+yyyy+"/jma/glb_"+mmddhh+"_mean.nc","r")  ; open netcdf file
-  ;fu  = addfile("../../netcdf/nc-reanl/2019/uwnd.2019.nc","r")  ; open netcdf file
-  ;fv  = addfile("../../netcdf/nc-reanl/2019/vwnd.2019.nc","r")  ; open netcdf file
-  u   = in->UGRD;(:,:,180:360,180:360)                       ; pull u off file
-  v   = in->VGRD;(:,:,180:360,180:360)                       ; pull v off file
+  ;in  = addfile("../../netcdf/tigge/"+yyyy+"/jma/glb_"+mmddhh+"_mean.nc","r")  ; open netcdf file
+  in  = addfile("../../netcdf/tigge/"+yyyy+"/jma/glb_"+init+"_"+mem+".nc","r")  ; open netcdf file
+  u   = in->u;(:,:,180:360,180:360)                       ; pull u off file
+  v   = in->v;(:,:,180:360,180:360)                       ; pull v off file
+  msl = in->msl
+  gh  = in->gh
   t0  = in->time
   lev0 = in->level
-  lat0 = dble2flt(in->lat)
-  lon0 = dble2flt(in->lon)
-  ;u   = fu->uwnd(0,:,:,:)                       ; pull u off file
-  ;v   = fv->vwnd(0,:,:,:)                       ; pull v off file
-  ;t = fu->time
-  ;lev0 = fu->level
-  ;lat0 = fu->lat ;N->S
-  ;lon0 = fu->lon
-  ;print(lon0)
-  uout = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+mmddhh+"_mean_ug.nc"
-  vout = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+mmddhh+"_mean_vg.nc"
-;  ofile = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+mmddhh+"_mean_v.nc"
-;  setfileoption("nc", "format", "netcdf4")
-;  setfileoption("nc", "headerReserveSpace", 64000)
-;  setfileoption("nc", "preFill", False)
+  lat0 = in->latitude
+  lon0 = in->longitude
+  trackfile = "../pytrack/jma/gtrack"+init+"_"+mem+".txt"
+  nd = 21
+  
+  uout = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+init+"_"+mem+"_ug.nc"
+  vout = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+init+"_"+mem+"_vg.nc"
+  pout = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+init+"_"+mem+"_slp.nc"
+  hout = "../../netcdf/tigge/"+yyyy+"/jma/rotate/np_glb_"+init+"_"+mem+"_gh.nc"
+  
   if (isfilepresent(uout)) then
     system("rm " + uout)
   end if
   if (isfilepresent(vout)) then
     system("rm " + vout)
   end if
-;  if (isfilepresent(ofile)) then
-;    system("rm " + ofile)
-;  end if
-;  out = addfile(ofile,"c") 
+  if (isfilepresent(pout)) then
+    system("rm " + pout)
+  end if
+  if (isfilepresent(hout)) then
+    system("rm " + hout)
+  end if
 ;************************************************
 ; rotate pole vector
 ;************************************************
@@ -105,11 +105,13 @@ begin
   nlon = ndim(3)
   lonout = new(nlon * nlat, "float")
   latout = new(nlon * nlat, "float")
-  trackfile = "../pytrack/jma/track"+init+"_mean.txt"
-  track = asciiread(trackfile, (/21, 7/), "float")
+  track = asciiread(trackfile, (/nd, 7/), "float")
+  
   ur = u
   vr = v
-  do l = 0, 20
+  pr = msl
+  hr = gh
+  do l = 0, nd-1
     dd = sprinti("%0.2d",toint(track(l, 2)))
     hh = sprinti("%0.2d",toint(track(l, 3)))
     print(dd+hh)
@@ -123,6 +125,28 @@ begin
     printMinMax(latout, 0)
     uin = u(l,:,:,:)
     vin = v(l,:,:,:)
+    pin = msl(l,:,:)
+    hin = gh(l,:,:,:)
+; rotate msl
+    pnp = linint2_points(lon0, lat0, pin, True, lonout*rad2deg, latout*rad2deg, 0)
+    if(any(ismissing(pnp)))
+      print("Missing values in interpolation of msl")
+      pmsg = linmsg(pnp(:),0)
+      pnp = (/pmsg/)
+    end if
+    pr(l,:,:) = (/reshape(pnp,(/nlat,nlon/))/)
+; rotate msl
+    hnp = linint2_points(lon0, lat0, hin, True, lonout*rad2deg, latout*rad2deg, 0)
+    if(any(ismissing(hnp)))
+      print("Missing values in interpolation of gh")
+      do k = 0, nlev-1
+        hmsg = linmsg(hnp(k,:),0)
+        hnp(k,:) = (/hmsg/)
+      end do
+    end if
+    do k = 0, nlev-1
+      hr(l,k,:,:) = (/reshape(hnp(k,:),(/nlat,nlon/))/)
+    end do
 ; (u, v) => (xdot, ydot, zdot)
     xd = uin
     yd = uin
@@ -197,46 +221,48 @@ begin
 ;************************************************
   write_nc(uout, ur, t0, lev0, lat0, lon0)
   write_nc(vout, vr, t0, lev0, lat0, lon0)
+  write_nc2d(pout, pr, t0, lat0, lon0)
+  write_nc(hout, hr, t0, lev0, lat0, lon0)
   ;write_nc(ofile,vrt_r,t0,lev0,lat0,lon0)
   ;exit()
 
 ;************************************************
 ; create plot
 ;************************************************
-  wks  = gsn_open_wks("png","vort")              ; send graphics to PNG file
+  wks  = gsn_open_wks("png","uv")              ; send graphics to PNG file
 
   res                   = True                   ; plot mods desired
-  res@gsnPolar          = "SH"
-  ;res@mpMinLatF         = 80
-  res@mpMaxLatF         = -80
-  res@cnFillOn          = True                   ; turn on color
+  res@gsnPolar          = "NH"
+  res@mpMinLatF         = 80
+  ;res@mpMaxLatF         = -80
+  res@cnFillOn          = False                  ; turn on color
   res@cnFillPalette     = "BlWhRe"               ; set color map
-  res@cnLinesOn         = False                  ; no contour lines
+  res@cnLinesOn         = True                  ; no contour lines
 
   ;res@gsnAddCyclic	      = False 
-  res@mpLandFillColor      = "gray"            ; set land to be gray
+  ;res@mpLandFillColor      = "gray"            ; set land to be gray
   ;res@mpMinLonF            =  120.               ; select a subregion
   ;res@mpMaxLonF            =  160.
   ;res@mpMinLatF            =  10. 
   ;res@mpMaxLatF            =  60.
 
-  res@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  res@cnMinLevelValF       = -20                   ; set min contour level
-  res@cnMaxLevelValF       =  20                   ; set max contour level
-  res@cnLevelSpacingF      =  2.                 ; set contour spacing
+  ;res@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+  ;res@cnMinLevelValF       = -20                   ; set min contour level
+  ;res@cnMaxLevelValF       =  20                   ; set max contour level
+  ;res@cnLevelSpacingF      =  2.                 ; set contour spacing
 
   res@gsnScalarContour      = True              ; vectors over scalars
   res@vcRefMagnitudeF       = 20.0              ; vec magnitude
   res@vcRefLengthF          = 0.05              ; size of ref vector
   res@vcLineArrowColor      = "black"           ; white vectors
-  res@vcMinDistanceF        = 0.01              ; thins arrows near pole  
+  res@vcMinDistanceF        = 0.1              ; thins arrows near pole  
   res@vcGlyphStyle          = "LineArrow"     ; turns on curly vectors
   res@vcLineArrowThicknessF = 2.
   res@vcMinMagnitudeF       = 5.0
 
   ;vrt = vrt*scale
   ;plot = gsn_csm_contour_map_polar(wks,vrt(3,:,:),res)
-  plot = gsn_csm_vector_map_polar(wks,ur(6,3,:,:),vr(6,3,:,:),res)
+  plot = gsn_csm_vector_scalar_map_polar(wks,ur(6,3,:,:),vr(6,3,:,:),hr(6,3,:,:),res)
   ;plot = gsn_csm_contour_map(wks,vrt(0,4,:,:),res) ; create plot  
 ;************************************************
 end

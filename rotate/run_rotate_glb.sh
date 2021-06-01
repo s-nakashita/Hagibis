@@ -7,8 +7,8 @@ fi
 yyyymmddhh=${1}
 yyyy=${yyyymmddhh:0:4}
 nlon=${nlon:-360}
-nlat=${nlat:-33}
-latmax=${latmax:-16}
+nlat=${nlat:-181}
+latmax=${latmax:-90}
 
 center=${2}
 case $center in

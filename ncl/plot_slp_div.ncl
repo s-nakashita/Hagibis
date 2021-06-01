@@ -15,13 +15,13 @@
 ; open file and read in data: data are on a gaussian grid
 ;*************************************************
   yyyymmddhh = "2019100912"
-  orig = "ecmwf"
+  orig = "jma"
   yyyy = str_get_cols(yyyymmddhh, 0, 3)
   mm   = str_get_cols(yyyymmddhh, 4, 5)
   dd   = str_get_cols(yyyymmddhh, 6, 7)
   hh   = str_get_cols(yyyymmddhh, 8, 9)
   mmddhh = str_get_cols(yyyymmddhh, 4, 9)
-  f   = addfile ("../../netcdf/tigge/"+yyyy+"/"+orig+"/glb_"+yyyymmddhh+"_mean.nc", "r")
+  f   = addfile ("../../netcdf/tigge/"+yyyy+"/"+orig+"/glb_"+yyyymmddhh+"_26.nc", "r")
   u  = f->u(:,{200},:,:)      ; (time,lat,lon) 
   v  = f->v(:,{200},:,:)
   slp = f->msl(:,:,:)
@@ -94,11 +94,12 @@
   end if
 
   T = 106
+  NT = 63
   a = new((/ ntim, nlat, N /),float)
   b = new((/ ntim, nlat, N /),float)
   shaec(div, a, b)
   tri_trunc(a, b, T)
-  exp_tapersh(a, b, 45, 2)
+  exp_tapersh(a, b, NT, 2)
   shsec(a, b, div)
   div = div * 1e6
   copy_VarCoords(slp, div)
@@ -107,7 +108,7 @@
 ;*************************************************
 ; plot results
 ;*************************************************    
-  wks  = gsn_open_wks("png","slp+div200_"+mmddhh+"_"+sday+"_to_"+eday+"_"+orig) ; send graphics to PNG file
+  wks  = gsn_open_wks("png","slp+div200_"+mmddhh+"_"+sday+"_to_"+eday+"_"+orig+"26") ; send graphics to PNG file
   plot = new(8,graphic)
   
   res                      = True

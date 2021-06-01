@@ -2,12 +2,12 @@
 init=${init:-2019100912}
 
 bstfile=bst_hagibis.txt
-orig=jma
+orig=ukmo
 case $orig in
     ecmwf ) M=50 ;;
     jma   ) M=26 ;;
     ncep  ) M=20 ;;
-    ukmo  ) M-17 ;;
+    ukmo  ) M=17 ;;
 esac
 
 for m in `seq $M`;do
