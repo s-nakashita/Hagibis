@@ -20,41 +20,43 @@ sigma = 0.0
 #outdir = Path("../ecmwf")
 #outdir.mkdir(0o755, True, True)
 t0 = datetime(2019, 10, 9, 0) # 2019-10-06 12:00:00
-#t0max = datetime(2019, 10, 9, 12) # 2019-10-07 12:00:00
-#while t0 <= t0max:
-init = t0.strftime("%m%d%H") # -> 2019100600
-year = t0.strftime("%Y")
-month = t0.strftime("%m")
-print(init)
-outfile = "./track" + year + init + "_gsm.txt"
-track = open(outfile, "w")
-infile = "../../netcdf/gsm/gl/"+year+"/"+month+"/init.nc"
-nc = netCDF4.Dataset(infile, 'r')
-lon = nc.variables['lon'][:]
-lat = nc.variables['lat'][:]
-time = nc.variables['time']
-for i in range(len(time)):
-    t = netCDF4.num2date(time[i], time.units) # 2019-10-06 12:00:00
-    print(t)
-    if t > btime[-1]: break
-    index_t0 = btime.index(t)
-    lon0 = bst[index_t0, 4]
-    lat0 = bst[index_t0, 5]
-    print(lon0, lat0)
-    slp = nc.variables['PRMSL_meansealevel'][i,]
-    lonmin, latmin, slpmin = grid.find_minimum(slp, lon, lat, lon0, lat0, sigma)
-    print(slpmin)
+t0max = datetime(2019, 10, 9, 12) # 2019-10-07 12:00:00
+while t0 <= t0max:
+    init = t0.strftime("%m%d%H") # -> 2019100600
+    year = t0.strftime("%Y")
+    month = t0.strftime("%m")
+    day = t0.strftime("%d")
+    hour = t0.strftime("%H")
+    print(init)
+    outfile = "./track" + year + init + "_gsm.txt"
+    track = open(outfile, "w")
+    infile = "/Volumes/dandelion/netcdf/gsm/gl/"+year+"/"+month+"/"+day+"/surface_"+hour+".nc"
+    nc = netCDF4.Dataset(infile, 'r')
+    lon = nc.variables['longitude'][:]
+    lat = nc.variables['latitude'][:]
+    time = nc.variables['time']
+    for i in range(len(time)):
+        t = netCDF4.num2date(time[i], time.units) # 2019-10-06 12:00:00
+        print(t)
+        if t > btime[-1]: break
+        index_t0 = btime.index(t)
+        lon0 = bst[index_t0, 4]
+        lat0 = bst[index_t0, 5]
+        print(lon0, lat0)
+        slp = nc.variables['prmsl'][i,]
+        lonmin, latmin, slpmin = grid.find_minimum(slp, lon, lat, lon0, lat0, sigma)
+        print(slpmin)
 #        y0 = np.deg2rad(lat0)
 #        y1 = np.deg2rad(latmin)
 #        dx = np.deg2rad(lonmin - lon0)
 #        d = np.arccos(np.sin(y0) * np.sin(y1) + np.cos(y0) * np.cos(y1) * np.cos(dx))
 #        if np.rad2deg(d) > dc: break
-    if slpmin > pc and latmin > latc : break
-    lon0 = lonmin
-    lat0 = latmin
-    print("{} {} {} {} {} {} {}".format(t.year, t.month, t.day, t.hour, lonmin, latmin, slpmin), file = track)
-nc.close()
-#t0 += dt
+        if slpmin > pc and latmin > latc : break
+        lon0 = lonmin
+        lat0 = latmin
+        print("{} {} {} {} {} {} {}".format(t.year, t.month, t.day, t.hour, lonmin, latmin, slpmin), file = track)
+    nc.close()
+    t0 += dt
 
 
 

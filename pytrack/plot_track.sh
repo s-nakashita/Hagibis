@@ -4,7 +4,7 @@ CDIR=`pwd`
 #datadir=rjtd
 datadir=`pwd` #jma
 bstfile=$CDIR/bst_hagibis.txt
-outfile=track_gsm.ps
+outfile=track_gsm_0900-0912.ps
 
 cd $datadir
 pwd
@@ -31,6 +31,7 @@ gmt pscoast -R125/165/12/45 -JQ12c -Bag -Dh -Gburlywood -Sazure -Wthinnest -A100
 #  plot_track ${init}
 #done
 plot_track 2019100900
+plot_track 2019100912
 #gmt psxy -R -J -O ${bstfile} -i4,5 -W3p -K >> ${outfile} 
 #gmt psxy -R -J -O ${bstfile} -i4,5 -Sc0.1i -Gblack >> ${outfile} 
 # best track
