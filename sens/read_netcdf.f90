@@ -2,8 +2,11 @@ module read_netcdf
   implicit none
   include '/opt/local/include/netcdf.inc'
 
-  integer,parameter :: imax=720,jmax=361,kmax=5,ntime=21
+  !integer,parameter :: imax=720,jmax=361,kmax=5,ntime=21
+  integer,parameter :: imax=720,jmax=361,kmax=9,ntime=21
   integer,parameter :: imaxa=720,jmaxa=361,kmaxa=3,ntimea=15
+  double precision, parameter :: dlon=0.5d0, dlat=0.5d0
+  double precision, parameter :: lon0=0.0d0, lat0=-90.0d0
 
 contains
 
@@ -51,7 +54,7 @@ contains
     real :: rlon(0:imax-1),rlat(jmax),rlev(kmax)
     integer :: rtime(ntime)
     real,intent(out) :: z(0:imax-1,jmax,kmax)
-    character,intent(in) :: fname*100,vname*1
+    character,intent(in) :: fname*100,vname*2
 
     ic=NF_OPEN(fname,0,ncid)
 
@@ -66,7 +69,7 @@ contains
     ic=NF_GET_VAR_REAL(ncid,idlev,rlev)
     ic=NF_GET_VAR_INT(ncid,idtime,rtime)
 
-    !print *, rlev
+    !print *, rlev(:)
     istart(1) = 1
     istart(2) = 1
     istart(3) = 1
@@ -83,9 +86,22 @@ contains
 
     return
   end subroutine fread3
-!
-! subroutine for NCEP-NCAR reanalysis data (regrid 720x361)
-!
+!-----------------------------------------------------------------------
+! Calculate boundary indexes
+!-----------------------------------------------------------------------
+  subroutine set_bound(slon,elon,slat,elat,islon,ielon,islat,ielat)
+    implicit none 
+    double precision,intent(in) ::  slon, elon, slat, elat
+    integer,intent(out)         :: islon,ielon,islat,ielat
+    islon = CEILING((slon-lon0)/dlon) + 1
+    ielon = CEILING((elon-lon0)/dlon) + 1
+    islat = CEILING((slat-lat0)/dlat) + 1
+    ielat = CEILING((elat-lat0)/dlat) + 1
+    return
+  end subroutine set_bound
+!-----------------------------------------------------------------------
+! Subroutine for NCEP-NCAR reanalysis data (regrid 720x361)
+!-----------------------------------------------------------------------
   subroutine freada(fname,vname,ip,z,slon,elon,slat,elat)
     implicit none
     integer :: istart(3),icount(3)
@@ -180,9 +196,9 @@ contains
 
     return
   end subroutine fread3a  
-!
-! calcurate time steps between 2 dates
-!
+!-----------------------------------------------------------------------
+! Calculate time steps between 2 dates
+!-----------------------------------------------------------------------
   subroutine calc_steps(idate,edate,dt,nt)
     implicit none
     integer,intent(in) :: idate,edate !format:yyyymmddhh
@@ -249,9 +265,9 @@ contains
     nt = nh + nd*(24/dt) + nm*(24/dt)*30 + ny*(24/dt)*365
     return
   end subroutine calc_steps
-!
-! calcurate date after any timesteps
-!
+!-----------------------------------------------------------------------
+! Calculate date after specified timesteps
+!-----------------------------------------------------------------------
   subroutine calc_date(idate,nt,edate)
     implicit none
     integer,intent(in) :: idate, nt !format:yyyymmddhh
@@ -289,9 +305,9 @@ contains
 
     return
   end subroutine calc_date
-!
-! calcurate specific humidity from relative humidity
-!
+!-----------------------------------------------------------------------
+! Calculate specific humidity from relative humidity
+!-----------------------------------------------------------------------
   SUBROUTINE calc_q(t,rh,p,q)
     IMPLICIT NONE
     double precision,PARAMETER :: t0=273.15d0
@@ -301,9 +317,9 @@ contains
     double precision,PARAMETER :: e0i=6.1121d0
     double precision,PARAMETER :: ai=22.587d0
     double precision,PARAMETER :: bi=273.86d0
-    real,INTENT(IN) :: t,rh,p !rh=%,p=hPa
-    real,INTENT(OUT) :: q
-    real :: e,es,tc
+    double precision,INTENT(IN) :: t,rh,p !rh=%,p=hPa
+    double precision,INTENT(OUT) :: q
+    double precision :: e,es,tc
 
     tc = t-t0
     IF(tc >= 0.0d0) THEN
@@ -322,7 +338,7 @@ contains
     RETURN
   END SUBROUTINE calc_q
 !-----------------------------------------------------------------------
-! Compute relative humidity (RH)
+! Calculate relative humidity (RH)
 !-----------------------------------------------------------------------
   SUBROUTINE calc_rh(t,q,p,rh)
     IMPLICIT NONE
@@ -333,8 +349,8 @@ contains
     DOUBLE PRECISION,PARAMETER :: e0i=6.1121d0
     DOUBLE PRECISION,PARAMETER :: ai=22.587d0
     DOUBLE PRECISION,PARAMETER :: bi=273.86d0
-    REAL,INTENT(IN) :: t,q,p
-    REAL,INTENT(OUT) :: rh
+    DOUBLE PRECISION,INTENT(IN) :: t,q,p
+    DOUBLE PRECISION,INTENT(OUT) :: rh
     DOUBLE PRECISION :: e,es,tc
   
     e = q * p * 0.01d0 / (0.378d0 * q + 0.622d0)
