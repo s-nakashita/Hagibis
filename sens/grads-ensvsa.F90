@@ -15,7 +15,15 @@ program grads_ensvsa
   integer,parameter :: nvar=(nv3d-3)*nlev+nv2d-1
 #endif
   double precision,parameter :: pi=atan(1.0d0)*4.0d0
-  double precision,parameter :: cp=1005.7d0, R=287.04d0, Lh=2.5104d6 
+  double precision,parameter :: cp=1005.7d0, R=287.04d0
+#ifdef moist
+  double precision,parameter :: Lh=2.5104d6
+#ifndef weak
+  double precision,parameter :: epsilon=1.0d0
+#else
+  double precision,parameter :: epsilon=1.0d-1
+#endif
+#endif 
   double precision,parameter :: Tr=270.0d0, pr=1.0d3
   ! Target region
   double precision, parameter :: slon=137.0d0, elon=142.0d0, slat=33.0d0, elat=37.0d0
@@ -128,7 +136,11 @@ program grads_ensvsa
    narea=nlon*nlat
 ! File Open 
 #ifdef moist
+#ifndef weak
    rdw='./weight-TE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
+#else
+   rdw='./weight-wTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
+#endif
 #else
    rdw='./weight-dTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
 #endif
@@ -139,16 +151,26 @@ program grads_ensvsa
    write(ne,'(I1)') emode
    if (smode==emode) then
 #ifdef moist
+#ifndef weak
       wd='./ensvsa-TE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
      wds='./ps-ensvsa-TE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
+#else
+     wd='./ensvsa-wTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
+     wds='./ps-ensvsa-wTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
+#endif
 #else
      wd='./ensvsa-dTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
      wds='./ps-ensvsa-dTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
 #endif
    else
 #ifdef moist
+#ifndef weak
       wd='./ensvsa-TE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
      wds='./ps-ensvsa-TE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
+#else
+     wd='./ensvsa-wTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
+     wds='./ps-ensvsa-wTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
+#endif
 #else
      wd='./ensvsa-dTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
      wds='./ps-ensvsa-dTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'-gr'
@@ -417,7 +439,7 @@ program grads_ensvsa
      !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
 #ifdef moist
      !q
-      ze(:,:,4*nlev+1:5*nlev,:)=ze(:,:,4*nlev+1:5*nlev,:)*Lh/sqrt(cp*Tr)
+      ze(:,:,4*nlev+1:5*nlev,:)=ze(:,:,4*nlev+1:5*nlev,:)*Lh/sqrt(cp*Tr)*sqrt(epsilon)
 #endif
       !do imem=1,mem
       !   print*,imem

@@ -15,7 +15,15 @@ program tevol_ensvsa
 #endif
   integer,parameter :: nvar=nv3d*nlev+nv2d-1
   double precision,parameter :: pi=atan(1.0d0)*4.0d0
-  double precision,parameter :: cp=1005.7d0, R=287.04d0, Lh=2.5104d6 
+  double precision,parameter :: cp=1005.7d0, R=287.04d0
+#ifdef moist
+  double precision,parameter :: Lh=2.5104d6
+#ifndef weak
+  double precision,parameter :: epsilon=1.0d0
+#else
+  double precision,parameter :: epsilon=1.0d-1
+#endif
+#endif 
   double precision,parameter :: Tr=270.0d0, pr=1.0d3
   ! Target region
   double precision, parameter :: slon=137.0d0, elon=142.0d0, slat=33.0d0, elat=37.0d0
@@ -124,10 +132,17 @@ program tevol_ensvsa
 ! File Open 
    if (smode==emode) then
 #ifdef moist
+#ifndef weak
       wd(1)='TE-moist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(2)='KE-moist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(3)='PE-moist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(4)='LE-moist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+#else
+      wd(1)='TE-wmoist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+      wd(2)='KE-wmoist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+      wd(3)='PE-wmoist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+      wd(4)='LE-wmoist-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+#endif
 #else
       wd(1)='TE-dry-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(2)='KE-dry-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
@@ -135,25 +150,36 @@ program tevol_ensvsa
 #endif
    else
 #ifdef moist
+#ifndef weak
       wd(1)='TE-moist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(2)='KE-moist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(3)='PE-moist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(4)='LE-moist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+#else
+      wd(1)='TE-wmoist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+      wd(2)='KE-wmoist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+      wd(3)='PE-wmoist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+      wd(4)='LE-wmoist-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
+#endif
 #else
       wd(1)='TE-dry-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(2)='KE-dry-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
       wd(3)='PE-dry-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_nlev'//cnlev//'.txt'
 #endif
    endif
-   open(21,file=wd(1),status='new')
-   open(22,file=wd(2),status='new')
-   open(23,file=wd(3),status='new')
+   open(21,file=wd(1),status='replace')
+   open(22,file=wd(2),status='replace')
+   open(23,file=wd(3),status='replace')
 #ifdef moist
-   open(24,file=wd(4),status='new')
+   open(24,file=wd(4),status='replace')
 #endif
    !mem=memn 
 #ifdef moist
+#ifndef weak
    rdw='./weight-TE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
+#else
+   rdw='./weight-wTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
+#endif
 #else
    rdw='./weight-dTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
 #endif
@@ -392,7 +418,7 @@ program tevol_ensvsa
      !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
 #ifdef moist
      !q
-      ze(:,:,3*nlev+1:4*nlev,:)=ze(:,:,3*nlev+1:4*nlev,:)*Lh/sqrt(cp*Tr)
+      ze(:,:,3*nlev+1:4*nlev,:)=ze(:,:,3*nlev+1:4*nlev,:)*Lh/sqrt(cp*Tr)*sqrt(epsilon)
 #endif
       !do imem=1,mem
       !   print*,imem

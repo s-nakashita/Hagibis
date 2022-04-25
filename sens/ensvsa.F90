@@ -12,7 +12,15 @@ program ensvsa
   integer,parameter :: nvar=nlev*3+1 
 #endif
   double precision,parameter :: pi=atan(1.0d0)*4.0d0
-  double precision,parameter :: cp=1005.7d0, R=287.04d0, Lh=2.5104d6 
+  double precision,parameter :: cp=1005.7d0, R=287.04d0
+#ifdef moist
+  double precision,parameter :: Lh=2.5104d6
+#ifndef weak
+  double precision,parameter :: epsilon=1.0d0
+#else
+  double precision,parameter :: epsilon=1.0d-1
+#endif
+#endif
   double precision,parameter :: Tr=270.0d0, pr=1.0d3
   ! Target region
   double precision, parameter :: slon=137.0d0, elon=142.0d0, slat=33.0d0, elat=37.0d0
@@ -112,8 +120,13 @@ program ensvsa
   ip = ip+1
   !ip=13
 #ifdef moist
+#ifndef weak
   wd='./weight-TE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
   logf='./TE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.log'
+#else
+  wd='./weight-wTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
+  logf='./wTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.log'
+#endif
 #else
   wd='./weight-dTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.grd'
   logf='./dTE-'//trim(orig)//'-'//yyyymmddhh//'_nlev'//cnlev//'.log'
@@ -314,7 +327,7 @@ program ensvsa
   !ze(:,:,10,:)=ze(:,:,10,:)*sqrt(R*Tr)/pr
 #ifdef moist
   !q
-   ze(:,:,3*nlev+1:4*nlev,:)=ze(:,:,3*nlev+1:4*nlev,:)*Lh/sqrt(cp*Tr)
+   ze(:,:,3*nlev+1:4*nlev,:)=ze(:,:,3*nlev+1:4*nlev,:)*Lh/sqrt(cp*Tr)*sqrt(epsilon)
 #endif
   !! check
    do imem=1,mem

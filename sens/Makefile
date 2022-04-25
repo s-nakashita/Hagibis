@@ -83,6 +83,21 @@ TE:	#	ensvsa-TE grads-ensvsa-TE tevol-ensvsa-TE
 	mv ensvsa grads-ensvsa tevol-ensvsa $(BINDIR);\
 	ls -l $(BINDIR)
 	@echo END
+wTE:	#	ensvsa-TE grads-ensvsa-TE tevol-ensvsa-TE
+	rm -r $(WKD) || echo
+	mkdir -p $(WKD) || echo
+	mkdir -p $(WKD)/CPPOUT || echo
+	mkdir -p $(BINDIR) || echo
+	cd $(WKD);\
+	$(MAKE) ensvsa -f $(PARENT_DIR)Makefile \
+	CPPFLAGS="$(CPPFLAGS) -Dmoist -Dweak" VPATH=$(PARENT_DIR);\
+	$(MAKE) grads-ensvsa -f $(PARENT_DIR)Makefile \
+	CPPFLAGS="$(CPPFLAGS) -Dmoist -Dweak" VPATH=$(PARENT_DIR);\
+	$(MAKE) tevol-ensvsa -f $(PARENT_DIR)Makefile \
+	CPPFLAGS="$(CPPFLAGS) -Dmoist -Dweak" VPATH=$(PARENT_DIR);\
+	mv ensvsa grads-ensvsa tevol-ensvsa $(BINDIR);\
+	ls -l $(BINDIR)
+	@echo END
 dTE:	#ensvsa-dTE grads-ensvsa-dTE
 	rm -r $(WKD) || echo
 	mkdir -p $(WKD) || echo

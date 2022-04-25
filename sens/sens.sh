@@ -9,8 +9,8 @@ case $orig in
 esac
 idate=2019100912
 edate=2019101212
-smode=1
-emode=1
+smode=3
+emode=3
 nlev=6
 if [ $nlev -eq 3 ]; then
 plevs="300 500 850"
@@ -60,8 +60,7 @@ enfile=`echo ${header1} | sed -e "s/ensvsa-${ntype}//g"`-${header2}.txt
 #make ${ntype}      || exit 10
 #./bin/ensvsa       || exit 11
 #./bin/grads-ensvsa || exit 12
-#rm *${enfile}
-#./bin/tevol-ensvsa     || exit 13
+#./bin/tevol-ensvsa || exit 13
 
 isec=$(date -jf "%Y%m%d%H" "${idate}" +"%s")
 esec=$(date -jf "%Y%m%d%H" "${edate}" +"%s")
@@ -85,30 +84,7 @@ case $mm in
 esac
 nlev=8
 plevs="200 250 300 500 700 850 925 1000"
-if [ ${ntype} = TE ]; then
-cat > $cfile << EOF
-DSET ^${ofile}
-UNDEF 9.999E+20
-OPTIONS big_endian template
-ydef 361 linear -90.0 0.5
-xdef 720 linear 0.0 0.5
-zdef ${nlev} levels ${plevs}
-tdef ${nd} linear ${hh}Z${dd}${mon}${yyyy} 6hr
-vars 11
-ugrd ${nlev} 33,100,0 U component of wind [m/s]
-vgrd ${nlev} 33,100,0 V component of wind [m/s]
-t ${nlev} 33,100,0 Temperature [K]
-q ${nlev} 33,100,0 Specific Humidity [kg/kg]
-gh ${nlev} 33,100,0 Geopotential Height [gpm]
-te ${nlev} 33,100,0 Total moist energy [J/kg/m^2]
-ke ${nlev} 33,100,0 Kinetic energy [J/kg/m^2]
-pe ${nlev} 33,100,0 Potential energy (T) [J/kg/m^2]
-le ${nlev} 33,100,0 Latent heat [J/kg/m^2]
-pres_meansealev 0 33,100,0  Pressure at mean sea level [hPa]
-peps 0 33,100,0 Potential energy (Ps) [J/kg/m^2]
-endvars
-EOF
-elif [ ${ntype} = dTE ]; then
+if [ ${ntype} = dTE ]; then
 cat > $cfile << EOF
 DSET ^${ofile}
 UNDEF 9.999E+20
@@ -129,8 +105,31 @@ pres_meansealev 0 33,100,0  Pressure at mean sea level [hPa]
 peps 0 33,100,0 Potential energy (Ps) [J/kg/m^2]
 endvars
 EOF
+else
+cat > $cfile << EOF
+DSET ^${ofile}
+UNDEF 9.999E+20
+OPTIONS big_endian template
+ydef 361 linear -90.0 0.5
+xdef 720 linear 0.0 0.5
+zdef ${nlev} levels ${plevs}
+tdef ${nd} linear ${hh}Z${dd}${mon}${yyyy} 6hr
+vars 11
+ugrd ${nlev} 33,100,0 U component of wind [m/s]
+vgrd ${nlev} 33,100,0 V component of wind [m/s]
+t ${nlev} 33,100,0 Temperature [K]
+gh ${nlev} 33,100,0 Geopotential Height [gpm]
+q ${nlev} 33,100,0 Specific Humidity [kg/kg]
+te ${nlev} 33,100,0 Total moist energy [J/kg/m^2]
+ke ${nlev} 33,100,0 Kinetic energy [J/kg/m^2]
+pe ${nlev} 33,100,0 Potential energy (T) [J/kg/m^2]
+le ${nlev} 33,100,0 Latent heat [J/kg/m^2]
+pres_meansealev 0 33,100,0  Pressure at mean sea level [hPa]
+peps 0 33,100,0 Potential energy (Ps) [J/kg/m^2]
+endvars
+EOF
 fi
-#cat $cfile
+cat $cfile
 #cdo -f nc import_binary ${cfile} ${ncfile}
 if [ ${orig} = jma ]; then
     lfilter=False
@@ -154,15 +153,17 @@ cat config.ncl
 
 ### plotting perturbations
 #for d in $(seq 0 $((${nd} - 1)));do
-ncl -nQ d=0 ensvsa.ncl
-ncl -nQ d=$((${nd} - 1)) ensvsa.ncl
+#ncl -nQ d=0 ensvsa.ncl
+#ncl -nQ d=$((${nd} - 1)) ensvsa.ncl
 #done
 ### plotting perturbation vorticity
 #ncl -nQ d=0 lfilter=True ensvsa_vor.ncl
 ### plotting height-longitude sector
-#latc=22.0
 #for d in $(seq 0 3); do # 20.0 30.0 35.0; do
-#ncl -nQ d=$d latc=${latc} ensvsa_h-lon.ncl
+latc=15.0
+ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
+latc=22.0
+ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
 ##ncl -nQ d=$((${nd} - 1)) latc=${latc} ensvsa_h-lon.ncl
 #done
 ### plotting SLP & vertical-interpolated winds
@@ -170,23 +171,23 @@ ncl -nQ d=$((${nd} - 1)) ensvsa.ncl
 #ncl -nQ d=4 ensvsa_vint.ncl
 #ncl -nQ d=$((${nd} - 1)) ensvsa_vint.ncl
 ### plotting Energy distribution
-for EN in te ke pe; do
-out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
-ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
-done
+#for EN in te ke pe; do
+#out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
+#ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
+#done
 ### compute Energy vertical profile
-for EN in ke pe; do
-for latc in 15.0 25.0 35.0; do
-ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
-done
-done
-if [ ${ntype} = TE ]; then
-EN=le
-out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
-ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
-for latc in 15.0 25.0 35.0; do
-ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
-done
-fi
+#for EN in ke pe; do
+#for latc in 15.0 25.0 35.0; do
+#ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
+#done
+#done
+#if [ ${ntype} != dTE ]; then
+#EN=le
+#out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
+#ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
+#for latc in 15.0 25.0 35.0; do
+#ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
+#done
+#fi
 #rm -f ${ofile} ${ncfile}
 ls -ltr | tail -9

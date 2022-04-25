@@ -64,7 +64,7 @@ begin
   vg = (/-1*vg/)
   temp     = f->t(d,:,:,:)
   temp = (/-1*temp/)
-  if (ntype .eq. "TE") then
+  if (ntype .ne. "dTE") then
     spfh	  = f->q(d,:,:,:)
     spfh = (/-1*spfh/)
   end if
@@ -142,7 +142,7 @@ begin
      temp@long_name = "Temparature"
      temp@units     = "K" 
      printMinMax(temp, 0)
-   if (ntype.eq."TE") then
+   if (ntype.ne."dTE") then
      ;; spfh
      shaec(spfh, a, b)
      ;tri_trunc(a, b, T)
@@ -223,7 +223,7 @@ begin
       u = ug(ilev,:,:)
       v = vg(ilev,:,:)
       t = temp(ilev,:,:)
-      if (ntype.eq."TE") then
+      if (ntype.ne."dTE") then
       q = spfh(ilev,:,:)
       q = q*1000
       end if
@@ -235,7 +235,11 @@ begin
       res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
+      if (ntype.ne."dTE") then
       res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
+      else
+      res@gsnCenterString	   = "T+wind_"+hgt+"hPa"
+      end if
       res@gsnCenterStringFontHeightF = 0.025
       res@gsnCenterStringOrthogonalPosF = 0.04
       ;res@gsnCenterStringParallelPosF   = 0.45
@@ -304,7 +308,7 @@ begin
   
       plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,resv)
 
-   if (ntype.eq."TE") then
+   if (ntype.ne."dTE") then
       res@cnFillOn             = False             ; turn on color for contours
       res@cnLinesOn            = True              ; turn off contour lines
       res@cnLineLabelsOn       = True
