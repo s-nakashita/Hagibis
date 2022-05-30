@@ -55,7 +55,11 @@ with trackf.open() as track:
         logging.debug(\
             f"output coordinate lon:max{lonout.max():.3f}, min{lonout.min():.3f} \n lat:max{latout.max():.3f},min{latout.min():.3f}")
 
-        data = xr.open_dataset(datadir / innc).sel(time=date)
+        try:
+            data = xr.open_dataset(datadir / innc).sel(time=date)
+        except KeyError:
+            logging.warning(f"{date_str} isn't in {innc}")
+            break
         logging.debug(data)
         
         # add cyclic

@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 
 latc=35
 file=f"_avr_latc{latc}.mtx"
-exp="dTE"
-out=f"ensvsa-{exp}_prof_latc{latc}.png"
+exp="wTE"
+#out=f"ensvsa-{exp}_prof_latc{latc}.png"
 #file="_avr_target.mtx"
 #out=f"ensvsa-{exp}_prof_target.png"
-#out=f"ensvsa-{exp}_prof.png"
-t_range = range(8,13)
+out=f"ensvsa-{exp}_prof.png"
+t_range = range(0,13,4)
 data = np.loadtxt("ke"+file, skiprows=1)
 ft = data[:,0]
 print(ft)

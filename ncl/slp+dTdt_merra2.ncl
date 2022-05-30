@@ -22,24 +22,26 @@ begin
 ;---Open netCDF file
   ;hh = 12
   ;cmap = read_colormap_file("precip3_16lev") ; all level
-  cmap = read_colormap_file("BlueDarkRed18") ; low level
+  ;cmap = read_colormap_file("BlueDarkRed18") ; low level
+  cmap = read_colormap_file("MPL_YlOrRd") ; low level
   ;cmap = cmap(::-1,:) ; for dyn
-  wks = gsn_open_wks("png","slp+dTdt_mid_mst")
-  plot = new(8,graphic)
+  wks = gsn_open_wks("png","slp+dTdt_mst")
+  plot = new(16,graphic)
 
   id = 0
-  
-  do dd = 9, 10
+  pmax = 850
+  pmin = 250
+  do dd = 9, 12
   idate = 2019100000 + dd*100
   yyyymmdd = str_get_cols(sprinti("%0.10d",idate), 0, 7)
-  a = addfile("../../netcdf/nasa/merra2/MERRA2_400.tavg1_2d_slv_Nx."+yyyymmdd+".nc4","r")
-  b = addfile("../../netcdf/nasa/merra2/MERRA2_400.tavg3_3d_tdt_Np."+yyyymmdd+".nc4","r")
+  a = addfile("/Volumes/dandelion/netcdf/nasa/merra2/MERRA2_400.tavg1_2d_slv_Nx."+yyyymmdd+".nc4","r")
+  b = addfile("/Volumes/dandelion/netcdf/nasa/merra2/MERRA2_400.tavg3_3d_tdt_Np."+yyyymmdd+".nc4","r")
   lat     = b->lat
   lon     = b->lon
-  lev     = b->lev({600:200})
+  lev     = b->lev({pmax:pmin})
   print(lev)
-  dp      = dpres_plevel_Wrap(lev, lev({600}), lev({200}), 0)
-  dpall = lev({600})-lev({200})
+  dp      = dpres_plevel_Wrap(lev, lev({pmax}), lev({pmin}), 0)
+  dpall = lev({pmax})-lev({pmin})
   dp = dp/dpall
   print(dp)
   time2d  = a->time
@@ -54,13 +56,22 @@ begin
 ; Read in U and V at 1000 mb [subscript 0]
 ; Determine the subscripts corresponding to Jan 88
 ;
-     d2      = ind(date2d.eq.date3d(d))
-     ps      = a->SLP(d2,:,:);PRMSL_meansealevel(:,180:340,180:360)
-     ps = ps/100
+     ind_p    = ind(date2d.eq.date3d(d))
+     ps       = a->SLP(ind_p,:,:);PRMSL_meansealevel(:,180:340,180:360)
+     ind_p2   = ind(date2d.eq.date3d(d+1))
+     ps       = ps + a->SLP(ind_p2,:,:)
+     ps       = ps*1e-2/2.
      ps@units = "hPa"
-     dTp      = b->DTDTTOT(d,{600:200},:,:)
-     dTm      = b->DTDTMST(d,{600:200},:,:)
-     dT = dTm
+     dTp      = b->DTDTTOT(d,{pmax:pmin},:,:)
+     dTp      = dTp + b->DTDTTOT(d+1,{pmax:pmin},:,:)
+     dTp      = dTp * 0.5
+     dTm      = b->DTDTMST(d,{pmax:pmin},:,:)
+     dTm      = dTm + b->DTDTMST(d+1,{pmax:pmin},:,:)
+     dTm      = dTm * 0.5
+     dT       = dTm
+     ctime    = time3d(d)
+     ctime    = (ctime + time3d(d+1))/2
+     date     = cd_string(ctime, "%N%D %H:%M")
      ;dT = dTp - dTm
      dT = dT*conform(dT, dble2flt(dp), 0)
      dTdt = ps
@@ -74,7 +85,7 @@ begin
      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = date3d(d)
+     res@gsnCenterString	   = date
      res@gsnRightString     = dTdt@units
      res@gsnLeftString	   = ps@units
      res@gsnCenterStringOrthogonalPosF = 0.02
@@ -88,9 +99,9 @@ begin
      res@mpFillOn             = False 
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpMinLonF            =  130.               ; select a subregion
-     res@mpMaxLonF            =  180.
-     res@mpMinLatF            =  -10. 
-     res@mpMaxLatF            =  20.
+     res@mpMaxLonF            =  160.
+     res@mpMinLatF            =  10. 
+     res@mpMaxLatF            =  40.
 
      res@lbLabelBarOn         = False
      ;res@lbOrientation            = "Vertical"     ; vertical label bar
@@ -101,8 +112,8 @@ begin
 ; you must manually set those levels.
 
      res@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
-     ;res@cnLevels = (/0.1,0.2,0.3,0.4,0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0/)
-     res@cnLevels = (/-2.5,-2.0,-1.5,-1.0,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,1.0,1.5,2.0,2.5/)
+     res@cnLevels = (/0.0,0.1,0.2,0.3,0.4,0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0/)
+     ;res@cnLevels = (/-2.5,-2.0,-1.5,-1.0,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,1.0,1.5,2.0,2.5/)
      ;res@cnMaxLevelCount	   = 20
      ;res@cnMinLevelValF       = 0.5               ; set min contour level
      ;res@cnMaxLevelValF       = 5.0                ; set max contour level
@@ -114,8 +125,8 @@ begin
      resp@gsnFrame	      = False
      resp@cnLevelSelectionMode = "ManualLevels"
      resp@cnMinLevelValF       = 1000.0               ; set min contour level
-     resp@cnMaxLevelValF       = 1080.0                 ; set max contour level
-     resp@cnLevelSpacingF      = 1.0               ; set contour spacing
+     resp@cnMaxLevelValF       = 1020.0                 ; set max contour level
+     resp@cnLevelSpacingF      = 4.0               ; set contour spacing
      resp@cnFillOn             = False               ; turn on color for contours
      resp@cnLinesOn            = True                ; turn off contour lines
      resp@cnLineLabelsOn        = True
@@ -135,6 +146,6 @@ begin
    resP	                   = True
    ;resP@gsnPanelMainString	   = "SLP + "+dT@long_name+" 600-200 hPa"
    resP@gsnPanelLabelBar     = True
-   gsn_panel(wks,plot,(/2,4/),resP)
+   gsn_panel(wks,plot,(/4,4/),resP)
    delete(plot)
 end

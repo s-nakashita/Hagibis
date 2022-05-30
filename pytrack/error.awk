@@ -23,5 +23,6 @@ BEGIN { ft = 0 }
       print ft, dist(lon[yyyymmddhh], lat[yyyymmddhh], $5, $6)
       ft += 6
     }
+#    getline
   }
 }

@@ -57,19 +57,22 @@ begin
 ;  end if
   end if
   end if
-;; 00Z -> *(-1)
   ug       = f->ugrd(d,:,:,:)
-  ug = (/-1*ug/)
   vg       = f->vgrd(d,:,:,:)
-  vg = (/-1*vg/)
   temp     = f->t(d,:,:,:)
-  temp = (/-1*temp/)
   if (ntype .ne. "dTE") then
     spfh	  = f->q(d,:,:,:)
-    spfh = (/-1*spfh/)
   end if
   ps       = f->pres_meansealev(d,:,:)
+  if (orig.ne."ncep") then
+  ug = (/-1*ug/)
+  vg = (/-1*vg/)
+  temp = (/-1*temp/)
   ps = (/-1*ps/)
+  if (ntype .ne. "dTE") then
+    spfh = (/-1*spfh/)
+  end if
+  end if
   te       = f->te(d,:,:,:)
   lat_uv   = f->lat
   lon_uv   = f->lon
@@ -205,8 +208,8 @@ begin
 ;************************************************
  ypts = (/ 37.0, 37.0, 33.0, 33.0, 37.0/)
  xpts = (/137.0,142.0,142.0,137.0,137.0/)
-; xpts = (/135.0,140.0,140.0,135.0,135.0/)
-;  ypts = (/ 27.0, 27.0, 24.0, 24.0, 27.0/)
+ xpts2= (/145.0,155.0,155.0,145.0,145.0/)
+ ypts2= (/ 18.0, 18.0,  8.0,  8.0, 18.0/)
 ;  xpts = (/136.0,139.0,139.0,136.0,136.0/)
 ;************************************************
 ; add the box
@@ -509,6 +512,11 @@ begin
    do i = 0 , 3
       dum(i)=gsn_add_polyline(wks,plote,xpts(i:i+1),ypts(i:i+1),resp)      
    end do   
+   dum2 = new(4,graphic)  
+; draw each line separately. Each line must contain two points.
+   do i = 0 , 3
+      dum2(i)=gsn_add_polyline(wks,plote,xpts2(i:i+1),ypts2(i:i+1),resp)      
+   end do
    ;plot(4) = plote
    draw(plote)
    frame(wks)

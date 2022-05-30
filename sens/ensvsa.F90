@@ -5,7 +5,11 @@ program ensvsa
   implicit none
     
   ! Parameters
+#ifdef lev6
   integer,parameter :: nlev=6 
+#else
+  integer,parameter :: nlev=3
+#endif
 #ifdef moist
   integer,parameter :: nvar=nlev*4+1 
 #else
@@ -47,8 +51,11 @@ program ensvsa
   double precision,allocatable ::  ze(:,:,:,:)
   double precision ::  sigma(nlev)
   double precision :: plev(nlev),dplev(nlev-1)
-  !data plev/300.0,500.0,850.0/
-  data plev/300.0d0,500.0d0,700.0d0,850.0d0,925.0d0,1000.0d0/
+#ifdef lev6
+   data plev/300.0d0,500.0d0,700.0d0,850.0d0,925.0d0,1000.0d0/
+#else
+   data plev/300.0,500.0,850.0/
+#endif
   double precision,allocatable ::  z(:,:),zT(:,:)
   double precision,allocatable :: u8(:,:),vt8(:,:)
   real,allocatable :: vt(:,:),v(:,:),vtv(:,:)
@@ -181,23 +188,35 @@ program ensvsa
         !print*,maxval(zv),minval(zv)
          if    (id==1)then
             !ug=zv3(:,:,1:3)
-            !ug=zv3(:,:,3:)
+#ifdef lev6
             ug=dble(zv3(:,:,4:))
+#else
+            ug=dble(zv3(:,:,3:))
+#endif
          elseif(id==2)then
             !vg=zv3(:,:,1:3)
-            !vg=zv3(:,:,3:)
+#ifdef lev6
             vg=dble(zv3(:,:,4:))
-         elseif(id==3)then
+#else
+            vg=dble(zv3(:,:,3:))
+#endif
+            elseif(id==3)then
             !T=zv3(:,:,1:3)
-            !T=zv3(:,:,3:)
+#ifdef lev6
             T =dble(zv3(:,:,4:))
+#else
+            T =dble(zv3(:,:,3:))
+#endif
          endif
       enddo
 #ifdef moist
       call fread3(rdf,vname(4),ip,zv3)
       !q=zv3(:,:,1:3)
-      !q=zv3(:,:,3:)
+#ifdef lev6
       q =dble(zv3(:,:,4:))
+#else
+      q =dble(zv3(:,:,3:))
+#endif
       !rh=zv3(:,:,1:3)
       !print*,"rh",rh(1,1,1)
       !do k=1,kmax
@@ -255,21 +274,34 @@ program ensvsa
             call fread3(rdf,vname(id),ip,zv3)
             if    (id==1)then
                !ug=zv3(:,:,1:3)
-               !ug=zv3(:,:,3:)
+#ifdef lev6
                ug=dble(zv3(:,:,4:))
+#else
+               ug=dble(zv3(:,:,3:))
+#endif
             elseif(id==2)then
                !vg=zv3(:,:,1:3)
-               !vg=zv3(:,:,3:)
+#ifdef lev6
                vg=dble(zv3(:,:,4:))
-            elseif(id==3)then
+#else
+               vg=dble(zv3(:,:,3:))
+#endif
+               elseif(id==3)then
                !T=zv3(:,:,1:3)
-               !T=zv3(:,:,3:)
+#ifdef lev6
                T =dble(zv3(:,:,4:))
+#else
+               T =dble(zv3(:,:,3:))
+#endif
             endif
          enddo
 #ifdef moist
          call fread3(rdf,vname(4),ip,zv3)
+#ifdef lev6
          q =dble(zv3(:,:,4:))
+#else
+         q =dble(zv3(:,:,3:))
+#endif
 #endif
          call fread(rdf,vname(5),ip,zv)
          ps=dble(zv)*1.0d-2     !Pa->hPa

@@ -18,12 +18,12 @@ case $center in
     ukmo ) orig=egrr ;;
 esac
 #orig=${center}
-#trackf=../pytrack/$orig/track${yyyymmddhh}.txt
+trackf=../pytrack/$orig/track${yyyymmddhh}.txt
 #trackf=../pytrack/$center/track${yyyymmddhh}_mean.txt
-trackf=../pytrack/$center/gtrack${yyyymmddhh}_mean.txt
+#trackf=../pytrack/$center/gtrack${yyyymmddhh}_mean.txt
 #trackf=../pytrack/$orig/track_anl.txt
-datadir=../../netcdf/tigge/${yyyy}/$center
-outdir=../../netcdf/tigge/${yyyy}/$center/rotate
+datadir=/Volumes/dandelion/netcdf/tigge/${yyyy}/$center
+outdir=/Volumes/dandelion/netcdf/tigge/${yyyy}/$center/rotate
 if [ ! -d $outdir ]; then
     mkdir $outdir
 fi
@@ -34,5 +34,5 @@ echo $yyyymmddhh $datadir $trackf $nlon $nlat $latmax | python rotate_uv_glb.py
 
 echo $yyyymmddhh | python create_netcdf_glb.py
 
-#mv np_${yyyymmddhh}_mean.nc ${outdir}/
-#rm np_*_${yyyymmddhh}_mean.nc
+mv np_glb_${yyyymmddhh}_mean.nc ${outdir}/
+rm np_*_${yyyymmddhh}_mean.nc

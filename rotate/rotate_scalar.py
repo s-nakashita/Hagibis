@@ -6,7 +6,7 @@ import xarray as xr
 import pandas as pd
 import librotate
 
-#Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_scalar.py
+#Usage echo yyyymmddhh datadir trackf nlon nlat latmax orig | python rotate_scalar.py
 param = sys.stdin.readline().strip("\n").split(" ")
 yyyymmddhh = param[0]
 ddirname   = param[1]
@@ -14,19 +14,26 @@ trackname  = param[2]
 nlon       = int(param[3])
 nlat       = int(param[4])
 latmax     = float(param[5]) #degree
+orig       = param[6]
+if len(param) > 7:
+    mem = param[7]
+else:
+    mem = "mean"
 dlat = latmax/(nlat-1) #degree
 
 datadir = Path(ddirname)
 outdir = Path('./')
 mmddhh = yyyymmddhh[4:]
-innc = mmddhh+'_mean.nc'
-outnc = 'np_sc_'+yyyymmddhh+'_mean.nc'
+innc = mmddhh+'_'+mem+'.nc'
+outnc = 'np_sc_'+yyyymmddhh+'_'+mem+'.nc'
 #innc = 'anl.nc'
 #outnc = 'np_sc_anl.nc'
 trackf = Path(trackname)
 
-var_sfc = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground']
-#var_sfc = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground']
+if orig == "ukmo":
+    var_sfc = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground']
+else:
+    var_sfc = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground']
 #var_pl = ['TMP_000mb','SPFH_000mb','HGT_000mb']
 var_pl = ['TMP','SPFH','HGT']
 
@@ -54,8 +61,11 @@ with trackf.open() as track:
         lonout,latout = librotate.rotate_lonlat(lonc,latc,lonin,latin)
         print(lonout.max(),lonout.min(),latout.max(),latout.min())
     
-        data = xr.open_dataset(datadir / innc).sel(time=date)
-        print(data)
+        try:
+            data = xr.open_dataset(datadir / innc).sel(time=date)
+            print(data)
+        except KeyError:
+            continue
 
         lon = data["lon"].values
         lat = data["lat"].values

@@ -20,12 +20,14 @@
 begin
 
 ;---Open netCDF file
-  rank = "best"
-  mem = "05"
-  orig = "jma"
-  dev = "pdf"
-  a = addfile("../../netcdf/tigge/2019/"+orig+"/glb_2019100912_mean.nc","r")
-  b = addfile("../../netcdf/tigge/2019/"+orig+"/glb_2019100912_"+mem+".nc","r")
+;  rank = "worst"
+do m=1,17
+  mem = sprinti("%0.2d", m) ;"26"
+  orig = "ukmo"
+  init = "0912"
+  dev = "png"
+  a = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_mean.nc","r")
+  b = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_"+mem+".nc","r")
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -43,18 +45,8 @@ begin
   ;q12      = b->SPFH(:,:,:,:)
   ;ps12     = b->PRES_meansealevel(:,:,:)
   ;z12      = b->HGT(:,:,:,:)
-  u00      = a->u(:,:,:,:)
-  v00      = a->v(:,:,:,:)
-  t00      = a->t(:,:,:,:)
-  q00      = a->q(:,:,:,:)
   ps00     = a->msl(:,:,:)
-  z00      = a->gh(:,:,:,:)
-  u12      = b->u(:,:,:,:)
-  v12      = b->v(:,:,:,:)
-  t12      = b->t(:,:,:,:)
-  q12      = b->q(:,:,:,:)
   ps12     = b->msl(:,:,:)
-  z12      = b->gh(:,:,:,:)
   lat_uv   = a->latitude
   lon_uv   = a->longitude
   plev     = a->level
@@ -67,7 +59,8 @@ begin
   lat0 = 0.
   lat1 = 40.
   
-  out = "prtb_"+orig+"_"+rank
+  ;out = "prtb_"+orig+"_"+rank
+  out = "prtb_"+orig+"/prtb_"+orig+"_"+init+"_"+mem
 ;  wks = gsn_open_wks("png","prtb_mem26")
 ;  plot = new(4,graphic)
   cmap = read_colormap_file("hotcold_18lev")
@@ -88,10 +81,11 @@ begin
   resps@gsnFrame	      = False
 ;   res@cnInfoLabelOn	      = False
      
-  resps@gsnCenterString	   = ""
+  resps@gsnCenterString	   = "slp"
   resps@gsnCenterStringOrthogonalPosF = 0.02
   resps@gsnLeftString	    = ""
-  resps@gsnRightString	    = ""
+  resps@gsnRightString	    = "hPa"
+  resps@gsnRightStringFontHeightF = 0.02
   resps@gsnAddCyclic	      = False
   resps@cnFillOn             = True               ; turn on color for contours
   resps@cnLinesOn            = False              ; turn off contour lines
@@ -125,11 +119,11 @@ begin
 
   resps@cnFillOn             = False             ; turn on color for contours
   resps@cnLinesOn            = True              ; turn off contour lines
-  resps@cnLineLabelsOn       = True
+  resps@cnLineLabelsOn       = False
   resps@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
    ;resps@cnMaxLevelCount	   = 10
-  resps@cnMinLevelValF       = 960.0              ; set min contour level
-  resps@cnMaxLevelValF       = 1080.0                 ; set max contour level
+  resps@cnMinLevelValF       = 1003.0              ; set min contour level
+  resps@cnMaxLevelValF       = 1019.0                 ; set max contour level
   resps@cnLevelSpacingF      = 4.0               ; set contour spacing
 ; when using the gsn_csm plot templates and overlay, it is necessary to
 ; turn off the automatic label strings so that you don't get text on 
@@ -139,13 +133,25 @@ begin
   resps@gsnCenterString  = ""
       
   plotpf = gsn_csm_contour(wks,pful,resps)
-  ;overlay(plotp,plotpf)
+  overlay(plotp,plotpf)
   ;plot(0) = plotp
   draw(plotp)
   frame(wks)
   delete(plotp)
   delete(plotpf)
-  do k = 2, 4
+end do
+exit()
+  u00      = a->u(:,:,:,:)
+  v00      = a->v(:,:,:,:)
+  t00      = a->t(:,:,:,:)
+  q00      = a->q(:,:,:,:)
+  z00      = a->gh(:,:,:,:)
+  u12      = b->u(:,:,:,:)
+  v12      = b->v(:,:,:,:)
+  t12      = b->t(:,:,:,:)
+  q12      = b->q(:,:,:,:)
+  z12      = b->gh(:,:,:,:)
+  do k = 3, 8
      u = u12(ind_12,k,:,:)
      u = u12(ind_12,k,:,:) - u00(ind_00,k,:,:) 
      v = v12(ind_12,k,:,:)
@@ -167,8 +173,11 @@ begin
      
      res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
      res@gsnCenterStringOrthogonalPosF = 0.02
-     res@gsnLeftString	    = ""
-     res@gsnRightString	    = ""
+     res@gsnLeftString	    = "K"
+     res@gsnLeftStringFontHeightF = 0.02
+     res@gsnRightString	    = "g/kg"
+     res@gsnRightStringFontHeightF = 0.02
+     res@gsnRightStringParallelPosF = 1.1    
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False              ; turn off contour lines

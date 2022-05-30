@@ -23,16 +23,16 @@ begin
   
   id = 0
   idate = 2019100900
-  edate = 2019101012
+  edate = 2019101218
   sday  = str_get_cols(sprinti("%0.10d",idate), 4, 9)
   eday  = str_get_cols(sprinti("%0.10d",edate), 4, 9)
-  cmap  = read_colormap_file("BlueDarkRed18")
+  cmap  = read_colormap_file("spread_15lev")
   wks   = gsn_open_wks("png","slp+lwr_era5_"+sday+"-"+eday)
-  plot  = new(2*2,graphic)
+  plot  = new(4*4,graphic)
   yyyymmdd = str_get_cols(sprinti("%0.10d",idate), 0, 7)
   yyyy     = str_get_cols(sprinti("%0.10d",idate), 0, 3)
   mm       = str_get_cols(sprinti("%0.10d",idate), 4, 5)
-  a = addfile("../../netcdf/era5/"+yyyy+"/"+mm+"/msl+lwr.nc","r")
+  a = addfile("/Volumes/dandelion/netcdf/era5/"+yyyy+"/"+mm+"/msl+lwr.nc","r")
   ;b = addfile("../../netcdf/nasa/merra2/MERRA2_400.tavg1_2d_rad_Nx."+yyyymmdd+".nc4","r")
   lat     = a->latitude
   lon     = a->longitude
@@ -46,7 +46,7 @@ begin
   date    = cd_string(time, "%N%D %H UTC")
   print(date)
   
-  do d = ds, de, 2
+  do d = ds, de
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -71,15 +71,14 @@ begin
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False               ; turn off contour lines
      res@cnLineLabelsOn       = False              ; turn off contour line labels
-     res@gsnScalarContour     = True               ; (for gsn_csm_vector_scalar_map)draw contours
-     res@cnFillPalette        = cmap
+     res@cnFillPalette        = cmap(::-1,:)
 
      res@mpFillOn             = False 
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
-     res@mpMinLonF            =  130.               ; select a subregion
+     res@mpMinLonF            =  120.               ; select a subregion
      res@mpMaxLonF            =  180.
      res@mpMinLatF            =  -10. 
-     res@mpMaxLatF            =  20.
+     res@mpMaxLatF            =  55.
 
      res@lbLabelBarOn         = False
      ;res@lbOrientation            = "Vertical"     ; vertical label bar
@@ -89,11 +88,11 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-     ;res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+     res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
      ;res@cnMaxLevelCount	   = 20
-     ;res@cnMinLevelValF       = -500.0               ; set min contour level
-     ;res@cnMaxLevelValF       = 500.0                 ; set max contour level
-     ;res@cnLevelSpacingF      = 50.0               ; set contour spacing
+     res@cnMinLevelValF       = 100.0               ; set min contour level
+     res@cnMaxLevelValF       = 280.0                 ; set max contour level
+     res@cnLevelSpacingF      = 20.0               ; set contour spacing
 
      plotdz = gsn_csm_contour_map_ce(wks,lwr,res)
      resp = True
@@ -101,8 +100,8 @@ begin
      resp@gsnFrame	      = False
      resp@cnLevelSelectionMode = "ManualLevels"
      resp@cnMinLevelValF       = 1000.0               ; set min contour level
-     resp@cnMaxLevelValF       = 1080.0                 ; set max contour level
-     resp@cnLevelSpacingF      = 1.0               ; set contour spacing
+     resp@cnMaxLevelValF       = 1020.0                 ; set max contour level
+     resp@cnLevelSpacingF      = 4.0               ; set contour spacing
      resp@cnFillOn             = False               ; turn on color for contours
      resp@cnLinesOn            = True                ; turn off contour lines
      resp@cnLineLabelsOn        = True
@@ -121,6 +120,6 @@ begin
    resP	                   = True
    ;resP@gsnPanelMainString	   = "SLP + "+lwr@long_name
    resP@gsnPanelLabelBar     = True
-   gsn_panel(wks,plot,(/2,2/),resP)
+   gsn_panel(wks,plot,(/4,4/),resP)
    delete(plot)
 end

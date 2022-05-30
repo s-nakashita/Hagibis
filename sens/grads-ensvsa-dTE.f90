@@ -5,12 +5,12 @@ program grads_ensvsa_dTE
   implicit none
  
   !integer,parameter :: dslon=95, delon=105, dslat=67, delat=75 
-  !integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
-  integer,parameter :: dslon=271, delon=281, dslat=247, delat=255 
+  integer,parameter :: dslon=275, delon=285, dslat=247, delat=255 
+  !integer,parameter :: dslon=271, delon=281, dslat=247, delat=255 
   integer,parameter :: nlon=delon-dslon+1, nlat=delat-dslat+1 
   integer,parameter :: narea=nlon*nlat 
-  integer,parameter :: nv3d=3,nv2d=2,nlev=3
-  integer,parameter :: nvar=nv3d*nlev+nv2d-1 
+  integer,parameter :: nv3d=3,nv2d=4,nlev=3
+  integer,parameter :: nvar=nv3d*nlev+nv2d-3 
   !integer,parameter :: memo=50, memn=26 
   real,parameter :: dtheta=0.5, pi=atan(1.0)*4.0 
   real,parameter :: cp=1005.7, R=287.04, Lh=2.5104*10**6 
@@ -34,7 +34,7 @@ program grads_ensvsa_dTE
   data plev/300.0,500.0,850.0/
   real,allocatable ::  z(:,:),zT(:,:)
   real,allocatable :: sg(:),p(:),w(:,:)
-  real :: TE(imax,jmax)
+  real :: TE(imax,jmax),KE(imax,jmax),PE(imax,jmax)
   real :: v3d(imax,jmax,nlev,nv3d) !ug,vg,T
   real :: v2d(imax,jmax,nv2d) !ps,TE
   real :: buf4(imax,jmax)
@@ -48,15 +48,15 @@ program grads_ensvsa_dTE
   namelist /sens_nml/ orig, mem, idate, edate, smode, emode
 
   character rdf*100,rdw*100,wd*100
-  character dir*30,dira*33,ns*1,ne*1,nmem*2
-  character yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10
+  character dir*32,dira*33,ns*1,ne*1,nmem*2
+  character yyyy*4,mm*2,mmddhh*6,yyyymmddhh*10,cedate*10
   character(len=3) :: vname(4)
   !character(len=4) :: vnamea(5)
   !data vname/'UGRD','VGRD','TMP','PRES_meansealevel'/
   data vname/'u','v','t','msl'/
   !data vnamea/'air','uwnd','vwnd','shum','slp'/
      !|----/----/----/----/----/----/----/----/----/----| 
-  dir='/Users/nakashita/netcdf/tigge/'
+  dir='/Volumes/dandelion/netcdf/tigge/'
  !dira='/Users/nakashita/netcdf/nc-reanl/'
 
    sigma(1)=200.0/pr
@@ -69,7 +69,8 @@ program grads_ensvsa_dTE
    read(11,nml=sens_nml)
    write(*,nml=sens_nml)
    close(11)
-   call calc_steps(idate,edate,12,tday)
+   !call calc_steps(idate,edate,12,tday)
+   call calc_steps(idate,edate,6,tday)
    print*,tday
    tday = tday+1
    !yyyymmddhh="2019100912"
@@ -78,14 +79,16 @@ program grads_ensvsa_dTE
    mm=yyyymmddhh(5:6)
    mmddhh=yyyymmddhh(5:10)
    print*,yyyy,mmddhh
+   write(cedate,'(I10)') edate
+   print *, cedate
    !smode=1
    !emode=1
    write(ns,'(I1)') smode
    write(ne,'(I1)') emode
    if (smode==emode) then
-      wd='./ensvsa-dTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'_n-gr'
+      wd='./ensvsa-dTE-m'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_n-gr'
    else
-      wd='./ensvsa-dTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'_n-gr'
+      wd='./ensvsa-dTE-m'//ns//'-'//ne//'-'//trim(orig)//'-'//yyyymmddhh//'-'//cedate//'_n-gr'
    endif
    open(21,file=wd,status='new',access='direct',&
           &        convert='big_endian',&
@@ -124,7 +127,7 @@ program grads_ensvsa_dTE
    !edate=2019100900
    read(yyyymmddhh,*) edate
    print*,"edate=",edate
-   do fday=0,tday !every 12 hours
+   do fday=0,tday !every 6 hours
       !idate=2019100900
       read(yyyymmddhh,*) idate
       call calc_steps(idate,edate,6,ip)
@@ -232,6 +235,8 @@ program grads_ensvsa_dTE
       enddo
      
       !zm=0.0
+      v3d = 0.0d0
+      v2d = 0.0d0
       do n = 1,nv3d
          do k = 1,nlev
             ivar = (n-1)*nlev + k
@@ -281,22 +286,31 @@ program grads_ensvsa_dTE
       !   print*,ze(1,1,:,imem)
       !enddo
 
-     !4.calcurate TE
+     !4.calcurate energy
       TE=0.0
+      KE=0.0
+      PE=0.0
       zm=0.0
       do imode=smode,emode
          do imem=1,mem
             zm=zm+ze(:,:,:,imem)*w(imem,imode)*sg(imode)/ssg
          enddo
       enddo
-     
+
       do ivar=1,nvar
          TE=TE+zm(:,:,ivar)**2/2
       enddo
-         
+      do ivar=1,6
+         KE=KE+zm(:,:,ivar)**2/2
+      enddo
+      do ivar=7,nvar
+         PE=PE+zm(:,:,ivar)**2/2
+      enddo
       !print*,"max",maxval(TE),"min",minval(TE)
 
       v2d(:,:,2) = TE
+      v2d(:,:,3) = KE
+      v2d(:,:,4) = PE
 
       it=fday+1
       do n=1,nv3d
@@ -312,7 +326,8 @@ program grads_ensvsa_dTE
          irec = irec+1
       enddo
       idate=edate
-      call calc_date(idate,2,edate)
+      !call calc_date(idate,2,edate)
+      call calc_date(idate,1,edate)
       print*, "edate=",edate
    enddo
    close(21)

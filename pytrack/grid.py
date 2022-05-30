@@ -22,7 +22,7 @@ def __set_stencil(g, i0, j0):
     f[8] = g[j0, ia]
     return f
 
-def find_minimum(g, lon, lat, lon0, lat0, sigma=0):
+def find_minimum(g, lon, lat, lon0, lat0, slp0, lonpre, latpre, sigma=0):
     gg = g if sigma==0 else ndimage.gaussian_filter(g, sigma)
     #print(np.min(gg),np.max(gg))
     loc_min = np.where( \
@@ -32,17 +32,45 @@ def find_minimum(g, lon, lat, lon0, lat0, sigma=0):
     y1 = np.deg2rad(lat[loc_min[0]])
     y0 = np.deg2rad(lat0)
     d = np.arccos(np.sin(y0) * np.sin(y1) + np.cos(y0) * np.cos(y1) * np.cos(dx))
-    n = np.argmin(d)
-    imin = loc_min[1][n]
-    jmin = loc_min[0][n]
+    #n = np.argmin(d)
+    #ncand = np.argsort(d)
+    g_min = g[loc_min[0],loc_min[1]]
+    #print(g_min)
+    g_min = np.abs(g_min - slp0)
+    ncand = np.argsort(g_min)
+    #print(n,ncand)
+    #  distance threshold
+    re = 6.371e3 #[km]
+    #if latpre is not None and latpre < 35.0:
+    d_thres = 1000.0 / re #[km]
+    #else:
+    #    d_thres = 1e6 / re #[m]
+    for i in range(ncand.size):
+        n = ncand[i]
+        imin = loc_min[1][n]
+        jmin = loc_min[0][n]
+        f = __set_stencil(g, imin, jmin)
+        x, y, gmin = biquadratic.interpolate(f)
+        dlon = lon[1] - lon[0]
+        lonmin = (lon[imin] + x * dlon) % 360
+        dlat = 0.5 * (lat[min(jmin + 1, lat.size-1)] - lat[max(jmin - 1, 0)])
+        latmin = min(max(lat[jmin] + y * dlat, -90), 90)
+        if lonpre is None or latpre is None : break
+        # check the distance from best track and previous center
+        dxtmp = np.deg2rad(lon0 - lonmin)
+        y1tmp = np.deg2rad(lat0)
+        y0tmp = np.deg2rad(latmin)
+        dtmp0 = np.arccos(np.sin(y0tmp) * np.sin(y1tmp) \
+            + np.cos(y0tmp) * np.cos(y1tmp) * np.cos(dxtmp))
+        dxtmp = np.deg2rad(lonpre - lonmin)
+        y1tmp = np.deg2rad(latpre)
+        y0tmp = np.deg2rad(latmin)
+        dtmp1 = np.arccos(np.sin(y0tmp) * np.sin(y1tmp) \
+            + np.cos(y0tmp) * np.cos(y1tmp) * np.cos(dxtmp))
+        print(dtmp0*re, dtmp1*re)
+        if dtmp0 < d_thres and dtmp1 < d_thres : break
     print("grid center")
-    print(lon[imin],lat[jmin])
-    f = __set_stencil(g, imin, jmin)
-    x, y, gmin = biquadratic.interpolate(f)
-    dlon = lon[1] - lon[0]
-    lon0 = (lon[imin] + x * dlon) % 360
-    dlat = 0.5 * (lat[min(jmin + 1, lat.size-1)] - lat[max(jmin - 1, 0)])
-    lat0 = min(max(lat[jmin] + y * dlat, -90), 90)
-    return lon0, lat0, gmin
+    print(f"{lon[imin]:.3f}, {lat[jmin]:.3f}, {g[jmin,imin]:.3f}")
+    return lonmin, latmin, gmin
 
     

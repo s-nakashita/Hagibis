@@ -6,7 +6,11 @@ program tevol_ensvsa
   implicit none
  
   ! Parameters
+#ifdef lev6
   integer,parameter :: nlev=6 
+#else
+  integer,parameter :: nlev=3
+#endif
   integer,parameter :: nv2d=2 !ps, PE(ps)
 #ifdef moist
   integer,parameter :: nv3d=4 !u,v,T,q
@@ -61,8 +65,11 @@ program tevol_ensvsa
   ! level
   double precision ::  sigma(nlev),ssg
   double precision :: plev(nlev),dplev(nlev-1)
-  !data plev/300.0,500.0,850.0/
-  data plev/300.0d0,500.0d0,700.0d0,850.0d0,925.0d0,1000.0d0/
+#ifdef lev6
+   data plev/300.0d0,500.0d0,700.0d0,850.0d0,925.0d0,1000.0d0/
+#else
+   data plev/300.0,500.0,850.0/
+#endif
   real,allocatable :: sg(:),p(:),w(:,:)
   double precision,allocatable :: TE(:),KE(:),PE(:),LE(:)
   ! Namelist
@@ -254,33 +261,35 @@ program tevol_ensvsa
                !call fread3a(rdf,vnamea(id),ip,zv3,90.0d0,180.0d0,0.0d0,80.0d0)
                !print*,maxval(zv),minval(zv)
                if    (id==1)then
-                  !ug=zv3(:,:,1:3)
-                  !ug=zv3(:,:,3:)
-                  ug=dble(zv3(:,:,4:))
-               elseif(id==2)then
-                  !vg=zv3(:,:,1:3)
-                  !vg=zv3(:,:,3:)
-                  vg=dble(zv3(:,:,4:))
+               !ug=zv3(:,:,1:3)
+#ifdef lev6
+               ug=dble(zv3(:,:,4:))
+#else
+               ug=dble(zv3(:,:,3:))
+#endif
+            elseif(id==2)then
+               !vg=zv3(:,:,1:3)
+#ifdef lev6
+               vg=dble(zv3(:,:,4:))
+#else
+               vg=dble(zv3(:,:,3:))
+#endif
                elseif(id==3)then
-                  !T=zv3(:,:,1:3)
-                  !T=zv3(:,:,3:)
-                  T =dble(zv3(:,:,4:))
-               endif
-            enddo
+               !T=zv3(:,:,1:3)
+#ifdef lev6
+               T =dble(zv3(:,:,4:))
+#else
+               T =dble(zv3(:,:,3:))
+#endif
+            endif
+         enddo
 #ifdef moist
-            call fread3(rdf,vname(4),ip,zv3)
-            !q=zv3(:,:,1:3)
-            !q=zv3(:,:,3:)
-            q =dble(zv3(:,:,4:))
-            !rh=zv3(:,:,1:3)
-            !print*,"rh",rh(1,1,1)
-            !do k=1,kmax
-            !   do j=1,jmax
-            !      do i=1,imax
-            !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
-            !      enddo
-            !   enddo
-            !enddo
+         call fread3(rdf,vname(4),ip,zv3)
+#ifdef lev6
+         q =dble(zv3(:,:,4:))
+#else
+         q =dble(zv3(:,:,3:))
+#endif
 #endif
             call fread(rdf,vname(5),ip,zv)
             ps=dble(zv)*1.0d-2     !Pa->hPa
@@ -332,22 +341,45 @@ program tevol_ensvsa
          do id=1,3
             call fread3(rdf,vname(id),ip,zv3)
             if    (id==1)then
-               !ug=zv3(:,:,1:3)
-               !ug=zv3(:,:,3:)
-               ug=dble(zv3(:,:,4:))
-            elseif(id==2)then
-               !vg=zv3(:,:,1:3)
-               !vg=zv3(:,:,3:)
-               vg=dble(zv3(:,:,4:))
+            !ug=zv3(:,:,1:3)
+#ifdef lev6
+            ug=dble(zv3(:,:,4:))
+#else
+            ug=dble(zv3(:,:,3:))
+#endif
+         elseif(id==2)then
+            !vg=zv3(:,:,1:3)
+#ifdef lev6
+            vg=dble(zv3(:,:,4:))
+#else
+            vg=dble(zv3(:,:,3:))
+#endif
             elseif(id==3)then
-               !T=zv3(:,:,1:3)
-               !T=zv3(:,:,3:)
-               T =dble(zv3(:,:,4:))
-            endif
-         enddo
+            !T=zv3(:,:,1:3)
+#ifdef lev6
+            T =dble(zv3(:,:,4:))
+#else
+            T =dble(zv3(:,:,3:))
+#endif
+         endif
+      enddo
 #ifdef moist
-         call fread3(rdf,vname(4),ip,zv3)
-         q =dble(zv3(:,:,4:))
+      call fread3(rdf,vname(4),ip,zv3)
+      !q=zv3(:,:,1:3)
+#ifdef lev6
+      q =dble(zv3(:,:,4:))
+#else
+      q =dble(zv3(:,:,3:))
+#endif
+      !rh=zv3(:,:,1:3)
+      !print*,"rh",rh(1,1,1)
+      !do k=1,kmax
+      !   do j=1,jmax
+      !      do i=1,imax
+      !         call calc_q(T(i,j,k),rh(i,j,k),plev(k),q(i,j,k))
+      !      enddo
+      !   enddo
+      !enddo
 #endif
          call fread(rdf,vname(5),ip,zv)
          ps=dble(zv)*1.0d-2     !Pa->hPa

@@ -16,7 +16,7 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
   load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/cd_string.ncl"
-
+  load "config.ncl"
 begin
 
 ;---Open netCDF file
@@ -27,6 +27,7 @@ begin
 ; Determine the subscripts corresponding to Jan 88
 ;
   ;d = 0
+  ;nlev = 6
   mmddhh = str_get_cols(yyyymmddhh, 4, 9)
   lon0 = 120.
   lon1 = 160.
@@ -36,30 +37,40 @@ begin
       lat0 = 0.
       ;lat0 = -10.
       lat1 = 40.
-  else if (d.eq.2) then
-      out = gfile+"_v24h"
+  else if (d.lt.8) then
+      hh = sprinti("%d",6*d)
+      out = gfile+"_v"+hh+"h"
       ;lat0 = 20.
       lat0 = 0.
-      lat1 = 60.
+      lat1 = 40.
+;  else if (d.eq.9) then
+;      out = gfile+"_v54h"
+;      ;lat0 = 20.
+;      lat0 = 0.
+;      lat1 = 60.
   else
-      out = gfile+"_v"
-      ;lat0 = 20.
-      lat0 = 0.
+      hh = sprinti("%d",6*d)
+      out = gfile+"_v"+hh+"h"
+      lat0 = 20.
+      ;lat0 = 0.
       lat1 = 60.
+;  end if
   end if
   end if
-  ug       = f->ugrd(d,:,:,:)
-  vg       = f->vgrd(d,:,:,:)
-  temp     = f->t(d,:,:,:)
-  spfh	  = f->q(d,:,:,:)
-  ps       = f->pres_meansealev(d,:,:)
 ;; 00Z -> *(-1)
+  ug       = f->ugrd(d,:,:,:)
   ug = (/-1*ug/)
+  vg       = f->vgrd(d,:,:,:)
   vg = (/-1*vg/)
+  temp     = f->t(d,:,:,:)
   temp = (/-1*temp/)
-  spfh = (/-1*spfh/)
+  if (ntype .eq. "TE") then
+    spfh	  = f->q(d,:,:,:)
+    spfh = (/-1*spfh/)
+  end if
+  ps       = f->pres_meansealev(d,:,:)
   ps = (/-1*ps/)
-  te       = f->te(d,:,:)
+  te       = f->te(d,:,:,:)
   lat_uv   = f->lat
   lon_uv   = f->lon
   plev     = f->lev
@@ -131,6 +142,7 @@ begin
      temp@long_name = "Temparature"
      temp@units     = "K" 
      printMinMax(temp, 0)
+   if (ntype.eq."TE") then
      ;; spfh
      shaec(spfh, a, b)
      ;tri_trunc(a, b, T)
@@ -141,6 +153,7 @@ begin
      spfh@units     = "kg/kg" 
      printMinMax(spfh, 0)
      ;   ListPush(vl_plt, var_t)
+   end if
      delete(a)
      delete(b)
         ;delete(var)
@@ -203,94 +216,95 @@ begin
   resp@gsLineThicknessF = 3.0                       ; thickness of lines
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
-  do k = 0, 2
-     wks = gsn_open_wks(dev,out+"_"+sprinti("%0.3d",toint(plev(2-k))))
-     cmap = read_colormap_file("hotcold_18lev")
-     u = ug(2-k,:,:)
-     v = vg(2-k,:,:)
-     t = temp(2-k,:,:)
-     q = spfh(2-k,:,:)
-     q = q*1000
-     hgt = plev(2-k)
-     ;wks = gsn_open_wks(dev,out+"_"+hgt)
+  do k = 0, nlev-1
+      ilev = nlev-k-1
+      wks = gsn_open_wks(dev,out+"_"+sprinti("%0.3d",toint(plev(ilev))))
+      cmap = read_colormap_file("hotcold_18lev")
+      u = ug(ilev,:,:)
+      v = vg(ilev,:,:)
+      t = temp(ilev,:,:)
+      if (ntype.eq."TE") then
+      q = spfh(ilev,:,:)
+      q = q*1000
+      end if
+      hgt = plev(ilev)
+      ;wks = gsn_open_wks(dev,out+"_"+hgt)
 ;---Create plot
-     res                = True               ; plot mods desired
-     res@gsnDraw	      = False
-     res@gsnFrame	      = False
+      res                = True               ; plot mods desired
+      res@gsnDraw	      = False
+      res@gsnFrame	      = False
 ;     res@cnInfoLabelOn	      = False
      
-     res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
-     res@gsnCenterStringFontHeightF = 0.025
-     res@gsnCenterStringOrthogonalPosF = 0.04
-     ;res@gsnCenterStringParallelPosF   = 0.45
-     res@gsnLeftString	    = "K"
-     res@gsnLeftStringFontHeightF = 0.02
-     res@gsnRightString   = "10^(-3)kg/kg"
-     res@gsnRightStringFontHeightF = 0.02
-     res@gsnRightStringParallelPosF = 1.1    
-     res@gsnAddCyclic	      = False
-     res@cnFillOn             = True               ; turn on color for contours
-     res@cnLinesOn            = False              ; turn off contour lines
-     res@cnLineLabelsOn       = False              ; turn off contour line labels
-     res@gsnScalarContour     = True               ; contours desired
-     res@cnFillPalette        = cmap
+      res@gsnCenterString	   = "T,q+wind_"+hgt+"hPa"
+      res@gsnCenterStringFontHeightF = 0.025
+      res@gsnCenterStringOrthogonalPosF = 0.04
+      ;res@gsnCenterStringParallelPosF   = 0.45
+      res@gsnLeftString	    = "K"
+      res@gsnLeftStringFontHeightF = 0.02
+      res@gsnRightString   = "g/kg"
+      res@gsnRightStringFontHeightF = 0.02
+      res@gsnRightStringParallelPosF = 1.1    
+      res@gsnAddCyclic	      = False
+      res@cnFillOn             = True               ; turn on color for contours
+      res@cnLinesOn            = False              ; turn off contour lines
+      res@cnLineLabelsOn       = False              ; turn off contour line labels
+      res@cnFillPalette        = cmap
 
-     ;res@mpLandFillColor      = "gray"            ; set land to be gray
-     res@mpFillOn             = False
-     res@mpMinLonF            =  lon0               ; select a subregion
-     res@mpMaxLonF            =  lon1
-     res@mpMinLatF            =  lat0 
-     res@mpMaxLatF            =  lat1
-     res@lbOrientation            = "Vertical"     ; vertical label bar
-     res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
-
-     res@vpXF = 0.15
-     res@vpWidthF = 0.7
-
-; note, when doing a subregion, NCL determines the range of the data from
-; the full domain. If you wish to just consider the domain you are plotting,
-; you must manually set those levels.
+      res@vpXF = 0.15
+      res@vpWidthF = 0.7
 
       res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+
+      resv = res
+      ;res@mpLandFillColor      = "gray"            ; set land to be gray
+      resv@mpFillOn             = False
+      resv@mpMinLonF            =  lon0               ; select a subregion
+      resv@mpMaxLonF            =  lon1
+      resv@mpMinLatF            =  lat0 
+      resv@mpMaxLatF            =  lat1
+      resv@lbOrientation            = "Vertical"     ; vertical label bar
+      resv@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 ;     res@cnMaxLevelCount	   = 10
-   if (d.eq.0) then
+   if (d.le.4) then
 ;  d=0
-      res@cnMinLevelValF       = -2.              ; set min contour level
-      res@cnMaxLevelValF       = 2.                ; set max contour level
-      res@cnLevelSpacingF      = .2               ; set contour spacing
-      res@vcRefMagnitudeF      = 10.0
-   else if (d.eq.2) then 
+      resv@cnMinLevelValF       = -2.              ; set min contour level
+      resv@cnMaxLevelValF       = 2.                ; set max contour level
+      resv@cnLevelSpacingF      = .2               ; set contour spacing
+      resv@vcRefMagnitudeF      = 10.0
+   else if (d.le.8) then 
 ;  d=2
-      res@cnMinLevelValF       = -5.               ; set min contour level
-      res@cnMaxLevelValF       = 5.                 ; set max contour level
-      res@cnLevelSpacingF      = .5               ; set contour spacing
-      res@vcRefMagnitudeF      = 20.0
+      resv@cnMinLevelValF       = -5.               ; set min contour level
+      resv@cnMaxLevelValF       = 5.                 ; set max contour level
+      resv@cnLevelSpacingF      = .5               ; set contour spacing
+      resv@vcRefMagnitudeF      = 20.0
    else 
 ;  d=6
-      res@cnMinLevelValF       = -20.               ; set min contour level
-      res@cnMaxLevelValF       = 20.                 ; set max contour level
-      res@cnLevelSpacingF      = 2.               ; set contour spacing
-      res@vcRefMagnitudeF      = 100.0
+      resv@cnMinLevelValF       = -10.               ; set min contour level
+      resv@cnMaxLevelValF       = 10.                 ; set max contour level
+      resv@cnLevelSpacingF      = 1.               ; set contour spacing
+      resv@vcRefMagnitudeF      = 100.0
    end if
    end if
    ;end if
-      res@vcRefLengthF              = 0.045           ; define length of vec ref
-      res@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
-      res@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
-      res@vcRefAnnoArrowUseVecColor = False           ; don't use vec color for ref
+      resv@gsnScalarContour     = True               ; contours desired
+      resv@vcRefLengthF              = 0.045           ; define length of vec ref
+      resv@vcRefAnnoOrthogonalPosF   = -1.0            ; move ref vector
+      resv@vcRefAnnoArrowLineColor   = "black"         ; change ref vector color
+      resv@vcRefAnnoArrowUseVecColor = False           ; don't use vec color for ref
 
-;     res@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
-      res@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
-      res@vcLineArrowColor        = "black"           ; change vector color
-      res@vcLineArrowThicknessF   = 2.0               ; change vector thickness
-      res@vcMinDistanceF	      = 0.02
-      res@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
+;     resv@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
+      resv@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
+      resv@vcLineArrowColor        = "black"           ; change vector color
+      resv@vcLineArrowThicknessF   = 2.0               ; change vector thickness
+      resv@vcMinDistanceF	      = 0.02
+      resv@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
       wind = sqrt(u^2+v^2)
       u = where(wind.lt.0.1, u@_FillValue, u)
   
-      plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
+      plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,resv)
 
+   if (ntype.eq."TE") then
       res@cnFillOn             = False             ; turn on color for contours
       res@cnLinesOn            = True              ; turn off contour lines
       res@cnLineLabelsOn       = True
@@ -299,21 +313,21 @@ begin
       res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
       res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-      if (d.eq.0) then
+      if (d.le.4) then
 ;  d=0
       res@cnMinLevelValF       = -5.               ; set min contour level
       res@cnMaxLevelValF       = 5.                 ; set max contour level
       res@cnLevelSpacingF      = 1.               ; set contour spacing
-   else if (d.eq.2) then
+   else if (d.le.8) then
 ;  d=2
       res@cnMinLevelValF       = -10.               ; set min contour level
       res@cnMaxLevelValF       = 10.                 ; set max contour level
       res@cnLevelSpacingF      = 2.               ; set contour spacing
    else 
 ;  d=6
-      res@cnMinLevelValF       = -50.               ; set min contour level
-      res@cnMaxLevelValF       = 50.                 ; set max contour level
-      res@cnLevelSpacingF      = 5.               ; set contour spacing
+      res@cnMinLevelValF       = -20.               ; set min contour level
+      res@cnMaxLevelValF       = 20.                 ; set max contour level
+      res@cnLevelSpacingF      = 4.               ; set contour spacing
    end if
    end if
    ;end if
@@ -326,6 +340,8 @@ begin
       
       plotq = gsn_csm_contour(wks,q,res)
       overlay(plott,plotq)
+      delete(plotq)
+   end if
 ; create array of dummy graphic variables. This is required, b/c each line
 ; must be associated with a unique dummy variable.
       dum = new(4,graphic)  
@@ -337,7 +353,6 @@ begin
       draw(plott)
       frame(wks)
       delete(plott)
-      delete(plotq)
       delete(dum)
    end do
 
@@ -350,7 +365,7 @@ begin
 ;   res@cnInfoLabelOn	      = False
      
    ;reste@gsnCenterString	   = "Total moist energy + slp"
-   ;reste@gsnCenterString	   = "slp"
+   reste@gsnCenterString	   = "slp"
    reste@gsnCenterStringOrthogonalPosF = 0.02
    reste@gsnCenterStringParallelPosF   = 0.55
    reste@gsnCenterStringFontHeightF    = 0.025
@@ -358,8 +373,8 @@ begin
    reste@gsnLeftString	    = ""
    reste@gsnLeftStringFontHeightF = 0.02
    reste@gsnLeftStringParallelPosF = -0.1
-   ;reste@gsnRightString	    = "hPa"
-   reste@gsnRightString	    = ""
+   reste@gsnRightString	    = "hPa"
+   ;reste@gsnRightString	    = ""
    reste@gsnRightStringFontHeightF = 0.02
    reste@gsnRightStringParallelPosF = 1.1
    reste@gsnAddCyclic	      = False
@@ -387,7 +402,7 @@ begin
    reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
    ;reste@cnLevelSelectionMode = "ExplicitLevels"
 ;     res@cnMaxLevelCount	   = 10
-   if (d.eq.0) then
+   if (d.le.4) then
 ;  d=0
       ;reste@cnLevels = (/1.,2.,4.,6.,8.,10.,15.,20.,25.,30.,35.,40.,45.,50.,60.,70.,80./)
       ;reste@cnLevels = (/1.,2.,3.,4.,5.,6.,8.,10.,12.5,15.,17.5,20./)
@@ -398,21 +413,21 @@ begin
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 10.               ; set contour spacing
-   else if (d.eq.2) then
+   else if (d.le.8) then
 ;  d=2
       ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
-      reste@cnMinLevelValF       = -20.0               ; set min contour level
-      reste@cnMaxLevelValF       = 20.                 ; set max contour level
-      reste@cnLevelSpacingF      = 2.               ; set contour spacing
+      reste@cnMinLevelValF       = -10.0               ; set min contour level
+      reste@cnMaxLevelValF       = 10.                 ; set max contour level
+      reste@cnLevelSpacingF      = 1.               ; set contour spacing
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 10.               ; set contour spacing
    else 
 ;  d=6
       ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
-      reste@cnMinLevelValF       = -100.0               ; set min contour level
-      reste@cnMaxLevelValF       = 100.                 ; set max contour level
-      reste@cnLevelSpacingF      = 10.               ; set contour spacing
+      reste@cnMinLevelValF       = -50.0               ; set min contour level
+      reste@cnMaxLevelValF       = 50.                 ; set max contour level
+      reste@cnLevelSpacingF      = 5.               ; set contour spacing
       ;reste@cnMinLevelValF       = 100.               ; set min contour level
       ;reste@cnMaxLevelValF       = 1000.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 100.               ; set contour spacing
@@ -449,7 +464,7 @@ begin
    ;resps@cnLevelSelectionMode = "ExplicitLevels"
    resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-   if (d.eq.0) then
+   if (d.le.4) then
 ;  d=0
       ;resps@cnLevels = (/1.,2.,3.,4.,5.,6.,8.,10.,12.5,15.,17.5,20./)
       resps@cnMinLevelValF       = 20.               ; set min contour level
@@ -458,7 +473,7 @@ begin
       ;resps@cnMinLevelValF       = -5.0               ; set min contour level
       ;resps@cnMaxLevelValF       = 5.                 ; set max contour level
       ;resps@cnLevelSpacingF      = 0.5               ; set contour spacing
-   else if (d.eq.2) then
+   else if (d.le.8) then
 ;  d=2
       ;resps@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
       resps@cnMinLevelValF       = 20.0               ; set min contour level

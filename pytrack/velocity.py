@@ -35,44 +35,46 @@ def direction(lon1, lon2, lat1, lat2):
     return theta * rad2deg
 # year mon day hour lon   lat  slp
 # 2019 10  4   18   164.4 15.7 100800
-bst = np.loadtxt("bst_hagibis.txt")
-btime = []
-ind = []
-i = -1
-for t in bst[:, (0, 1, 2, 3)].astype(np.int32): # [2019 10 4 18]
-    i += 1
-    if not t[3] % 6 == 0:
-        print(t[3])
-        continue 
-    btime.append(datetime(*t)) # 2019-10-04 18:00:00
-    ind.append(i)
-print(bst[(ind),3])
-outfile = "bst_velocity.txt"
-velocity = open(outfile, "w")
-for l in range(len(btime)):
-    ind1 = max(0,l-1)
-    ind2 = min(len(btime)-1,l+1)
-    lon1 = bst[ind[ind1], 4]
-    lon2 = bst[ind[ind2], 4]
-    lat1 = bst[ind[ind1], 5]
-    lat2 = bst[ind[ind2], 5]
-    dt = (btime[ind2] - btime[ind1]).total_seconds()
-    v = speed(lon1, lon2, lat1, lat2, dt)
-    d = direction(lon1, lon2, lat1, lat2)
-    print("{} {} {} {} {} {}".format(int(btime[l].year), int(btime[l].month), \
+outbst = False
+if outbst:
+    bst = np.loadtxt("bst_hagibis.txt")
+    btime = []
+    ind = []
+    i = -1
+    for t in bst[:, (0, 1, 2, 3)].astype(np.int32): # [2019 10 4 18]
+        i += 1
+        if not t[3] % 6 == 0:
+            print(t[3])
+            continue 
+        btime.append(datetime(*t)) # 2019-10-04 18:00:00
+        ind.append(i)
+    print(bst[(ind),3])
+    outfile = "bst_velocity.txt"
+    velocity = open(outfile, "w")
+    for l in range(len(btime)):
+        ind1 = max(0,l-1)
+        ind2 = min(len(btime)-1,l+1)
+        lon1 = bst[ind[ind1], 4]
+        lon2 = bst[ind[ind2], 4]
+        lat1 = bst[ind[ind1], 5]
+        lat2 = bst[ind[ind2], 5]
+        dt = (btime[ind2] - btime[ind1]).total_seconds()
+        v = speed(lon1, lon2, lat1, lat2, dt)
+        d = direction(lon1, lon2, lat1, lat2)
+        print("{} {} {} {} {} {}".format(int(btime[l].year), int(btime[l].month), \
         int(btime[l].day), int(btime[l].hour), v, d),\
          file=velocity)
 
 origin = ["ecmf", "rjtd", "kwbc", "egrr"]
 dt0 = timedelta(hours = 12)
 for orig in origin:
-    t0 = datetime(2019, 10, 8, 0)
-    t0max = datetime(2019, 10, 10, 12)
+    t0 = datetime(2019, 10, 7, 0)
+    t0max = datetime(2019, 10, 11, 0)
     while t0 <= t0max:
         init = t0.strftime("%Y%m%d%H")
         yyyy = t0.strftime("%Y")
-        tfile = orig + "/track" + init + ".txt"
-        ofile = orig + "/velocity" + init + ".txt"
+        tfile = orig + "/track" + init + "_mod.txt"
+        ofile = orig + "/velocity" + init + "_mod.txt"
         track = np.loadtxt(tfile)
         velocity = open(ofile, "w")
         time = []

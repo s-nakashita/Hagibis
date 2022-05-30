@@ -3,7 +3,11 @@ module read_netcdf
   include '/opt/local/include/netcdf.inc'
 
   !integer,parameter :: imax=720,jmax=361,kmax=5,ntime=21
+#ifdef lev6
   integer,parameter :: imax=720,jmax=361,kmax=9,ntime=21
+#else
+  integer,parameter :: imax=720,jmax=361,kmax=5,ntime=21
+#endif
   integer,parameter :: imaxa=720,jmaxa=361,kmaxa=3,ntimea=15
   double precision, parameter :: dlon=0.5d0, dlat=0.5d0
   double precision, parameter :: lon0=0.0d0, lat0=-90.0d0

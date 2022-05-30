@@ -9,14 +9,14 @@ case $orig in
 esac
 idate=2019100912
 edate=2019101212
-smode=3
-emode=3
-nlev=6
-if [ $nlev -eq 3 ]; then
-plevs="300 500 850"
-elif [ $nlev -eq 6 ]; then
-plevs="300 500 700 850 925 1000"
+smode=1
+emode=1
+nlev=3
+CPPFLAGS="-cpp -E -P"
+if [ $nlev -eq 6 ]; then
+CPPFLAGS=${CPPFLAGS}" -Dlev6"
 fi
+echo $CPPFLAGS
 cat > sens.nml << EOF
 &sens_nml
 orig = "${orig}",
@@ -43,6 +43,8 @@ else
     header1=ensvsa-${ntype}-m${smode}-${emode}
 fi
 header2=${orig}-${idate}-${edate}_nlev${nlev}
+wfile=weight-${ntype}-${orig}-${idate}_nlev${nlev}.grd
+logfile=${ntype}-${orig}-${idate}_nlev${nlev}.log
 ofile=${header1}-${header2}-gr
 cfile=${header1}-${header2}.ctl
 ncfile=${header1}-${header2}.nc
@@ -50,18 +52,18 @@ mfile=/Volumes/dandelion/netcdf/tigge/${yyyy}/${orig}/glb_${idate}_mean.nc
 gfile=${header1}_t+wind_nlev${nlev}_${orig}_${mm}${dd}${hh}-${em}${ed}${eh}_isign
 tefile=${header1}_EN_${orig}_${mm}${dd}${hh}-${em}${ed}${eh}
 enfile=`echo ${header1} | sed -e "s/ensvsa-${ntype}//g"`-${header2}.txt
-#if [ -e $ofile ]; then
-#    rm -f ${ofile} ${ncfile}
-#    rm weight-${ntype}-${orig}-${idate}_nlev${nlev}.grd
-#fi
-#if [ read_netcdf.f90 -nt read_netcdf.mod ]; then
-#    make clean
-#fi
-#make ${ntype}      || exit 10
-#./bin/ensvsa       || exit 11
-#./bin/grads-ensvsa || exit 12
-#./bin/tevol-ensvsa || exit 13
-
+if [ -e $ofile ]; then
+    rm -f ${ofile} ${ncfile} ${wfile}
+fi
+if [ read_netcdf.F90 -nt read_netcdf.mod ]; then
+    make clean
+fi
+make ${ntype} CPPFLAGS="${CPPFLAGS}" || exit 10
+./bin/ensvsa                       || exit 11
+./bin/grads-ensvsa                 || exit 12
+./bin/tevol-ensvsa                 || exit 13
+# weights' ASCII text
+awk '{if($1 == "vector="){$1="";print}}' $logfile > ${logfile%.*}.txt
 isec=$(date -jf "%Y%m%d%H" "${idate}" +"%s")
 esec=$(date -jf "%Y%m%d%H" "${edate}" +"%s")
 diff=$((${esec} - ${isec}))
@@ -82,8 +84,13 @@ case $mm in
     11 ) mon=Nov ;;
     12 ) mon=Dec ;;
 esac
+if [ $nlev -eq 3 ]; then
+nlev=5
+plevs="200 250 300 500 850"
+elif [ $nlev -eq 6 ]; then
 nlev=8
 plevs="200 250 300 500 700 850 925 1000"
+fi
 if [ ${ntype} = dTE ]; then
 cat > $cfile << EOF
 DSET ^${ofile}
@@ -130,12 +137,12 @@ endvars
 EOF
 fi
 cat $cfile
-#cdo -f nc import_binary ${cfile} ${ncfile}
-if [ ${orig} = jma ]; then
+cdo -f nc import_binary ${cfile} ${ncfile}
+#if [ ${orig} = jma ]; then
     lfilter=False
-else
-    lfilter=True
-fi
+#else
+#    lfilter=True
+#fi
 dev=png
 cat > config.ncl << EOF
 ntype="${ntype}"
@@ -147,23 +154,23 @@ nlev=${nlev}
 orig="${orig}"
 yyyymmddhh="${idate}"
 dev="${dev}"
-lfilter=${lfilter}
+;lfilter=${lfilter}
 EOF
 cat config.ncl
 
 ### plotting perturbations
 #for d in $(seq 0 $((${nd} - 1)));do
-#ncl -nQ d=0 ensvsa.ncl
-#ncl -nQ d=$((${nd} - 1)) ensvsa.ncl
+ncl -nQ d=0 ensvsa.ncl
+ncl -nQ d=$((${nd} - 1)) ensvsa.ncl
 #done
 ### plotting perturbation vorticity
 #ncl -nQ d=0 lfilter=True ensvsa_vor.ncl
 ### plotting height-longitude sector
 #for d in $(seq 0 3); do # 20.0 30.0 35.0; do
-latc=15.0
-ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
-latc=22.0
-ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
+#latc=15.0
+#ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
+#latc=22.0
+#ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
 ##ncl -nQ d=$((${nd} - 1)) latc=${latc} ensvsa_h-lon.ncl
 #done
 ### plotting SLP & vertical-interpolated winds
@@ -171,10 +178,15 @@ ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
 #ncl -nQ d=4 ensvsa_vint.ncl
 #ncl -nQ d=$((${nd} - 1)) ensvsa_vint.ncl
 ### plotting Energy distribution
-#for EN in te ke pe; do
-#out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
-#ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
-#done
+for EN in te ke pe; do
+out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
+ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
+done
+if [ ${ntype} != dTE ]; then
+EN=le
+out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
+ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
+fi
 ### compute Energy vertical profile
 #for EN in ke pe; do
 #for latc in 15.0 25.0 35.0; do
@@ -183,8 +195,6 @@ ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
 #done
 #if [ ${ntype} != dTE ]; then
 #EN=le
-#out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
-#ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
 #for latc in 15.0 25.0 35.0; do
 #ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
 #done

@@ -17,7 +17,12 @@
 		},
 		{
 			"path": "tex"
+		},
+		{
+			"path": "himawari"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"makefile.extensionOutputFolder": "./.vscode"
+	}
 }

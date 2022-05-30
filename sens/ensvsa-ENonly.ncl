@@ -80,7 +80,7 @@ begin
      res@gsnCenterString  = vdate
      res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnCenterStringFontHeightF = 0.03
-     res@gsnLeftString	    = "J/kg/m^2"
+     res@gsnLeftString	    = "J/kg"
      res@gsnRightString   = ""    
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours

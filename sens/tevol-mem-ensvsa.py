@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-nlev=6
-etype='wmoist'
-TE = np.loadtxt(f"TE-{etype}-m1-jma-2019100912-2019101212_nlev{nlev}.txt")
+nlev=3
+orig='ukmo'
+if orig == 'jma':
+    nlev = 6
+etype='dry'
+TE = np.loadtxt(f"TE-{etype}-m1-{orig}-2019100912-2019101212_nlev{nlev}.txt")
 print(TE.shape)
 
 time = TE[:,0]
@@ -10,11 +13,20 @@ vtime = np.arange(time.size)[time==72.0]
 it_v = vtime[0]
 print(it_v)
 if etype == 'moist':
-    sigma = 65.7825
+    if orig == 'ecmwf':
+        sigma = 73.9661
+    if orig == 'jma':
+        sigma = 65.7825
+    if orig == 'ncep':
+        sigma = 42.1070
 elif etype == "wmoist":
-    sigma = 40.8240
+    if orig == 'jma':
+        sigma = 40.8240
 elif etype == 'dry':
-    sigma = 43.3248
+    if orig == 'jma':
+        sigma = 43.3248
+    if orig == 'ukmo':
+        sigma = 37.7293
 maxTE = TE[0,1]*(sigma**2)
 
 fig, ax = plt.subplots(figsize=(10,6))
@@ -31,4 +43,4 @@ ax.set_xticks(time, minor=True)
 ax.set_xlabel('forecast time[h]')
 ax.set_ylabel('J/kg')
 ax.legend()
-fig.savefig(f'tevol-{etype}-mem_nlev{nlev}.png',bbox_inches='tight',dpi=300)
+fig.savefig(f'tevol-{etype}-mem_{orig}_nlev{nlev}.png',bbox_inches='tight',dpi=300)

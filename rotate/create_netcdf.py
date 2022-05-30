@@ -6,23 +6,29 @@ from pathlib import Path
 import pandas as pd
 import librotate
 
-#Usage echo yyyymmddhh | python create_netcdf.py
+#Usage echo yyyymmddhh orig | python create_netcdf.py
 param = sys.stdin.readline().strip("\n").split(" ")
 yyyymmddhh = param[0]
+orig       = param[1]
+if len(param)>2:
+    mem = param[2]
+else:
+    mem = "mean"
 
 datadir = Path('./')
 outdir  = Path('./')
-nc_scl  = Path('np_sc_' + yyyymmddhh + '_mean.nc')
-nc_vec  = Path('np_ve_' + yyyymmddhh + '_mean.nc')
+nc_scl  = Path('np_sc_' + yyyymmddhh + '_'+mem+'.nc')
+nc_vec  = Path('np_ve_' + yyyymmddhh + '_'+mem+'.nc')
 #nc_scl  = Path('np_sc_anl.nc')
 #nc_vec  = Path('np_ve_anl.nc')
-
-outvar = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground',\
+if orig == "ukmo":
+    outvar = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground',\
           'UGRD_10maboveground','VGRD_10maboveground',\
           'UGRD','VGRD','TMP','SPFH','HGT']
-#outvar = ['PRES_meansealevel','TMP_1D5maboveground','DPT_1D5maboveground',\
-#          'UGRD_10maboveground','VGRD_10maboveground',\
-#          'UGRD','VGRD','TMP','SPFH','HGT']
+else:
+    outvar = ['PRES_meansealevel','TMP_2maboveground','DPT_2maboveground',\
+          'UGRD_10maboveground','VGRD_10maboveground',\
+          'UGRD','VGRD','TMP','SPFH','HGT']
 stname = ['Pressure','Temparature','Dew point of temparature',\
           'U component of wind','V component of wind',\
           'U component of wind','V component of wind',\
@@ -33,11 +39,24 @@ outvar_dict = {}
 start = datetime.strptime(yyyymmddhh, '%Y%m%d%H')
 dt = timedelta(hours=6)
 
-outnc = netCDF4.Dataset(outdir/Path('np_'+yyyymmddhh+'_mean.nc'), 'w')
+outnc = netCDF4.Dataset(outdir/Path('np_'+yyyymmddhh+'_'+mem+'.nc'), 'w')
 #outnc = netCDF4.Dataset(outdir/Path('np_anl.nc'), 'w')
-in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
-nlat = in_scl.variables["latitude"][:].size
-nlon = in_scl.variables["longitude"][:].size
+#try:
+innc = netCDF4.Dataset(datadir/nc_scl,'r')
+#except FileNotFoundError:
+#    try:
+#        innc = netCDF4.Dataset(datadir/nc_vec, 'r')
+#    except FileNotFoundError:
+#        print("not found original netcdf files")
+#        exit
+try:
+    nlat = innc.variables["latitude"][:].size
+except KeyError:
+    nlat = innc.variables["lat"][:].size
+try:
+    nlon = innc.variables["longitude"][:].size
+except KeyError:
+    nlon = innc.variables["lon"][:].size
 print(nlat,nlon)
 
 time = outnc.createDimension('time',None)
@@ -77,96 +96,101 @@ for i in range(len(outvar)):
     outvar_dict[vkey] = var
 print(outvar_dict)
 
-in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
-print(in_scl.variables["time"].units)
-print(in_scl.variables["level"][:])
-outvar_dict["level"][:] = in_scl.variables["level"][:]
-outvar_dict["lat"][:] = in_scl.variables["latitude"][:]
-outvar_dict["lon"][:] = in_scl.variables["longitude"][:]
-for t in range(len(in_scl.variables["time"][:])):
-    date = netCDF4.num2date(in_scl.variables["time"][t],in_scl.variables["time"].units)
-    t0 = netCDF4.date2num(date,outvar_dict["time"].units)
-    print(date,t0)
-    outvar_dict["time"][t] = t0
-    for name in in_scl.variables.keys():
-        if(name == "time" or name == "latitude" \
-           or name == "longitude" or name == "level"):
-            continue
-        if(name in outvar_dict):
-            print(name)
-            outvar_dict[name][t,:] = in_scl.variables[name][t,:]
-            print(outvar_dict[name][:].shape)
-        else:
-            print(int(name[-5:-2]))
-            lev=1
-            if(int(name[-5:-2]) < 925):
-                lev+=1
-            if(int(name[-5:-2]) < 850):
-                lev+=1
-            if(int(name[-5:-2]) < 700):
-                lev+=1
-            if(int(name[-5:-2]) < 500):
-                lev+=1
-            if(int(name[-5:-2]) < 300):
-                lev+=1
-            if(int(name[-5:-2]) < 250):
-                lev+=1
-            if(int(name[-5:-2]) == 0):
-                lev=0
-                        
-            if(name[:3]=="TMP"):
-                print(name[:3])
-                outvar_dict["TMP"][t,lev,:] = in_scl.variables[name][t,:]
-                print(outvar_dict[name[:3]][t])
-            elif(name[:4]=="SPFH"):
-                print(name[:4])
-                outvar_dict["SPFH"][t,lev,:] = in_scl.variables[name][t,:]
-                print(outvar_dict[name[:4]][t])
-            elif(name[:3]=="HGT"):
-                print(name[:3])
-                outvar_dict["HGT"][t,lev,:] = in_scl.variables[name][t,:]
-                print(outvar_dict[name[:3]][t])
+try:
+    in_scl = netCDF4.Dataset(datadir/nc_scl,'r')
+    print(in_scl.variables["time"].units)
+    print(in_scl.variables["level"][:])
+    outvar_dict["level"][:] = in_scl.variables["level"][:]
+    outvar_dict["lat"][:] = in_scl.variables["latitude"][:]
+    outvar_dict["lon"][:] = in_scl.variables["longitude"][:]
+    for t in range(len(in_scl.variables["time"][:])):
+        date = netCDF4.num2date(in_scl.variables["time"][t],in_scl.variables["time"].units)
+        t0 = netCDF4.date2num(date,outvar_dict["time"].units)
+        print(date,t0)
+        outvar_dict["time"][t] = t0
+        for name in in_scl.variables.keys():
+            if(name == "time" or name == "latitude" \
+                or name == "longitude" or name == "level"):
+                continue
+            if(name in outvar_dict):
+                print(name)
+                outvar_dict[name][t,:] = in_scl.variables[name][t,:]
+                print(outvar_dict[name][:].shape)
             else:
-                print("error")
-
-in_vec = netCDF4.Dataset(datadir/nc_vec,'r')
-print(in_vec.variables["level"][:])
-for t in range(len(in_vec.variables["time"][:])):
-    for name in in_vec.variables.keys():
-        if(name == "time" or name == "latitude" \
-           or name == "longitude" or name == "level"):
-            continue
-        if(name in outvar_dict):
-            print(name)
-            outvar_dict[name][t,:] = in_vec.variables[name][t,:]
-            print(outvar_dict[name][:].shape)
-        else:
-            print(int(name[-5:-2]))
-            lev=1
-            if(int(name[-5:-2]) < 925):
-                lev+=1
-            if(int(name[-5:-2]) < 850):
-                lev+=1
-            if(int(name[-5:-2]) < 700):
-                lev+=1
-            if(int(name[-5:-2]) < 500):
-                lev+=1
-            if(int(name[-5:-2]) < 300):
-                lev+=1
-            if(int(name[-5:-2]) < 250):
-                lev+=1
-            if(int(name[-5:-2]) == 0):
-                lev=0
+                print(int(name[-5:-2]))
+                lev=1
+                if(int(name[-5:-2]) < 925):
+                    lev+=1
+                if(int(name[-5:-2]) < 850):
+                    lev+=1
+                if(int(name[-5:-2]) < 700):
+                    lev+=1
+                if(int(name[-5:-2]) < 500):
+                    lev+=1
+                if(int(name[-5:-2]) < 300):
+                    lev+=1
+                if(int(name[-5:-2]) < 250):
+                    lev+=1
+                if(int(name[-5:-2]) == 0):
+                    lev=0
                         
-            if(name[:4]=="UGRD"):
-                print(name[:4])
-                outvar_dict["UGRD"][t,lev,:] = in_vec.variables[name][t,:]
-                print(outvar_dict[name[:4]][t])
-            elif(name[:4]=="VGRD"):
-                print(name[:4])
-                outvar_dict["VGRD"][t,lev,:] = in_vec.variables[name][t,:]
-                print(outvar_dict[name[:4]][t])
-            else:
-                print("error")
+                if(name[:3]=="TMP"):
+                    print(name[:3])
+                    outvar_dict["TMP"][t,lev,:] = in_scl.variables[name][t,:]
+                    print(outvar_dict[name[:3]][t])
+                elif(name[:4]=="SPFH"):
+                    print(name[:4])
+                    outvar_dict["SPFH"][t,lev,:] = in_scl.variables[name][t,:]
+                    print(outvar_dict[name[:4]][t])
+                elif(name[:3]=="HGT"):
+                    print(name[:3])
+                    outvar_dict["HGT"][t,lev,:] = in_scl.variables[name][t,:]
+                    print(outvar_dict[name[:3]][t])
+                else:
+                    print("error")
+except FileNotFoundError:
+    print(f"not exist {nc_scl}")
 
+try:
+    in_vec = netCDF4.Dataset(datadir/nc_vec,'r')
+    print(in_vec.variables["level"][:])
+    for t in range(len(in_vec.variables["time"][:])):
+        for name in in_vec.variables.keys():
+            if(name == "time" or name == "latitude" \
+                or name == "longitude" or name == "level"):
+                continue
+            if(name in outvar_dict):
+                print(name)
+                outvar_dict[name][t,:] = in_vec.variables[name][t,:]
+                print(outvar_dict[name][:].shape)
+            else:
+                print(int(name[-5:-2]))
+                lev=1
+                if(int(name[-5:-2]) < 925):
+                    lev+=1
+                if(int(name[-5:-2]) < 850):
+                    lev+=1
+                if(int(name[-5:-2]) < 700):
+                    lev+=1
+                if(int(name[-5:-2]) < 500):
+                    lev+=1
+                if(int(name[-5:-2]) < 300):
+                    lev+=1
+                if(int(name[-5:-2]) < 250):
+                    lev+=1
+                if(int(name[-5:-2]) == 0):
+                    lev=0
+                        
+                if(name[:4]=="UGRD"):
+                    print(name[:4])
+                    outvar_dict["UGRD"][t,lev,:] = in_vec.variables[name][t,:]
+                    print(outvar_dict[name[:4]][t])
+                elif(name[:4]=="VGRD"):
+                    print(name[:4])
+                    outvar_dict["VGRD"][t,lev,:] = in_vec.variables[name][t,:]
+                    print(outvar_dict[name[:4]][t])
+                else:
+                    print("error")
+except FileNotFoundError:
+    print(f"not exist {nc_vec}")
 print(outnc.variables["time"][:],outnc.variables["lat"][:],outnc.variables["lon"][:])

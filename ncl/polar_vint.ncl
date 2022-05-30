@@ -49,8 +49,8 @@ begin
   lev = a->level
   print(lev(2::-1))
   date  = cd_string(t, "%Y%N%D%H")
-  ds = ind(date.eq.2019101012) ;start
-  de = ind(date.eq.2019101012) ;end
+  ds = ind(date.eq.2019101000) ;start
+  de = ind(date.eq.2019101018) ;end
   nd = de - ds + 1
   year 	     = str_get_cols(yyyymmddhh,0,3)
   month	     = str_get_cols(yyyymmddhh,4,5)
@@ -64,9 +64,9 @@ begin
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
   ;wks = gsn_open_wks("png","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
-  wks = gsn_open_wks("pdf","asym1012_glb"+yyyymmddhh)             ; send graphics to PNG file
+  wks = gsn_open_wks("png","asym_glb"+yyyymmddhh)             ; send graphics to PNG file
   gsn_define_colormap(wks, "sunshine_9lev")
-  plot = new(1,"graphic")
+  plot = new(4,"graphic")
 
 ;************************************************
 ; prepare filtering function
@@ -99,7 +99,7 @@ begin
     dsec = sec
     dsec = sec + 6*d
     index = ind(t.eq.dsec)
-    day   = cd_string(dsec, "%H UTC,%D")
+    day   = cd_string(dsec, "%N-%D %H UTC")
     print(day)
     ;do lev = 0,3
 ;      print(i)
@@ -200,8 +200,9 @@ begin
     
     res@gsnSpreadColorEnd     = -3
     res@gsnScalarContour      = True              ; vectors over scalars
+    res@vcRefAnnoFontHeightF  = 0.025
     res@vcRefMagnitudeF       = 10.0              ; vec magnitude
-    res@vcRefLengthF          = 0.05              ; size of ref vector
+    res@vcRefLengthF          = 0.08               ; size of ref vector
     res@vcLineArrowColor      = "black"           ; white vectors
     res@vcMinDistanceF        = 0.04              ; thins arrows near pole  
     res@vcGlyphStyle          = "LineArrow"     ; turns on curly vectors
@@ -217,8 +218,8 @@ begin
       ;  res@gsnCenterString     = u_@level+"mb"
     res@gsnLeftString       = "Wind Velocity"
       ;else
-	  ;res@gsnCenterString	= day
-	  res@gsnCenterString	= ""
+	  res@gsnCenterString	= day
+	  ;res@gsnCenterString	= ""
 	  res@gsnLeftString	= ""
       ;end if
 ; because this is ice data, which has a gap in the tropics, we need to
@@ -235,8 +236,8 @@ begin
 ;  resP@gsnPanelMainString = str_get_cols(yyyymmddhh,8,9)+"00 UTC"
 ;  resP@gsnPanelMainString = "vertical integrated asymmetric wind "+str_get_cols(yyyymmddhh,4,9)
   resP@gsnPanelLabelBar	  = True
-  resP@lbOrientation      = "Vertical"
-  resP@lbLabelFontHeightF = 0.007
+  resP@lbOrientation      = "Horizontal"
+  resP@lbLabelFontHeightF = 0.015
   resP@gsnPanelLeft	  = 0.005
   resP@gsnPanelBottom	  = 0.08
   resP@gsnPanelSave	  = True

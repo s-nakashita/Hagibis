@@ -26,13 +26,13 @@ begin
   lon1 = 150.
   ;lon1 = 180.
   if (d.eq.0) then
-      out = gfile+"_vor"
+      out = gfile+"_vor+w"
       lat0 = 10.
       ;lat0 = -10.
       lat1 = 30.
   else if (d.lt.8) then
       hh = sprinti("%d",6*d)
-      out = gfile+"_vor_v"+hh+"h"
+      out = gfile+"_vor+w_v"+hh+"h"
       ;lat0 = 20.
       lat0 = 0.
       lat1 = 40.
@@ -43,7 +43,7 @@ begin
 ;      lat1 = 60.
   else
       hh = sprinti("%d",6*d)
-      out = gfile+"_v"+hh+"h"
+      out = gfile+"_vor+w_v"+hh+"h"
       lat0 = 20.
       ;lat0 = 0.
       lat1 = 60.
@@ -54,6 +54,9 @@ begin
   f = addfile("../sens/"+ncfile,"r")
   ug       = f->ugrd(d,:,:,:)
   vg       = f->vgrd(d,:,:,:)
+  temp     = f->t(d,:,:,:)
+  ug = (/-1*ug/)
+  vg = (/-1*vg/)
   vor = uv2vrF(ug, vg)
   copy_VarCoords(ug, vor)
   vor@long_name = "Vorticity"
@@ -112,6 +115,16 @@ begin
      vor@units     = "/s"
      printVarSummary(vor)
      printMinMax(vor, 0)
+
+     shaec(temp, a, b)
+     tri_trunc(a, b, T)
+     ;exp_tapersh(a, b, NT, 2)
+     shsec(a, b, temp)
+     copy_VarCoords(ug, temp)
+     temp@long_name = "Temperature"
+     temp@units     = "K"
+     printVarSummary(temp)
+     printMinMax(temp, 0)
      ;   ListPush(vl_plt, var_t)
      delete(a)
      delete(b)
@@ -133,89 +146,113 @@ begin
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
   do k = 0, nlev-1
-     ilev = nlev-k-1
-     wks = gsn_open_wks(dev,out+"_"+sprinti("%0.3d",toint(plev(ilev))))
-     ;cmap = read_colormap_file("hotcold_18lev")
-     cmap = read_colormap_file("sunshine_9lev")
-     v = vor(ilev,:,:)
-     hgt = plev(ilev)
-     w = wspd_m({hgt},:,:)
+    ilev = nlev-k-1
+    wks = gsn_open_wks(dev,out+"_"+sprinti("%0.3d",toint(plev(ilev))))
+    ;cmap = read_colormap_file("hotcold_18lev")
+    cmap = read_colormap_file("sunshine_9lev")
+    v = vor(ilev,:,:)
+    t = temp(ilev,:,:)
+    hgt = plev(ilev)
+    w = wspd_m({hgt},:,:)
 ;---Create plot
-     res                = True               ; plot mods desired
-     res@gsnDraw	      = False
-     res@gsnFrame	      = False
-;     res@cnInfoLabelOn	      = False
+    res                = True               ; plot mods desired
+    res@gsnDraw	      = False
+    res@gsnFrame	      = False
+;    res@cnInfoLabelOn	      = False
+    
+    ;res@gsnCenterString	   = "Wspd+Vor_"+hgt+"hPa"
+    res@gsnCenterString	   = "T+Vor_"+hgt+"hPa"
+    res@gsnCenterStringFontHeightF = 0.025
+    res@gsnCenterStringOrthogonalPosF = 0.04
+    ;res@gsnCenterStringParallelPosF   = 0.45
+    res@gsnLeftStringFontHeightF = 0.02
+    res@gsnLeftString   = "10~S~-5~N~ "+v@units
+    res@gsnRightStringFontHeightF = 0.02
+    res@gsnRightStringParallelPosF = 1.1    
+    res@gsnRightString	    = w@units
+    res@gsnAddCyclic	      = False
+    res@cnFillOn             = True               ; turn on color for contours
+    res@cnLinesOn            = False              ; turn off contour lines
+    res@cnLineLabelsOn       = False              ; turn off contour line labels
+    res@cnFillPalette        = cmap
+
+    res@vpXF = 0.15
+    res@vpWidthF = 0.7
+
+    res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+    res@cnMaxLevelValF       = 45.0
+    res@cnMinLevelValF       = 5.0
+    res@cnLevelSpacingF      = 5.0
+    ;res@cnMaxLevelValF       = 1.0
+    ;res@cnMinLevelValF       = -1.0
+    ;res@cnLevelSpacingF      = .2
      
-     res@gsnCenterString	   = "Wspd+Vor_"+hgt+"hPa"
-     res@gsnCenterStringFontHeightF = 0.025
-     res@gsnCenterStringOrthogonalPosF = 0.04
-     ;res@gsnCenterStringParallelPosF   = 0.45
-     res@gsnLeftStringFontHeightF = 0.02
-     res@gsnLeftString   = "10~S~-5~N~ "+v@units
-     res@gsnRightStringFontHeightF = 0.02
-     res@gsnRightStringParallelPosF = 1.1    
-     res@gsnRightString	    = w@units
-     res@gsnAddCyclic	      = False
-     res@cnFillOn             = True               ; turn on color for contours
-     res@cnLinesOn            = False              ; turn off contour lines
-     res@cnLineLabelsOn       = False              ; turn off contour line labels
-     res@cnFillPalette        = cmap
+    resm = res
+    ;resm@mpLandFillColor      = "gray"            ; set land to be gray
+    resm@mpFillOn             = False
+    resm@mpMinLonF            =  lon0               ; select a subregion
+    resm@mpMaxLonF            =  lon1
+    resm@mpMinLatF            =  lat0 
+    resm@mpMaxLatF            =  lat1
+    resm@lbOrientation            = "Vertical"     ; vertical label bar
+    resm@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
+    plot = gsn_csm_contour_map_ce(wks,w,resm)
+    ;plot = gsn_csm_contour_map_ce(wks,t,resm)
 
-     res@vpXF = 0.15
-     res@vpWidthF = 0.7
-
-     res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-     res@cnMaxLevelValF       = 45.0
-     res@cnMinLevelValF       = 5.0
-     res@cnLevelSpacingF      = 5.0
-     
-     resm = res
-     ;resm@mpLandFillColor      = "gray"            ; set land to be gray
-     resm@mpFillOn             = False
-     resm@mpMinLonF            =  lon0               ; select a subregion
-     resm@mpMaxLonF            =  lon1
-     resm@mpMinLatF            =  lat0 
-     resm@mpMaxLatF            =  lat1
-     resm@lbOrientation            = "Vertical"     ; vertical label bar
-     resm@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
-     plott = gsn_csm_contour_map_ce(wks,w,resm)
-
-     res@cnFillOn             = False             ; turn on color for contours
-     res@cnLinesOn            = True              ; turn off contour lines
-     res@cnLineLabelsOn       = True
-     res@cnLineColor          = "black"
-     res@cnLineThicknessF     = 5.0
-     res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-     res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
-     res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
-     if (hgt.le.300) then
-       res@cnMinLevelValF       = -10.               ; set min contour level
-       res@cnMaxLevelValF       = 10.                 ; set max contour level
-       res@cnLevelSpacingF      = .5               ; set contour spacing
-     else 
-       res@cnMinLevelValF       = -20.               ; set min contour level
-       res@cnMaxLevelValF       = 20.                 ; set max contour level
-       res@cnLevelSpacingF      = 1.               ; set contour spacing
-     end if
-      res@gsnRightString   = ""    
-      res@gsnLeftString    = ""
-      res@gsnCenterString  = ""
+    res@cnFillOn             = False             ; turn on color for contours
+    res@cnLinesOn            = True              ; turn off contour lines
+    res@cnLineLabelsOn       = True
+    res@cnLineColor          = "black"
+    res@cnLineThicknessF     = 5.0
+    res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+    res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+    res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+    if (hgt.le.300) then
+      res@cnMinLevelValF       = -5.               ; set min contour level
+      res@cnMaxLevelValF       = 5.                 ; set max contour level
+      res@cnLevelSpacingF      = .5               ; set contour spacing
+    else if (hgt.le.850) then
+      res@cnMinLevelValF       = -10.               ; set min contour level
+      res@cnMaxLevelValF       = 10.                 ; set max contour level
+      res@cnLevelSpacingF      = 1.               ; set contour spacing
+    else
+      res@cnMinLevelValF       = -20.               ; set min contour level
+      res@cnMaxLevelValF       = 20.                 ; set max contour level
+      res@cnLevelSpacingF      = 2.               ; set contour spacing
+    end if
+    end if
+    res@gsnRightString   = ""    
+    res@gsnLeftString    = ""
+    res@gsnCenterString  = ""
       
-      v = v*1.0e5
-      plotq = gsn_csm_contour(wks,v,res)
-      overlay(plott,plotq)
+    v = v*1.0e5
+    plotq = gsn_csm_contour(wks,v,res)
+    overlay(plot,plotq)
+    delete(plotq)
+
+    res@cnLineColor          = "blue"
+    res@cnLineThicknessF     = 5.0
+    res@cnLineLabelsOn       = False
+    res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+    res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+    res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+    res@cnMinLevelValF       = -1.               ; set min contour level
+    res@cnMaxLevelValF       = 1.                 ; set max contour level
+    res@cnLevelSpacingF      = .2               ; set contour spacing
+    ;plott = gsn_csm_contour(wks,t,res)
+    ;overlay(plot,plott)
+    ;delete(plott)
 ; create array of dummy graphic variables. This is required, b/c each line
 ; must be associated with a unique dummy variable.
-      dum = new(4,graphic)  
+    dum = new(4,graphic)  
 ; draw each line separately. Each line must contain two points.
-      do i = 0 , 3
-         dum(i)=gsn_add_polyline(wks,plott,xpts(i:i+1),ypts(i:i+1),resp)      
-      end do   
-      ;plot(k) = plott
-      draw(plott)
-      frame(wks)
-      delete(plott)
-      delete(plotq)
-      delete(dum)
+    do i = 0 , 3
+      dum(i)=gsn_add_polyline(wks,plot,xpts(i:i+1),ypts(i:i+1),resp)      
+    end do   
+    ;plot(k) = plott
+    draw(plot)
+    frame(wks)
+    delete(plot)
+    delete(dum)
    end do
 end

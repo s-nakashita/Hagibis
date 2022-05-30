@@ -8,7 +8,7 @@ import librotate
 
 debug = True
 
-#Usage echo yyyymmddhh datadir trackf nlon nlat latmax | python rotate_uv.py
+#Usage echo yyyymmddhh datadir trackf nlon nlat latmax orig | python rotate_uv.py
 param = sys.stdin.readline().strip("\n").split(" ")
 yyyymmddhh = param[0]
 ddirname   = param[1]
@@ -16,13 +16,18 @@ trackname  = param[2]
 nlon       = int(param[3])
 nlat       = int(param[4])
 latmax     = float(param[5]) #degree
+orig       = param[6]
 dlat       = latmax/(nlat-1) #degree
+if len(param) > 7:
+    mem = param[7]
+else:
+    mem = "mean"
 
 datadir = Path(ddirname)
 outdir  = Path('./')
 mmddhh  = yyyymmddhh[4:]
-innc    = mmddhh + '_mean.nc'
-outnc   = 'np_ve_' + yyyymmddhh + '_mean.nc'
+innc    = mmddhh + '_'+mem+'.nc'
+outnc   = 'np_ve_' + yyyymmddhh + '_'+mem+'.nc'
 #innc    = 'anl.nc'
 #outnc   = 'np_ve_anl.nc'
 trackf  = Path(trackname)
@@ -52,8 +57,11 @@ with trackf.open() as track:
         lonout,latout = librotate.rotate_lonlat(lonc,latc,lonin,latin)
         print(lonout.max(),lonout.min(),latout.max(),latout.min())
         
-        data = xr.open_dataset(datadir / innc).sel(time=date)
-        print(data)
+        try:
+            data = xr.open_dataset(datadir / innc).sel(time=date)
+            print(data)
+        except KeyError:
+            continue
         
         lon = data["lon"].values
         lat = data["lat"].values

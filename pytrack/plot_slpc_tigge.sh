@@ -1,11 +1,11 @@
 #!/bin/bash
-init0=2019100812
-init1=2019100812
+init0=2019100900
+init1=2019100912
 CDIR=`pwd`
 
 rm init_*.txt
 dh=$((12 * 3600))
-cptfile=track_tigge1d.cpt
+cptfile=track_tigge.cpt
 #./makecpt.sh ${init0} ${init1} ${dh}
 #./makecpt2.sh
 ./init.sh ${init0} ${init1} ${dh} > init_tmp.txt
@@ -13,12 +13,12 @@ cptfile=track_tigge1d.cpt
 rm legend2.txt
 ./legend2.sh ${cptfile} 
 bstfile=bst_hagibis.txt
-outfile=slpc_tigge_${init0:4:6}.ps
+outfile=slpc_tigge_${init0:4:4}.ps
 
 function plot_slpc() {
     line=$2
     for center in ecmf rjtd kwbc egrr; do
-	ln -s $CDIR/$center/track${1}.txt track.txt
+	ln -s $CDIR/$center/track${1}_mod.txt track.txt
 	tracktxt=track.txt
 	yyyy=`echo ${1:0:4}`
 	mm=`echo ${1:4:2}`
@@ -37,6 +37,7 @@ function plot_slpc() {
 	    else
 		gmt psxy -R -J -O tmp.txt -i0,1,2 -St0.1i -Wfaint -G${pencol} -K >> ${outfile}
 	    fi
+		rm tmp.txt
 	fi
 	line=`expr $line + 1`
 	rm track.txt
@@ -44,7 +45,15 @@ function plot_slpc() {
 }
 
 
-gmt psbasemap -R2019-10-04T18/2019-10-15T00/912/1012 -JX15c/10c -Y8c -Bxa1df6hg1d -Bya4f2g4 -K > ${outfile}
+#gmt psbasemap -R2019-10-04T18/2019-10-15T00/912/1012 -JX15c/10c -Y8c -Bxa1df6hg1d -Bya4f2g4 -K > ${outfile}
+gmt psbasemap -R2019-10-07T00/2019-10-13T00/912/1012 -JX15c/10c -Y8c -Bxa1df6hg1d -Bya8f4g8 -K > ${outfile}
+# best track
+awk '$4 % 6 == 0{print $1 "-" $2 "-" $3 "T" $4, $7*0.01}' ${bstfile} > tmp.txt
+gmt psxy -R -J -O tmp.txt -i0,1 -W3p -K >> ${outfile}
+echo $?
+gmt psxy -R -J -O tmp.txt -i0,1 -Sc0.1i -Gwhite -Wthin -K >> ${outfile}
+echo $?
+rm tmp.txt
 count=1
 for init in $(cat init_tmp.txt); do
     echo ${init} ${count}
@@ -52,17 +61,12 @@ for init in $(cat init_tmp.txt); do
     count=`expr $count + 4`
 done
 echo $?
-# best track
-awk '$4 % 6 == 0{print $1 "-" $2 "-" $3 "T" $4, $7*0.01}' ${bstfile} > tmp.txt
-gmt psxy -R -J -O tmp.txt -i0,1 -W3p -K >> ${outfile}
+#gmt pslegend -Dx0c/-11c+w5c/10c -K -O < legend2.txt >> ${outfile}
+head -1 legend2.txt  | gmt pslegend -Dx0c/-11c+w5c/10c -K -O >> ${outfile}
+head -5 legend2.txt  | tail -n 4 | gmt pslegend -Dx5c/-11c+w5c/10c -K -O >> ${outfile}
 echo $?
-gmt psxy -R -J -O tmp.txt -i0,1 -Sc0.1i -Gwhite -Wthin -K >> ${outfile}
+tail -n 4 legend2.txt | gmt pslegend -Dx10c/-11c+w5c/10c -K -O >> ${outfile}
 echo $?
-gmt pslegend -Dx0c/-11c+w5c/10c -K -O < legend2.txt >> ${outfile}
-#head -5 legend2.txt  | gmt pslegend -Dx0c/-11c+w5c/10c -K -O >> ${outfile}
-#echo $?
-#tail -n +4 legend2.txt | head -6 | gmt pslegend -Dx5c/-11c+w5c/10c -K -O >> ${outfile}
-#echo $?
 #tail -n +12 legend2.txt | gmt pslegend -Dx10c/-11c+w5c/10c -O >> ${outfile}
 echo $?
 pstopdf ${outfile}

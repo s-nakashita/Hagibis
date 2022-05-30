@@ -29,15 +29,21 @@ begin
   ;d = 0
   mmddhh = str_get_cols(yyyymmddhh, 4, 9)
   lon0 = 120.
-  lon1 = 180.
+  lon1 = 160.
   if (d.eq.0) then
       out = gfile
-      lat0 = -10.
+      lat0 = 0.
+      lat1 = 40.
+  else if (d.eq.4) then
+      out = gfile+"_v24h"
+      ;lat0 = 20.
+      lat0 = 0.
       lat1 = 60.
   else
       out = gfile+"_v"
-      lat0 = 20.
+      lat0 = 0.
       lat1 = 60.
+  end if
   end if
   ug       = a->ugrd(d,:,:,:)
   vg       = a->vgrd(d,:,:,:)
@@ -54,16 +60,16 @@ begin
   time     = a->time
   
   
-  wks = gsn_open_wks("png",out)
-  plot = new(6,graphic)
-  cmap = read_colormap_file("hotcold_18lev")
+;  wks = gsn_open_wks("png",out)
+;  plot = new(6,graphic)
+;  cmap = read_colormap_file("hotcold_18lev")
     
   vdate  = cd_string(time(d), "%Y%N%D%H")
 ;************************************************
 ; create points for box
 ;************************************************
  ypts = (/ 37.0, 37.0, 33.0, 33.0, 37.0/)
- xpts = (/136.0,142.0,142.0,136.0,136.0/)
+ xpts = (/137.0,142.0,142.0,137.0,137.0/)
 ;************************************************
 ; add the box
 ;************************************************
@@ -73,6 +79,8 @@ begin
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
   do k = 0,2
+     wks = gsn_open_wks(dev,out+"_"+sprinti("%0.3d",toint(plev(2-k))))
+     cmap = read_colormap_file("hotcold_18lev")
      u = ug(2-k,:,:)
      v = vg(2-k,:,:)
      t = temp(2-k,:,:)
@@ -109,6 +117,8 @@ begin
      res@lbOrientation            = "Vertical"     ; vertical label bar
      res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 
+     res@vpXF = 0.15
+     res@vpWidthF = 0.7
 ; note, when doing a subregion, NCL determines the range of the data from
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
@@ -153,16 +163,16 @@ begin
       do i = 0 , 3
          dum(i)=gsn_add_polyline(wks,plott,xpts(i:i+1),ypts(i:i+1),resp)      
       end do   
-      plot(k) = plott
-      ;draw(plott)
-      ;frame(wks)
+      ;plot(k) = plott
+      draw(plott)
+      frame(wks)
       delete(plott)
       delete(dum)
    end do
 
-   delete(cmap)
-   cmap = read_colormap_file("spread_15lev")
-   ;wks = gsn_open_wks(dev,out+"_te")
+   ;delete(cmap)
+   ;cmap = read_colormap_file("spread_15lev")
+   wks = gsn_open_wks(dev,out+"_sfc")
    reste                = True               ; plot mods desired
    reste@gsnDraw	      = False
    reste@gsnFrame	      = False
@@ -192,30 +202,37 @@ begin
    reste@lbOrientation            = "Vertical"     ; vertical label bar
    reste@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 
+   reste@vpXF = 0.15
+   reste@vpWidthF = 0.7
 ; note, when doing a subregion, NCL determines the range of the data from
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-   ;reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-   reste@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
+   reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+   ;reste@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
       ;reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-      reste@cnLevels = (/0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.,2.25,2.5,3.,4.,5.,7.5,10./)
-      ;reste@cnMinLevelValF       = .1               ; set min contour level
-      ;reste@cnMaxLevelValF       = 2.0                 ; set max contour level
-      ;reste@cnLevelSpacingF      = .1               ; set contour spacing
-   else if (d.ge.6) then 
+      ;reste@cnLevels = (/0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.,2.25,2.5,3./);,4.,5.,7.5,10./)
+      reste@cnMinLevelValF       = -2.5             ; set min contour level
+      reste@cnMaxLevelValF       = 2.5              ; set max contour level
+      reste@cnLevelSpacingF      = .25              ; set contour spacing
+   else if (d.eq.4) then 
 ;  d=6
-      reste@cnLevelSelectionMode = "ExplicitLevels"
-      reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000.,1500.,2000./)
-      ;reste@cnMinLevelValF       = 25.               ; set min contour level
-      ;reste@cnMaxLevelValF       = 500.0                 ; set max contour level
-      ;reste@cnLevelSpacingF      = 25.               ; set contour spacing
+      ;reste@cnLevelSelectionMode = "ExplicitLevels"
+      ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000.,1500.,2000./)
+      reste@cnMinLevelValF       = -20.               ; set min contour level
+      reste@cnMaxLevelValF       = 20.                 ; set max contour level
+      reste@cnLevelSpacingF      = 2.               ; set contour spacing
+   else
+      reste@cnMinLevelValF       = -100.
+      reste@cnMaxLevelValF       = 100.
+      reste@cnLevelSpacingF      = 10.
    end if
    end if
-   plote = gsn_csm_contour_map(wks, te, reste)
+   ;plote = gsn_csm_contour_map(wks, te, reste)
+   plote = gsn_csm_contour_map(wks, ps, reste)
 
    resps                = True               ; plot mods desired
    resps@gsnDraw	      = False
@@ -256,8 +273,8 @@ begin
    end if
    end if
    
-   plotp = gsn_csm_contour(wks, ps, resps)
-   overlay(plote,plotp)
+   ;plotp = gsn_csm_contour(wks, ps, resps)
+   ;overlay(plote,plotp)
 ; create array of dummy graphic variables. This is required, b/c each line
 ; must be associated with a unique dummy variable.
    dum = new(4,graphic)  
@@ -265,11 +282,11 @@ begin
    do i = 0 , 3
       dum(i)=gsn_add_polyline(wks,plote,xpts(i:i+1),ypts(i:i+1),resp)      
    end do   
-   plot(4) = plote
-   ;draw(plote)
-   ;frame(wks)
+   ;plot(4) = plote
+   draw(plote)
+   frame(wks)
 
-   resP	                   = True
-   resP@gsnPanelMainString	   = "ensvsa-dTE T&wind,slp,TE "+vdate+" "+orig
-   gsn_panel(wks,plot,(/2,3/),resP)
+   ;resP	                   = True
+   ;resP@gsnPanelMainString	   = "ensvsa-dTE T&wind,slp,TE "+vdate+" "+orig
+   ;gsn_panel(wks,plot,(/2,3/),resP)
 end

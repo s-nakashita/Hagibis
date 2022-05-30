@@ -1,5 +1,5 @@
 #!/bin/bash
-init0=2019100512
+init0=2019100700
 init1=2019101212
 CDIR=`pwd`
 
@@ -7,7 +7,11 @@ dh=$((12 * 3600))
 ./init.sh ${init0} ${init1} ${dh} > init_tmp.txt
 
 function select_error() {
+  #if [ -f ./${2}/error${1}_mod.txt ]; then
+  #ln -fs ./${2}/error${1}_mod.txt error.txt
+  #else
   ln -fs ./${2}/error${1}.txt error.txt
+  #fi
   yyyy=`echo ${1:0:4}`
 	mm=`echo ${1:4:2}`
 	dd=`echo ${1:6:2}`
