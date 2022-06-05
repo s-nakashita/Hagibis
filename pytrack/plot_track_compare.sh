@@ -1,12 +1,12 @@
 #!/bin/bash
 #init0=2019100900
-init0=${1:-2019100900}
+init0=${1:-2019100912}
 CDIR=`pwd`
 bstfile=$CDIR/bst_hagibis.txt
-outfile=track_all_${init0}_mod.ps
+outfile=track_${init0}_ipv320_mean.ps
 
 function plot_track() {
-    for orig in 0 1 2 3;do
+    for orig in 0 2 3;do
 	case $orig in
 	    0 ) datadir=ecmf ;;
 	    1 ) datadir=rjtd ;;
@@ -14,7 +14,7 @@ function plot_track() {
 	    3 ) datadir=egrr ;;
 	esac
 	#if [ $orig -eq 0 ];then
-	tracktxt=$datadir/track${1}_mod.txt
+	tracktxt=$datadir/track${1}_ipv320_mean.txt
 	#else
 	#tracktxt=$datadir/track${1}.txt
 	#fi
@@ -25,8 +25,10 @@ function plot_track() {
 	if [ -f ${tracktxt} ]; then
 	    echo "exist"
 	    ptime=$(date -jf "%Y/%m/%d %H:%M:%S" "2019/10/12 12:00:00" +"%s")
-	    awk '{s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp.txt
-	    awk '!($3~12 && $4~12){s=(100000-$7)/20000+0.1;print($5, $6, '${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp_n.txt
+	    #awk '{s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp.txt
+	    #awk '!($3~12 && $4~12){s=(100000-$7)/20000+0.1;print($5, $6, '${orig}', s > 0.1 ? s : 0.1)}' ${tracktxt} > tmp_n.txt
+	    awk '{s=(100000-$7)/20000+0.1;print($5, $6,'${orig}', 0.3)}' ${tracktxt} > tmp.txt
+	    awk '!($3~12 && $4~12){s=(100000-$7)/20000+0.1;print($5, $6, '${orig}', 0.3)}' ${tracktxt} > tmp_n.txt
 	    awk '$3~12 && $4~12{print($5, $6, '${orig}', 0.4)}' ${tracktxt} > tmp_p.txt
 	    pencol=$(awk '$1~'${orig}'{print $2}' $CDIR/track_tigge.cpt)
 	    gmt5 psxy -R -J -O tmp.txt -i0,1 -W1p,${pencol} -K >> ${outfile} 

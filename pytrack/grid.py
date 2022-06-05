@@ -33,11 +33,11 @@ def find_minimum(g, lon, lat, lon0, lat0, slp0, lonpre, latpre, sigma=0):
     y0 = np.deg2rad(lat0)
     d = np.arccos(np.sin(y0) * np.sin(y1) + np.cos(y0) * np.cos(y1) * np.cos(dx))
     #n = np.argmin(d)
-    #ncand = np.argsort(d)
-    g_min = g[loc_min[0],loc_min[1]]
+    ncand = np.argsort(d)
+    #g_min = g[loc_min[0],loc_min[1]]
     #print(g_min)
-    g_min = np.abs(g_min - slp0)
-    ncand = np.argsort(g_min)
+    #g_min = np.abs(g_min - slp0)
+    #ncand = np.argsort(g_min)
     #print(n,ncand)
     #  distance threshold
     re = 6.371e3 #[km]
