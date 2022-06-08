@@ -20,7 +20,7 @@
 begin
 
 ;---Open netCDF file
-  f = addfile("../sens/"+ncfile,"r")
+  f = addfile(ncfile,"r")
 ;  if (d.eq.0) then
     fm= addfile(mfile, "r")
 ;  end if

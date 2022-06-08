@@ -51,7 +51,7 @@ begin
   end if
   end if
 ;---Open netCDF file
-  f = addfile("../sens/"+ncfile,"r")
+  f = addfile(ncfile,"r")
   ug       = f->ugrd(d,:,:,:)
   vg       = f->vgrd(d,:,:,:)
   temp     = f->t(d,:,:,:)

@@ -7,6 +7,8 @@ case $orig in
     ncep ) mem=20 ;;
     ukmo ) mem=17 ;;
 esac
+mkdir -p $orig
+cd $orig
 idate=2019100912
 edate=2019101212
 smode=1
@@ -55,13 +57,19 @@ enfile=`echo ${header1} | sed -e "s/ensvsa-${ntype}//g"`-${header2}.txt
 if [ -e $ofile ]; then
     rm -f ${ofile} ${ncfile} ${wfile}
 fi
-if [ read_netcdf.F90 -nt read_netcdf.mod ]; then
+cd ..
+if [ read_netcdf.F90 -nt tmp/read_netcdf.mod ]; then
     make clean
 fi
 make ${ntype} CPPFLAGS="${CPPFLAGS}" || exit 10
-./bin/ensvsa                       || exit 11
-./bin/grads-ensvsa                 || exit 12
-./bin/tevol-ensvsa                 || exit 13
+cd $orig
+ln -s ../bin/ensvsa .
+ln -s ../bin/grads-ensvsa .
+ln -s ../bin/tevol-ensvsa .
+./ensvsa                       || exit 11
+./grads-ensvsa                 || exit 12
+./tevol-ensvsa                 || exit 13
+rm ensvsa grads-ensvsa tevol-ensvsa
 # weights' ASCII text
 awk '{if($1 == "vector="){$1="";print}}' $logfile > ${logfile%.*}.txt
 isec=$(date -jf "%Y%m%d%H" "${idate}" +"%s")
@@ -154,49 +162,49 @@ nlev=${nlev}
 orig="${orig}"
 yyyymmddhh="${idate}"
 dev="${dev}"
-;lfilter=${lfilter}
+lfilter=${lfilter}
 EOF
 cat config.ncl
 
 ### plotting perturbations
 #for d in $(seq 0 $((${nd} - 1)));do
-ncl -nQ d=0 ensvsa.ncl
-ncl -nQ d=$((${nd} - 1)) ensvsa.ncl
+ncl -nQ d=0 ../ensvsa.ncl
+ncl -nQ d=$((${nd} - 1)) ../ensvsa.ncl
 #done
 ### plotting perturbation vorticity
-#ncl -nQ d=0 lfilter=True ensvsa_vor.ncl
+#ncl -nQ d=0 lfilter=True ../ensvsa_vor.ncl
 ### plotting height-longitude sector
 #for d in $(seq 0 3); do # 20.0 30.0 35.0; do
 #latc=15.0
-#ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
+#ncl -nQ d=0 latc=${latc} ../ensvsa_h-lon.ncl
 #latc=22.0
-#ncl -nQ d=0 latc=${latc} ensvsa_h-lon.ncl
-##ncl -nQ d=$((${nd} - 1)) latc=${latc} ensvsa_h-lon.ncl
+#ncl -nQ d=0 latc=${latc} ../ensvsa_h-lon.ncl
+##ncl -nQ d=$((${nd} - 1)) latc=${latc} ../ensvsa_h-lon.ncl
 #done
 ### plotting SLP & vertical-interpolated winds
-#ncl -nQ d=0 ensvsa_vint.ncl
-#ncl -nQ d=4 ensvsa_vint.ncl
-#ncl -nQ d=$((${nd} - 1)) ensvsa_vint.ncl
+#ncl -nQ d=0 ../ensvsa_vint.ncl
+#ncl -nQ d=4 ../ensvsa_vint.ncl
+#ncl -nQ d=$((${nd} - 1)) ../ensvsa_vint.ncl
 ### plotting Energy distribution
 for EN in te ke pe; do
 out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
-ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
+ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ../ensvsa-ENonly.ncl
 done
 if [ ${ntype} != dTE ]; then
 EN=le
 out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
-ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ensvsa-ENonly.ncl
+ncl -nQ nd=${nd} EN=\"${EN}\" out=\"${out}\" ../ensvsa-ENonly.ncl
 fi
 ### compute Energy vertical profile
 #for EN in ke pe; do
 #for latc in 15.0 25.0 35.0; do
-#ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
+#ncl -nQ latc=${latc} EN=\"${EN}\" ../ensvsa-ENavg.ncl
 #done
 #done
 #if [ ${ntype} != dTE ]; then
 #EN=le
 #for latc in 15.0 25.0 35.0; do
-#ncl -nQ latc=${latc} EN=\"${EN}\" ensvsa-ENavg.ncl
+#ncl -nQ latc=${latc} EN=\"${EN}\" ../ensvsa-ENavg.ncl
 #done
 #fi
 #rm -f ${ofile} ${ncfile}

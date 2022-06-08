@@ -20,7 +20,7 @@
 begin
 
 ;---Open netCDF file
-  f = addfile("../sens/"+ncfile,"r")
+  f = addfile(ncfile,"r")
   fm= addfile(mfile,"r")
 ;
 ; Read in Sea Surface Temperature Anomalies
