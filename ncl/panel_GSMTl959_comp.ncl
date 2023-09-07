@@ -1,12 +1,12 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
- yyyymmddhh="2019101109"
+ yyyymmddhh="2019101100"
  yyyymmdd = str_get_cols(yyyymmddhh, 0, 7)
  yyyy = str_get_cols(yyyymmddhh, 0, 3)
  mm = str_get_cols(yyyymmddhh, 4, 5)
  dd = str_get_cols(yyyymmddhh, 6, 7)
  rdrdir = "/Volumes/dandelion/netcdf/JMAGPV/hourly/"+yyyy+"/"+mm
- init = "2019100912"
+ init = "2019100900"
  iy = toint(str_get_cols(yyyymmddhh, 0, 3))
  im = toint(str_get_cols(yyyymmddhh, 4, 5))
  id = toint(str_get_cols(yyyymmddhh, 6, 7))
@@ -22,9 +22,9 @@ begin
  tunits = time@units
  delete(fgsm)
 
- int_h = 1
- wks = gsn_open_wks("png", "comp_prcp_"+sprinti("%d", int_h)+"h_"+init+"_"+yyyymmddhh)
- plot_region = False
+ int_h = 36
+ wks = gsn_open_wks("pdf", "comp_prcp_"+sprinti("%d", int_h)+"h_"+init+"_"+yyyymmddhh)
+ plot_region = True
 
  res = True
  res@gsnDraw = False
@@ -51,10 +51,10 @@ begin
  res@mpLeftCornerLonF  = 127.5
  res@mpRightCornerLonF = 141.5
  ;if (yyyymmdd .eq. "20191012") then
- ; res@mpLeftCornerLatF = 33.0
- ; res@mpRightCornerLatF = 40.0
- ; res@mpLeftCornerLonF = 135.0
- ; res@mpRightCornerLonF = 143.0
+  res@mpLeftCornerLatF = 33.0
+  res@mpRightCornerLatF = 40.0
+  res@mpLeftCornerLonF = 135.0
+  res@mpRightCornerLonF = 143.0
  ;end if
  res@mpFillDrawOrder = "PostDraw"
  res@mpOutlineOn = True
@@ -94,9 +94,9 @@ begin
  res@cnFillPalette             = cmap;_default(16:160,:)
  res@cnLevelSelectionMode      = "ExplicitLevels"  ; manually specify contour levels
  res@cnLevels = (/.5, 1., 2., 3., 5., 10., 15., 20., 25./)
- ;res@cnLevels = res@cnLevels * 18.0
+ res@cnLevels = res@cnLevels * 18.0
 
- plot = new(3, "graphic")
+ plot = new(4, "graphic")
  deg2rad = acos(-1.) / 180.
  ;Radar
  fname = rdrdir+"/"+dd + "/jrap"+yyyymmdd+sprinti("%0.2d", ih)+".nc"
@@ -136,7 +136,7 @@ begin
  res@tmXBLabelFontHeightF       = 0.02
  res@cnFillMode = "RasterFill"
  res@cnRasterSmoothingOn = True
- ;plot(0) = gsn_csm_contour_map(wks, prcp, res)
+ plot(0) = gsn_csm_contour_map(wks, prcp, res)
  ; polyline
  if (plot_region) then
  ; Tokai
@@ -187,7 +187,7 @@ begin
 
  res@gsnCenterString = sst(j)
  res@lbLabelBarOn = False
- plot(j) = gsn_csm_contour_map(wks, prcp, res)
+ plot(j+1) = gsn_csm_contour_map(wks, prcp, res)
  delete(prcp1)
  delete(prcp2)
  delete(prcp)

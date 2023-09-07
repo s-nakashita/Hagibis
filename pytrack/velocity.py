@@ -66,15 +66,16 @@ if outbst:
          file=velocity)
 
 origin = ["ecmf", "rjtd", "kwbc", "egrr"]
+center = {"ecmf":"ecmwf","rjtd":"jma","kwbc":"ncep","egrr":"ukmo"}
 dt0 = timedelta(hours = 12)
-for orig in origin:
-    t0 = datetime(2019, 10, 7, 0)
-    t0max = datetime(2019, 10, 11, 0)
+for orig in ["rjtd"]:
+    t0 = datetime(2019, 10, 10, 12)
+    t0max = datetime(2019, 10, 10, 12)
     while t0 <= t0max:
         init = t0.strftime("%Y%m%d%H")
         yyyy = t0.strftime("%Y")
-        tfile = orig + "/track" + init + "_mod.txt"
-        ofile = orig + "/velocity" + init + "_mod.txt"
+        tfile = center[orig] + "/track" + init + "_cntl.txt"
+        ofile = center[orig] + "/velocity" + init + "_cntl.txt"
         track = np.loadtxt(tfile)
         velocity = open(ofile, "w")
         time = []
@@ -98,7 +99,12 @@ for orig in origin:
             dt = (time[ind2] - time[ind1]).total_seconds()
             v = speed(lon1, lon2, lat1, lat2, dt)
             d = direction(lon1, lon2, lat1, lat2)
-            print("{} {} {} {} {} {}".format(int(time[l].year), int(time[l].month), \
-                int(time[l].day), int(time[l].hour), v, d),\
+            vwe = v*sin(d*deg2rad)
+            vns = v*cos(d*deg2rad)
+            print("{} {} {} {} {} {} {} {} {} {}".format(\
+                int(time[l].year), int(time[l].month), \
+                int(time[l].day), int(time[l].hour), \
+                track[ind[l], 4], track[ind[l], 5],\
+                v, d, vwe, vns),\
                 file=velocity)
         t0 += dt0

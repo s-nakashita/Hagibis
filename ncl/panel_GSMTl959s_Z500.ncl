@@ -55,7 +55,7 @@ begin
    fh2     = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100_est/fcst_p_asia_2019100900.nc","r")
    fh3     = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100_mgdsst/fcst_p_asia_2019100900.nc", "r")
    
-   lev = 500
+   lev = 300
    var = "Z"
    var_l = str_lower(var)
    pr1 = fh1->$var$(:, {lev}, :, :)
@@ -76,9 +76,9 @@ begin
     ;ver = 4
   ;do ver=1, 7
     ;pltPath = pltDir+pltName+sprinti("%d", ver)
-    t_offset = 21
+    t_offset = 20
     nrow = 3
-    ncol = 2
+    ncol = 3
     pltPath = pltDir+pltName+cd_string(fh1->time(t_offset), "%D%H")+"-"+cd_string(fh1->time(t_offset+nrow*ncol-1), "%D%H")
     wks     = gsn_open_wks(pltType, pltPath) 
 
@@ -126,9 +126,12 @@ begin
 
    ; Set resources specifically for plots in column 1
     res@cnLevelSelectionMode      = "ManualLevels"  ; manually specify contour levels
-    res@cnMinLevelValF            = 5300.             ; min level
-    res@cnMaxLevelValF            = 5900.             ; max level
-    res@cnLevelSpacingF           = 50.              ; contour interval
+    ;res@cnMinLevelValF            = 5300.             ; min level
+    ;res@cnMaxLevelValF            = 5900.             ; max level
+    ;res@cnLevelSpacingF           = 50.              ; contour interval
+    res@cnMinLevelValF            = 9000.             ; min level
+    res@cnMaxLevelValF            = 9800.             ; max level
+    res@cnLevelSpacingF           = 100.              ; contour interval
     ;res@cnLevelSelectionMode     = "ExplicitLevels"
     ;res@cnLevels = (/5500., 5600., 5700., 5740., 5780., 5820., 5860., 5900./)
     ;res@cnLevels = (/8600.,8700.,8800.,8900.,9000.,9100.,9200.,9300.,9400.,9500.,9600.,9700./)
@@ -141,7 +144,7 @@ begin
     res1@mpProjection               = "CylindricalEquidistant"       ; projection
     res1@mpMinLatF = 20.0
     res1@mpMaxLatF = 50.0
-    res1@mpMinLonF = 110.0
+    res1@mpMinLonF = 120.0
     res1@mpMaxLonF = 150.0
     res1@mpFillDrawOrder            = "PostDraw"
 
@@ -161,32 +164,32 @@ begin
     i = 0
     do t = 0, nrow*ncol*t_int-1, t_int
     if (t+t_offset .lt. ntim) then
-    dir  = cd_string(time(t+t_offset), "%Y/%N/%D")
-    dd   = cd_string(time(t+t_offset), "%D")
-    print(dir)
-    fh0  = addfile("/Volumes/dandelion/netcdf/era5/"+dir+"/plev_"+dd+".nc","r")
-    t0   = fh0->time
-    ;print(cd_string(time(t+t_offset),"%Y%N%D%H"))
-    ;print(cd_string(t0,"%Y%N%D%H"))
-    ind0 = ind(cd_string(t0,"%Y%N%D%H").eq.cd_string(time(t+t_offset),"%Y%N%D%H"))
-    print(ind0)
-    pr   = fh0->$var_l$(ind0,{lev},:,:)
-    pr   = pr / 9.81
-    printMinMax(pr,0)
+    ;dir  = cd_string(time(t+t_offset), "%Y/%N/%D")
+    ;dd   = cd_string(time(t+t_offset), "%D")
+    ;print(dir)
+    ;fh0  = addfile("/Volumes/dandelion/netcdf/era5/"+dir+"/plev_"+dd+".nc","r")
+    ;t0   = fh0->time
+    ;;print(cd_string(time(t+t_offset),"%Y%N%D%H"))
+    ;;print(cd_string(t0,"%Y%N%D%H"))
+    ;ind0 = ind(cd_string(t0,"%Y%N%D%H").eq.cd_string(time(t+t_offset),"%Y%N%D%H"))
+    ;print(ind0)
+    ;pr   = fh0->$var_l$(ind0,{lev},:,:)
+    ;pr   = pr / 9.81
+    ;printMinMax(pr,0)
     res1@gsnCenterString = date(t+t_offset)
-    res1@cnLineColor = "black"
-    res1@cnLineLabelFontColor = "black"
-    plot(i) = gsn_csm_contour_map(wks, pr, res1)
-    delete(fh0)
-    delete(pr)
+    ;res1@cnLineColor = "black"
+    ;res1@cnLineLabelFontColor = "black"
+    ;plot(i) = gsn_csm_contour_map(wks, pr, res1)
+    ;delete(fh0)
+    ;delete(pr)
 
     pr = pr1(t+t_offset,:,:)
     printMinMax(pr, 0)
-    res@cnLineColor = "red"
-    res@cnLineLabelFontColor = "red"
-    ;plot(i) = gsn_csm_contour_map(wks, pr, res1)
-    plot1 = gsn_csm_contour(wks, pr, res)
-    overlay(plot(i), plot1)
+    res1@cnLineColor = "red"
+    res1@cnLineLabelFontColor = "red"
+    plot(i) = gsn_csm_contour_map(wks, pr, res1)
+    ;plot1 = gsn_csm_contour(wks, pr, res)
+    ;overlay(plot(i), plot1)
     
     pr = pr2(t+t_offset,:,:)
     printMinMax(pr, 0)

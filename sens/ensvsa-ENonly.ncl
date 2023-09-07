@@ -52,7 +52,8 @@ begin
   wks = gsn_open_wks(dev,out)
   nplots = nd / 4 + 1
   plot = new(nplots,graphic)
-  cmap = read_colormap_file("spread_15lev")
+  ;cmap = read_colormap_file("spread_15lev")
+  cmap = read_colormap_file("gsltod")
   
   ypts = (/ 37.0, 37.0, 33.0, 33.0, 37.0/)
   xpts = (/137.0,142.0,142.0,137.0,137.0/)
@@ -63,10 +64,10 @@ begin
   i = 0;1
   dum = new((/nplots,4/),graphic)  
   cnLevels = (/\
-  (/1.,2.,4.,8.,16.,32.,64.,128./),\
-  (/2.,4.,8.,16.,32.,64.,128.,256./),\
-  (/4.,8.,16.,32.,64.,128.,256.,512./),\
-  (/8.,16.,32.,64.,128.,256.,512.,1024./)\
+  (/2.,4.,8.,16.,32.,64.,128./),\
+  (/4.,8.,16.,32.,64.,128.,256./),\
+  (/8.,16.,32.,64.,128.,256.,512./),\
+  (/16.,32.,64.,128.,256.,512.,1024./)\
   /)
   do d = 0,nd-1,4
      vdate  = cd_string(time(d), "%H UTC, %D")

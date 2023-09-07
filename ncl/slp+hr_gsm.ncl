@@ -23,16 +23,30 @@ begin
   ;hh = 12
   ;cmap = read_colormap_file("precip3_16lev") ; all level
   ;cmap = read_colormap_file("BlueDarkRed18") ; low level
-  cmap = read_colormap_file("MPL_YlOrRd") ; low level
+  ;cmap = read_colormap_file("MPL_YlOrRd") ; low level
+  cmap = read_colormap_file("hotcold_18lev")
   ;cmap = cmap(::-1,:) ; for dyn
   yyyymmddhh = 2019100912
-  sst = "_mgdsst"
-  a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_surf_asia_"+yyyymmddhh+".nc","r")
-  b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
-  wks = gsn_open_wks("png","slp+hr_cloud"+yyyymmddhh+sst)
-  plot = new(16,graphic)
+  ;sst = "_mgdsst"
+  ;a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_surf_asia_"+yyyymmddhh+".nc","r")
+  ;b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
+  ;prtb = "cntl"
+  if(prtb.eq."cntl") then
+  a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est/fcst_surf_asia_"+yyyymmddhh+".nc","r")
+  b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
+  else
+  a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est_0912+"+prtb+"/fcst_surf_asia_"+yyyymmddhh+".nc","r")
+  b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est_0912+"+prtb+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
+  end if
+  ;out="slp+hr_cloud"+yyyymmddhh+sst
+  out="slp+hrcv"+yyyymmddhh+"_"+prtb
+  wks = gsn_open_wks("ps",out)
+  ;plot = new(16,graphic)
+  nrow=1
+  ncol=4
+  plot = new(nrow*ncol,graphic)
 
-  id = 2
+  id = 0
   pmax = 850
   pmin = 250
 
@@ -48,10 +62,11 @@ begin
   time6h  = b->time
   date1h  = cd_string(time1h, "%N%D %H:%M")
   date6h  = cd_string(time6h, "%N%D %H:%M")
-  ntime   = dimsizes(time6h)
   print(date6h)
   factor = 1.0 / 24.0 ; per day -> per hour
-  do d = 0, ntime-1
+  d0=0
+  ntime   = min((/dimsizes(time6h)-d0,nrow*ncol/))
+  do d = d0, d0+ntime-1
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -61,15 +76,16 @@ begin
      ps       = a->PSEA(ind_p,:,:)
      ps@units = "hPa"
      dTcv     = b->aHRCV(d,{pmax:pmin},:,:)
-     dTlc     = b->aHRLC(d,{pmax:pmin},:,:)
+     ;dTlc     = b->aHRLC(d,{pmax:pmin},:,:)
      dT       = dTcv
-     dT       = dTcv + dTlc
+     ;dT       = dTcv + dTlc
      ctime    = time6h(d)
-     date     = cd_string(ctime, "%N%D %H:%M")
+     date     = cd_string(ctime, "%HZ%D")
      ;dT = dTp - dTm
      dT = dT*conform(dT, dp, 0)
      dTdt = dT(0,:,:)
-     dTdt@standard_name = "Heating Rate (Cloud)"
+     dTdt@long_name = "Heating Rate (Convection)"
+     ;dTdt@standard_name = "Heating Rate (Cloud)"
      dTdt@units         = "K/h"
      dTdt = dim_sum_n(dT, 0) * factor
 
@@ -82,20 +98,19 @@ begin
      res@gsnCenterString	   = date
      res@gsnRightString     = dTdt@units
      res@gsnLeftString	   = ps@units
-     res@gsnCenterStringOrthogonalPosF = 0.02
+     ;res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
      res@cnLinesOn            = False               ; turn off contour lines
      res@cnLineLabelsOn       = False              ; turn off contour line labels
-     res@gsnScalarContour     = True               ; (for gsn_csm_vector_scalar_map)draw contours
-     res@cnFillPalette        = cmap
+     ;res@gsnScalarContour     = True               ; (for gsn_csm_vector_scalar_map)draw contours
 
      res@mpFillOn             = False 
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
-     res@mpMinLonF            =  130.               ; select a subregion
-     res@mpMaxLonF            =  160.
-     res@mpMinLatF            =  10. 
-     res@mpMaxLatF            =  40.
+     res@mpMinLonF            =  120.               ; select a subregion
+     res@mpMaxLonF            =  180.
+     res@mpMinLatF            =  -10. 
+     res@mpMaxLatF            =  50.
 
      res@lbLabelBarOn         = False
      ;res@lbOrientation            = "Vertical"     ; vertical label bar
@@ -105,9 +120,15 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
+     ndimc = dimsizes(cmap)
+     ncolor = (ndimc(0)+1)/2
+     newcmap = new((/ncolor,ndimc(1)/),float)
+     newcmap(:,:) = cmap(ncolor-1:,:)
+     res@cnFillPalette        = newcmap(:,:)
      res@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
-     res@cnLevels = (/0.0,0.1,0.2,0.3,0.4,0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0/)
+     ;res@cnLevels = (/0.0,0.1,0.2,0.3,0.4,0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0/)
      ;res@cnLevels = (/-2.5,-2.0,-1.5,-1.0,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,1.0,1.5,2.0,2.5/)
+     res@cnLevels = (/0.2,0.3,0.4,0.5,1.0,1.5,2.0,2.5/)
      ;res@cnMaxLevelCount	   = 20
      ;res@cnMinLevelValF       = 0.5               ; set min contour level
      ;res@cnMaxLevelValF       = 5.0                ; set max contour level
@@ -139,6 +160,6 @@ begin
    resP	                   = True
    ;resP@gsnPanelMainString	   = "SLP + "+dT@long_name+" 600-200 hPa"
    resP@gsnPanelLabelBar     = True
-   gsn_panel(wks,plot,(/4,4/),resP)
+   gsn_panel(wks,plot,(/nrow,ncol/),resP)
    delete(plot)
 end

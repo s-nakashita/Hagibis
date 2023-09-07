@@ -20,10 +20,17 @@
 begin
 
 ;---Open netCDF file
-  orig = "ukmo"
-  dev = "png"
-  a = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_2019100912_mean.nc","r")
-  b = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_2019100912_spr.nc","r")
+;  orig = "jma"
+;  init = "2019100900"
+;  regrid = False
+;  dev = "png"
+  if (regrid) then
+  a = addfile("/Volumes/dandelion/netcdf/tigge/2019/regrid/"+orig+"/glb_"+init+"_mean.nc","r")
+  b = addfile("/Volumes/dandelion/netcdf/tigge/2019/regrid/"+orig+"/glb_"+init+"_spr.nc","r")
+  else
+  a = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_"+init+"_mean.nc","r")
+  b = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_"+init+"_spr.nc","r")
+  end if
 ;
 ; Read in Sea Surface Temperature Anomalies
 ; Read in U and V at 1000 mb [subscript 0]
@@ -55,8 +62,13 @@ begin
   q00      = a->q(:,:,:,:)
   q12      = b->q(:,:,:,:)
   end if
+  if(regrid) then
+  lat_uv   = a->lat
+  lon_uv   = a->lon
+  else
   lat_uv   = a->latitude
   lon_uv   = a->longitude
+  end if
   plev     = a->level
   time_00   = a->time
   time_12   = b->time
@@ -67,12 +79,16 @@ begin
   lat0 = -10.
   lat1 = 60.
   
-  out = "sprd_"+orig
+  if(regrid) then
+  out = "sprd_regrid_"+orig+"_"+init
+  else
+  out = "sprd_"+orig+"_"+init
+  end if
 ;  wks = gsn_open_wks("png","prtb_mem26")
 ;  plot = new(4,graphic)
   cmap = read_colormap_file("spread_15lev")
     
-  vdate = 2019100912
+  vdate = init
   ind_00 = ind(date_00.eq.vdate)
   ind_12 = ind(date_12.eq.vdate)
   print(ind_00)
@@ -146,42 +162,36 @@ begin
   frame(wks)
   delete(plotp)
   delete(plotpf)
+  levels = (/850,500,300/)
   ;do k = 3, 8 ;; jma
-  do k = 0, 4 ;; others
-     ;u = u12(ind_12,k,:,:)
+  do k = 0, dimsizes(levels)-1 ;; others
+    level = levels(k)
+     u = u12(ind_12,{level},:,:)
      ;u = u12(ind_12,k,:,:) - u00(ind_00,k,:,:) 
-     ;v = v12(ind_12,k,:,:)
+     v = v12(ind_12,{level},:,:)
      ;v = v12(ind_12,k,:,:) - v00(ind_00,k,:,:)
-     t = t12(ind_12,k,:,:)
+     ke = u 
+     ke = 0.5*sqrt(u^2 + v^2)
+     ke@long_name = "kinetic energy spread"
+     ke@units = "m~S~2~N~/s~S~2~N~"
+     t = t12(ind_12,{level},:,:)
      ;t = t12(ind_12,k,:,:) - t00(ind_00,k,:,:)
      if (orig .ne. "ukmo") then
-     q = q12(ind_12,k,:,:)
+     q = q12(ind_12,{level},:,:)
      ;q = q12(ind_12,k,:,:) - q00(ind_00,k,:,:)
      q = q*10^3
+     q@units = "g/ks"
      end if
-     z = z12(ind_12,k,:,:)
+     z = z12(ind_12,{level},:,:)
      ;z = z12(ind_12,k,:,:) - z00(ind_00,k,:,:)
-     hgt = plev(k)
-     wks = gsn_open_wks(dev,out+"_"+hgt)
+     wks = gsn_open_wks(dev,out+"_"+level)
+     plots = new(2,graphic)
 ;---Create plot
      res                = True               ; plot mods desired
      res@gsnDraw	      = False
      res@gsnFrame	      = False
-;     res@cnInfoLabelOn	      = False
-     
-     res@gsnCenterString	   = "T,q_"+hgt+"hPa"
-     res@gsnCenterStringOrthogonalPosF = 0.02
-     res@gsnLeftString	    = "g/kg"
-     res@gsnLeftStringFontHeightF = 0.02
-     res@gsnRightString	    = "K"
-     res@gsnRightStringFontHeightF = 0.02
-     res@gsnRightStringParallelPosF = 1.1    
      res@gsnAddCyclic	      = False
-     res@cnFillOn             = True               ; turn on color for contours
-     res@cnLinesOn            = False              ; turn off contour lines
-     res@cnLineLabelsOn       = False              ; turn off contour line labels
-     ;res@gsnScalarContour     = True               ; contours desired
-     res@cnFillPalette        = cmap
+     resc = res
 
 ;     res@mpLandFillColor      = "gray"            ; set land to be gray
      res@mpFillOn	      = False
@@ -196,15 +206,32 @@ begin
      res@vpXF = 0.15
      res@vpWidthF = 0.7
 
+;     res@cnInfoLabelOn	      = False
+     res1 = res
+     res2 = res
+     ;res1 : T+q
+     res1@gsnCenterString	   = "T,q";+"_"+level+"hPa"
+     res1@gsnCenterStringOrthogonalPosF = 0.02
+     res1@gsnLeftString	    = "g/kg"
+     res1@gsnLeftStringFontHeightF = 0.02
+     res1@gsnRightString	    = "K"
+     res1@gsnRightStringFontHeightF = 0.02
+     res1@gsnRightStringParallelPosF = 1.1    
+     res1@cnFillOn             = True               ; turn on color for contours
+     res1@cnLinesOn            = False              ; turn off contour lines
+     res1@cnLineLabelsOn       = False              ; turn off contour line labels
+     ;res@gsnScalarContour     = True               ; contours desired
+     res1@cnFillPalette        = cmap
+
 ; note, when doing a subregion, NCL determines the range of the data from
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-      res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-;     res@cnMaxLevelCount	   = 10
-      res@cnMinLevelValF       = 0.2               ; set min contour level
-      res@cnMaxLevelValF       = 2.0                 ; set max contour level
-      res@cnLevelSpacingF      = 0.2               ; set contour spacing
+      res1@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+;     res1@cnMaxLevelCount	   = 10
+      res1@cnMinLevelValF       = 0.4               ; set min contour level
+      res1@cnMaxLevelValF       = 1.2                 ; set max contour level
+      res1@cnLevelSpacingF      = 0.1               ; set contour spacing
 
       ;res@vcRefMagnitudeF           = 5.0             ; define vector ref mag
       ;res@vcRefLengthF              = 0.045           ; define length of vec ref
@@ -223,39 +250,37 @@ begin
       ;u = where(wind.lt.0.5, u@_FillValue, u)
   
       ;plott = gsn_csm_vector_scalar_map_ce(wks,u,v,t,res)
-      plott = gsn_csm_contour_map_ce(wks,t,res)
+      plots(0) = gsn_csm_contour_map_ce(wks,t,res1)
 
      if (orig .ne. "ukmo") then
-      res@cnFillOn             = False             ; turn on color for contours
-      res@cnLinesOn            = True              ; turn off contour lines
-      res@cnLineLabelsOn       = True
-      res@cnLineColor          = "blue"
-      res@cnLineThicknessF     = 3.0
-      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
-      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
-;     res@cnMaxLevelCount	   = 10
-      res@cnMinLevelValF       = 0.5             ; set min contour level
-      res@cnMaxLevelValF       = 3.0                 ; set max contour level
-      res@cnLevelSpacingF      = 0.5               ; set contour spacing
+      resc@cnFillOn             = False             ; turn on color for contours
+      resc@cnLinesOn            = True              ; turn off contour lines
+      resc@cnLineLabelsOn       = True
+      resc@cnLineColor          = "blue"
+      resc@cnLineThicknessF     = 3.0
+      resc@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+      resc@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+      resc@cnMaxLevelCount	   = 10
+;      resc@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+;      resc@cnMinLevelValF       = 0.5             ; set min contour level
+;      resc@cnMaxLevelValF       = 3.0                 ; set max contour level
+;      resc@cnLevelSpacingF      = 0.5               ; set contour spacing
 ; when using the gsn_csm plot templates and overlay, it is necessary to
 ; turn off the automatic label strings so that you don't get text on 
 ; top of text
-      res@gsnRightString   = ""    
-      res@gsnLeftString    = ""
-      res@gsnCenterString  = ""
+      resc@gsnRightString   = ""    
+      resc@gsnLeftString    = ""
+      resc@gsnCenterString  = ""
       
-      plotq = gsn_csm_contour(wks,q,res)
-      overlay(plott,plotq)
+      plotq = gsn_csm_contour(wks,q,resc)
+      overlay(plots(0),plotq)
      end if
-      res@cnFillOn             = False             ; turn on color for contours
-      res@cnLinesOn            = True              ; turn off contour lines
-      res@cnLineLabelsOn       = True
-      res@cnLineColor          = "black"
-      res@cnLineThicknessF     = 3.0
-      res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
-      res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+
+      res2@cnFillOn             = True             ; turn on color for contours
+      res2@cnLinesOn            = False              ; turn off contour lines
+      res2@cnLineLabelsOn       = False
+      res2@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+      res2@cnFillPalette        = cmap
       ;;res@cnMaxLevelCount	   = 10
       ;if (k .eq. 5) then
       ;   res@cnMinLevelValF       = 1200.0              ; set min contour level
@@ -272,24 +297,26 @@ begin
       ;   res@cnMaxLevelValF       = 9600.0                 ; set max contour level
       ;   res@cnLevelSpacingF      = 80.0               ; set contour spacing
       ;end if
-      res@cnMinLevelValF = 1.0
-      res@cnMaxLevelValF = 10.0
-      res@cnLevelSpacingF = 1.0
+      res2@cnMinLevelValF = 0.4
+      res2@cnMaxLevelValF = 1.2
+      res2@cnLevelSpacingF = 0.1
 ; when using the gsn_csm plot templates and overlay, it is necessary to
 ; turn off the automatic label strings so that you don't get text on 
 ; top of text
-      res@gsnRightString   = ""    
-      res@gsnLeftString    = ""
-      res@gsnCenterString  = ""
+      res2@gsnLeftString   = ""    
+      res2@gsnRightString    = "m~S~2~N~/s~S~2~N~"
+      res2@gsnCenterString  = "KE"
+
+      plots(1) = gsn_csm_contour_map_ce(wks,ke,res2)
       
-      ;plotz = gsn_csm_contour(wks,z,res)
-      ;overlay(plott,plotz)
-      draw(plott)
-      frame(wks)
-      ;plot(k+1) = plott
-      delete(plott)
-      ;delete(plotq)
-      ;delete(plotz)
+      resP = True
+      resP@gsnPanelMainString = level+" hPa"
+      gsn_panel(wks,plots,(/1,2/),resP)
+      delete(resP)
+      delete(res1)
+      delete(res2)
+      delete(resc)
+      delete(res)
    end do
 
 ;   resP	                   = True

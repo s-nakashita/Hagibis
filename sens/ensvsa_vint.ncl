@@ -231,7 +231,14 @@ begin
   resp@gsLineThicknessF = 4.0                       ; thickness of lines
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
-   cmap = read_colormap_file("hotcold_18lev")
+   ;cmap = read_colormap_file("hotcold_18lev")
+   cmap1 = read_colormap_file("gsdtol")
+   cmap2 = read_colormap_file("gsltod")
+   print(dimsizes(cmap1))
+   print(dimsizes(cmap2))
+   cmap = new((/32,4/),float)
+   cmap(:15,:) = cmap1(0:30:2,:)
+   cmap(15:,:) = cmap2(:16,:)
    wks = gsn_open_wks(dev,out+"_slp+wind")
    reste                = True               ; plot mods desired
    reste@gsnDraw	      = False
@@ -250,13 +257,13 @@ begin
    reste@gsnRightStringParallelPosF = 1.1
    reste@gsnAddCyclic	      = False
    reste@cnFillOn             = True               ; turn on color for contours
-   reste@cnLinesOn            = False             ; turn off contour lines
+   reste@cnLinesOn            = True             ; turn off contour lines
    reste@cnLineLabelsOn       = False              ; turn off contour line labels
    reste@cnFillPalette        = cmap
    reste@gsnScalarContour     = True               ; contours desired
    reste@gsnContourZeroLineThicknessF = 0.0
    reste@gsnContourNegLineDashPattern = 1
-   reste@gsnContourLineThicknessesScale = 3.0
+   reste@gsnContourLineThicknessesScale = 2.0
 
    ;reste@mpLandFillColor      = "gray"            ; set land to be gray
    reste@mpFillOn             =  False            ; not land fill 
@@ -283,9 +290,9 @@ begin
 ;  d=0
       ;reste@cnLevels = (/1.,2.,4.,6.,8.,10.,15.,20.,25.,30.,35.,40.,45.,50.,60.,70.,80./)
       ;reste@cnLevels = (/1.,2.,3.,4.,5.,6.,8.,10.,12.5,15.,17.5,20./)
-      reste@cnMinLevelValF       = -2.5              ; set min contour level
-      reste@cnMaxLevelValF       = 2.5                ; set max contour level
-      reste@cnLevelSpacingF      = 0.25               ; set contour spacing
+      reste@cnMinLevelValF       = -1.4              ; set min contour level
+      reste@cnMaxLevelValF       = 1.4                ; set max contour level
+      reste@cnLevelSpacingF      = 0.2               ; set contour spacing
       ;reste@cnMinLevelValF       = .1               ; set min contour level
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
@@ -334,7 +341,8 @@ begin
    reste@vcFillArrowsOn       = True
    reste@vcMinFracLengthF     = 0.2
    reste@vcFillArrowEdgeColor = "black"
-   reste@vcFillArrowFillColor = "green"
+   ;reste@vcFillArrowFillColor = "green"
+   reste@vcFillArrowFillColor = "gray"
    reste@vcMinDistanceF	      = 0.02
    reste@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
@@ -353,7 +361,7 @@ begin
    resps@cnLineLabelsOn       = False              ; turn off contour line labels
    resps@cnLineColor          = "black"
    ;resps@cnLineColor          = "blue"
-   resps@cnLineThicknessF     = 3.
+   resps@cnLineThicknessF     = 4.
    resps@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
    resps@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
       

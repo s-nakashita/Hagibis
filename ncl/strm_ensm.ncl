@@ -21,7 +21,7 @@ begin
 
 ;---Open netCDF file
   orig = "jma"
-  dev = "png"
+  dev = "ps"
   init = "0912"
   if (init.eq."0900") then
     d_offset = 0
@@ -50,7 +50,8 @@ begin
   out = "strm_ensm_"+orig+"_"+init
   cmap = read_colormap_file("hotcold_18lev")
   plotnum = (/0,3,6,9,1,4,7,10,2,5,8,11/)
-  do k = 3, 8
+  ;do k = 3, 8
+  do k = 4, 4
     u = um(:,k,:,:)
     v = vm(:,k,:,:)
     hgt = plev(k)
@@ -80,11 +81,7 @@ begin
     res@gsnRightStringFontHeightF = 0.02
     res@gsnRightStringParallelPosF = 1.1    
     res@gsnAddCyclic	       = True
-    res@cnFillOn             = True               ; turn on color for contours
-    res@cnLinesOn            = True               ; turn off contour lines
-    res@cnLineLabelsOn       = False              ; turn off contour line labels
-    res@cnFillPalette        = cmap
-
+    
 ;    res@mpLandFillColor      = "gray"            ; set land to be gray
     res@mpFillOn	      = False
     res@mpMinLonF            =  lon0               ; select a subregion
@@ -102,10 +99,16 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
+    ;res@cnFillOn             = True               ; turn on color for contours
+    res@cnFillOn             = False               ; turn on color for contours
+    res@cnLinesOn            = True               ; turn off contour lines
+    res@cnLineLabelsOn       = False              ; turn off contour line labels
+    res@cnFillPalette        = cmap
     res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-    res@cnMinLevelValF       = -9.               ; set min contour level
-    res@cnMaxLevelValF       = 9.                ; set max contour level
-    res@cnLevelSpacingF      = 1.                 ; set contour spacing
+    res@cnMinLevelValF       = -16.               ; set min contour level
+    res@cnMaxLevelValF       = 16.                ; set max contour level
+    res@cnLevelSpacingF      = 2.                 ; set contour spacing
+    res@cnLineThicknessF = 2.
     res@gsnContourNegLineDashPattern = 2
     res@gsnContourZeroLineThicknessF = 3.
 

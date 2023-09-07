@@ -17,7 +17,7 @@ dc = 5
 pc = 101000
 latc = 40
 sigma = 0.0
-orig = "ecmf"
+orig = "rjtd"
 Cendict={"ecmf":"ecmwf","rjtd":"jma","kwbc":"ncep","egrr":"ukmo"}
 center = Cendict[orig]
 Memdict={"ecmwf":50,"jma":26,"ncep":20,"ukmo":17} #old
@@ -27,22 +27,24 @@ Mem = Memdict[center]
 #outdir.mkdir(0o755, True, True)
 #for m in range(Mem):
 t0 = datetime(2019, 10, 7, 0) # 2019-10-06 12:00:00
-t0max = datetime(2019, 10, 11, 0) # 2019-10-07 12:00:00
+t0max = datetime(2019, 10, 12, 12) # 2019-10-07 12:00:00
 while t0 <= t0max:
     init = t0.strftime("%m%d%H") # -> 2019100600
     year = t0.strftime("%Y")
+    month = t0.strftime("%m")
     print(init)
     #outfile = orig+"/track" + year + init + "_mean.txt"
-    outfile = orig+"/track" + year + init + "_mod.txt"
+    outfile = center+"/track" + year + init + "_cntl.txt"
         #outfile = center+"/track" + year + init + "_" + str(m+1).zfill(2) + ".txt"
     #outfile = orig+"/track_anl.txt"
     track = open(outfile, "w")
-    infile = "/Volumes/dandelion/netcdf/tigge/"+year+"/"+center+"/"+init+"_mean.nc"
+    #infile = "/Volumes/dandelion/netcdf/tigge/"+year+"/"+center+"/"+init+"_mean.nc"
+    infile = "/Volumes/dandelion/netcdf/tigge/"+year+"/"+month+"/"+center+"/glb_"+year+init+"_cntl.nc"
         #infile = "/Volumes/dandelion/netcdf/tigge/"+year+"/"+center+"/"+init+"_" + str(m+1).zfill(2) + ".nc"
     #infile = "../../netcdf/tigge/"+year+"/"+orig+"/anl.nc"
     nc = netCDF4.Dataset(infile, 'r')
-    lon = nc.variables['lon'][:]
-    lat = nc.variables['lat'][:]
+    lon = nc.variables['longitude'][:]
+    lat = nc.variables['latitude'][:]
     time = nc.variables['time']
     lonpre = None 
     latpre = None
@@ -61,8 +63,10 @@ while t0 <= t0max:
         slp0 = slpb
         print("best track center")
         print(f"{lonb:.3f}, {latb:.3f}, {slpb:.3f}")
-        slp = nc.variables['PRES_meansealevel'][i,]
-        if nc.variables['PRES_meansealevel'].units == 'hPa':
+        #slp = nc.variables['PRES_meansealevel'][i,]
+        slp = nc.variables['msl'][i,]
+        #if nc.variables['PRES_meansealevel'].units == 'hPa':
+        if nc.variables['msl'].units == 'hPa':
             slp *= 1e2
         lonmin, latmin, slpmin = \
         grid.find_minimum(slp, lon, lat, lon0, lat0, slp0, lonpre, latpre, sigma)

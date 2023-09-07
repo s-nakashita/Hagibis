@@ -1,6 +1,6 @@
 #!/bin/sh
 head=error-slp
-outfile=${head}-tigge_mod.ps
+outfile=${head}-tigge.ps
 
 if [ "$head" = "error" ]; then
 gmt psbasemap -R2019-10-07T00/2019-10-13T00/0/600 -JX15c/10c -Y8c -BWeSn -Bxa1df6hg1d+l"initial date" -Bya100f100g50+l"error(km)" -K > ${outfile}
@@ -16,9 +16,9 @@ gmt psxy -R -J -O tmp.txt -i0,1 -Sc0.1i -Gwhite -Wthin -K >> ${outfile}
 line=1
 for orig in ecmf rjtd kwbc egrr; do
   #if [ $orig = ecmf ]; then
-  ln -fs ./${head}-${orig}_mod.txt tmp.txt
+  #ln -fs ./${head}-${orig}_mod.txt tmp.txt
   #else
-  #ln -fs ./${head}-${orig}.txt tmp.txt
+  ln -fs ./${head}-${orig}.txt tmp.txt
   #fi
   pencol=$(cat track_error_tigge.cpt | awk -v awk_var=$line '{if(NR == awk_var) {print $2}}' )
   gmt psxy -R -J -O tmp.txt -i0,1 -W1p,${pencol} -K >> ${outfile} 
@@ -32,6 +32,7 @@ gmt pslegend -R -J -Dn0.7/0.7+w4c -F+gwhite+p -K -O < legend_error_tigge.txt >> 
 #tail -n +2 legend.txt | head -6 | gmt pslegend -Dx5c/-11c+w5c/10c -K -O >> ${outfile}
 #tail -n +13 legend.txt | gmt pslegend -Dx10c/-11c+w5c/10c -O >> ${outfile}
 
+convert -trim -density 300 -rotate 90 ${outfile} ${outfile%.ps}.png
 pstopdf ${outfile}
 pdfcrop ${outfile%.ps}.pdf
 mv -f ${outfile%.ps}-crop.pdf ${outfile%.ps}.pdf

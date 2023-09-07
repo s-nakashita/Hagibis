@@ -250,7 +250,8 @@ program grads_ensvsa
          ilv=0
          ilq=0
          !rdf=dir//yyyy//'/jma/'//mmddhh//'_'//nmem//'.nc'
-         rdf=dir//yyyy//'/'//trim(orig)//'/glb_'//yyyymmddhh//'_'//nmem//'.nc'
+         !rdf=dir//yyyy//'/'//trim(orig)//'/glb_'//yyyymmddhh//'_'//nmem//'.nc'
+         rdf='glb_'//yyyymmddhh//'_'//nmem//'.nc'
          !print*,rdf
          inquire(file=rdf, exist=ex)
          if(ex)then
@@ -335,7 +336,8 @@ program grads_ensvsa
       ilv=0
       ilq=0
       !rdf=dir//yyyy//'/jma/'//mmddhh//'_mean.nc'   !_n
-      rdf=dir//yyyy//'/'//trim(orig)//'/glb_'//yyyymmddhh//'_mean.nc'   !_n
+      !rdf=dir//yyyy//'/'//trim(orig)//'/glb_'//yyyymmddhh//'_mean.nc'   !_n
+      rdf='glb_'//yyyymmddhh//'_mean.nc'   !_n
       !rdf=dir//yyyy//'/jma/100900_mean.nc'
       !rdf=dir//yyyy//'/jma/anl_sellev.nc' !_a
       inquire(file=rdf, exist=ex)

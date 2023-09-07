@@ -1,5 +1,7 @@
-1	greenyellow	2	greenyellow
-2	lightgreen	3	lightgreen
+1	red	2	red
+2	darkgray	3	darkgray
+3   darkgreen   4   darkgreen
+4   darkmagenta 5   darkmagenta
 B	black
 F	white
 N	127.5

@@ -20,12 +20,13 @@
 begin
 
 ;---Open netCDF file
-;  rank = "worst"
-do m=1,17
-  mem = sprinti("%0.2d", m) ;"26"
-  orig = "ukmo"
+  rank = "worst"
+;do m=1,17
+;  mem = sprinti("%0.2d", m) 
+  mem = "26"; "05"
+  orig = "jma"
   init = "0912"
-  dev = "png"
+  dev = "ps"
   a = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_mean.nc","r")
   b = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_"+mem+".nc","r")
 ;
@@ -59,11 +60,19 @@ do m=1,17
   lat0 = 0.
   lat1 = 40.
   
-  ;out = "prtb_"+orig+"_"+rank
-  out = "prtb_"+orig+"/prtb_"+orig+"_"+init+"_"+mem
+  out = "prtb_"+orig+"_"+rank
+  ;out = "prtb_"+orig+"/prtb_"+orig+"_"+init+"_"+mem
 ;  wks = gsn_open_wks("png","prtb_mem26")
 ;  plot = new(4,graphic)
-  cmap = read_colormap_file("hotcold_18lev")
+  ;cmap = read_colormap_file("hotcold_18lev")
+  cmap1 = read_colormap_file("gsdtol")
+  cmap2 = read_colormap_file("gsltod")
+  print(dimsizes(cmap1))
+  print(dimsizes(cmap2))
+  cmap = new((/32,4/),float)
+  cmap(:15,:) = cmap1(0:30:2,:)
+  cmap(15:,:) = cmap2(:16,:)
+  ;exit()
     
   vdate = 2019100912
   ind_00 = ind(date_00.eq.vdate)
@@ -88,10 +97,13 @@ do m=1,17
   resps@gsnRightStringFontHeightF = 0.02
   resps@gsnAddCyclic	      = False
   resps@cnFillOn             = True               ; turn on color for contours
-  resps@cnLinesOn            = False              ; turn off contour lines
+  resps@cnLinesOn            = True              ; turn off contour lines
   resps@cnLineLabelsOn       = False              ; turn off contour line labels
   resps@gsnScalarContour     = True               ; contours desired
   resps@cnFillPalette        = cmap
+  resps@gsnContourZeroLineThicknessF = 0.0
+  resps@gsnContourNegLineDashPattern = 1
+  resps@gsnContourLineThicknessesScale = 2.0
 
   resps@mpLandFillColor      = "gray"            ; set land to be gray
   resps@mpMinLonF            =  lon0               ; select a subregion
@@ -111,9 +123,12 @@ do m=1,17
 
   resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
-  resps@cnMinLevelValF       = -1.5              ; set min contour level
-  resps@cnMaxLevelValF       = 1.5                 ; set max contour level
-  resps@cnLevelSpacingF      = 0.1             ; set contour spacing
+  ;resps@cnMinLevelValF       = -1.5              ; set min contour level
+  ;resps@cnMaxLevelValF       = 1.5                 ; set max contour level
+  ;resps@cnLevelSpacingF      = 0.1             ; set contour spacing
+  resps@cnMinLevelValF       = -1.4              ; set min contour level
+  resps@cnMaxLevelValF       = 1.4                 ; set max contour level
+  resps@cnLevelSpacingF      = 0.2             ; set contour spacing
 
   plotp = gsn_csm_contour_map(wks, ps, resps)
 
@@ -139,7 +154,7 @@ do m=1,17
   frame(wks)
   delete(plotp)
   delete(plotpf)
-end do
+;end do
 exit()
   u00      = a->u(:,:,:,:)
   v00      = a->v(:,:,:,:)

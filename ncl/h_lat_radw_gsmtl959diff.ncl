@@ -9,7 +9,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/cd_string.ncl"
 load "calc_e.ncl"
 begin
   ;f     = addfile ("../../netcdf/gsm/gl/2019/10/rotate/np_init_vort.nc","r")
-  yyyymmddhh = 2019100912
+  yyyymmddhh = 2019100900
   f1 = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100_est/np_fcst_asia_"+yyyymmddhh+".nc","r")
   ;Exp = "clim"
   ;if (Exp .eq. "clim") then
@@ -70,8 +70,8 @@ begin
   ;id   = ind(t.eq.vt)
   ;print(id)
   ;plot_num = id/2 + 1
-  nrow = 3
-  ncol = 3
+  nrow = 1 ;3
+  ncol = 2 ;3
   plot_num = nrow*ncol
   plot = new(plot_num,graphic)
   ;ft = tofloat(t)
@@ -83,7 +83,7 @@ begin
   t_offset = 4
   ;wks   = gsn_open_wks ("png", "winds_h-lat_"+Exp+"-est_"+date(t_offset)+"-"+date(min((/t_offset+plot_num-1,ntmax-1/))) )          ; send graphics to PNG file
   ;wks   = gsn_open_wks ("png", "winds_h-lat_6havg_"+Exp+"-mgdsst_"+date6h(t_offset)+"-"+date6h(min((/t_offset+plot_num-2,ntmax6h-1/))) )          ; send graphics to PNG file
-  wks   = gsn_open_wks ("png", "winds_h-lat_diff_"+date(t_offset)+"-"+date(min((/t_offset+nrow-1,ntmax-1/))) )          ; send graphics to PNG file
+  wks   = gsn_open_wks ("pdf", "winds_h-lat_diff_"+date(t_offset)+"-"+date(min((/t_offset+nrow-1,ntmax-1/))) )          ; send graphics to PNG file
   r = new(dimsizes(rw1&lat), typeof(rw1&lat))
   deg2r(rw1&lat, r)
   r@units = "km"
@@ -296,7 +296,7 @@ do d=0,nrow-1
   res1@cnMaxLevelValF      =  10.                 ; max level
   res1@tiMainString        = "MGD - EST"
   ;plot(d)  = gsn_csm_pres_hgt(wks, u_zm({100:1000},{75:90}), res )   ; place holder
-  plot(3*d+2)  = gsn_csm_contour(wks, data({100:1000},{0:500}), res1 )   ; place holder
+  ;plot(3*d+2)  = gsn_csm_contour(wks, data({100:1000},{0:500}), res1 )   ; place holder
   data2 = w3_zm 
   data2!0 = "level"
   data2&level = u1&level
@@ -316,7 +316,7 @@ do d=0,nrow-1
   opt@gsnShadeHigh     = 17
   plot2 = gsn_contour_shade(plot2, -0.1, 10.1, opt)
   delete(opt)
-  overlay(plot(3*d+2), plot2)
+  ;overlay(plot(3*d+2), plot2)
   delete(data)
   delete(data2)
 end do  

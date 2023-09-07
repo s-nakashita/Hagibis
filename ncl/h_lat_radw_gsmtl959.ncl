@@ -9,8 +9,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/cd_string.ncl"
 load "calc_e.ncl"
 begin
   ;f     = addfile ("../../netcdf/gsm/gl/2019/10/rotate/np_init_vort.nc","r")
-  yyyymmddhh = 2019100912
-  Exp = "clim"
+  yyyymmddhh = 2019100900
+  Exp = "est"
   if (Exp .eq. "clim") then
     fname = "/Volumes/dandelion/GSMJob/Jobwk_Tl959L100/np_fcst_asia_"+yyyymmddhh+".nc"
   else if (Exp .eq. "est") then
@@ -55,8 +55,8 @@ begin
   ;id   = ind(t.eq.vt)
   ;print(id)
   ;plot_num = id/2 + 1
-  nrow = 3
-  ncol = 4
+  nrow = 1 ;3
+  ncol = 1 ;4
   plot_num = nrow*ncol
   plot = new(plot_num,graphic)
   ;ft = tofloat(t)
@@ -65,8 +65,8 @@ begin
   date  = cd_string(t, "%Y%N%D%H")
   date6h  = cd_string(t6h, "%Y%N%D%H")
   print(date6h)
-  t_offset = 0
-  wks   = gsn_open_wks ("png", "windrv_h-lat_"+Exp+"_"+date(t_offset)+"-"+date(min((/t_offset+plot_num-1,ntmax-1/))) )          ; send graphics to PNG file
+  t_offset = 4
+  wks   = gsn_open_wks ("pdf", "windrv_h-lat_"+Exp+"_"+date(t_offset)+"-"+date(min((/t_offset+plot_num-1,ntmax-1/))) )          ; send graphics to PNG file
   ;wks   = gsn_open_wks ("png", "windrv_h-lat_6havg_"+Exp+"_"+date6h(t_offset)+"-"+date6h(min((/t_offset+plot_num-2,ntmax6h-1/))) )          ; send graphics to PNG file
   r = new(dimsizes(rw&lat), typeof(rw&lat))
   deg2r(rw&lat, r)
@@ -74,7 +74,7 @@ begin
   ;print(r)
   print(sprintf("%.1f", r))
 do d=0,plot_num-1
-  ind_t2 = d
+  ind_t2 = d+t_offset
   ;if (d+t_offset .gt. ntmax6h-1) then
   ;  break
   ;end if

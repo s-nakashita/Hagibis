@@ -13,7 +13,7 @@ idate=2019100912
 edate=2019101212
 smode=1
 emode=1
-nlev=3
+nlev=6
 CPPFLAGS="-cpp -E -P"
 if [ $nlev -eq 6 ]; then
 CPPFLAGS=${CPPFLAGS}" -Dlev6"
@@ -39,30 +39,43 @@ em=${edate:4:2}
 ed=${edate:6:2}
 eh=${edate:8:2}
 echo $em $ed $eh
+datadir=/Volumes/dandelion/netcdf/tigge/${yyyy}/${orig}
 if [ $smode -eq $emode ]; then
     header1=ensvsa-${ntype}-m${emode}
 else
     header1=ensvsa-${ntype}-m${smode}-${emode}
 fi
+#header2=${orig}-${idate}-${edate}
+#wfile=weight-${ntype}-${orig}-${idate}.grd
+#logfile=${ntype}-${orig}-${idate}.log
 header2=${orig}-${idate}-${edate}_nlev${nlev}
 wfile=weight-${ntype}-${orig}-${idate}_nlev${nlev}.grd
 logfile=${ntype}-${orig}-${idate}_nlev${nlev}.log
 ofile=${header1}-${header2}-gr
 cfile=${header1}-${header2}.ctl
 ncfile=${header1}-${header2}.nc
-mfile=/Volumes/dandelion/netcdf/tigge/${yyyy}/${orig}/glb_${idate}_mean.nc
+mfile=glb_${idate}_mean.nc
+rm -f glb_${idate}_*.nc
+ln -s ${datadir}/glb_${idate}_mean.nc .
+
 gfile=${header1}_t+wind_nlev${nlev}_${orig}_${mm}${dd}${hh}-${em}${ed}${eh}_isign
 tefile=${header1}_EN_${orig}_${mm}${dd}${hh}-${em}${ed}${eh}
 enfile=`echo ${header1} | sed -e "s/ensvsa-${ntype}//g"`-${header2}.txt
-if [ -e $ofile ]; then
-    rm -f ${ofile} ${ncfile} ${wfile}
-fi
+if [ ! -s $ofile ]; then
+#    rm -f ${ofile} ${ncfile} ${wfile}
+#fi
 cd ..
 if [ read_netcdf.F90 -nt tmp/read_netcdf.mod ]; then
     make clean
 fi
 make ${ntype} CPPFLAGS="${CPPFLAGS}" || exit 10
 cd $orig
+#rsync -auv ${datadir}/glb_${idate}_*.nc .
+for m in $(seq 1 $mem);do
+m2=`printf '%0.2d' $m`
+ln -s ${datadir}/glb_${idate}_${m2}.nc
+done
+
 ln -s ../bin/ensvsa .
 ln -s ../bin/grads-ensvsa .
 ln -s ../bin/tevol-ensvsa .
@@ -72,6 +85,7 @@ ln -s ../bin/tevol-ensvsa .
 rm ensvsa grads-ensvsa tevol-ensvsa
 # weights' ASCII text
 awk '{if($1 == "vector="){$1="";print}}' $logfile > ${logfile%.*}.txt
+fi
 isec=$(date -jf "%Y%m%d%H" "${idate}" +"%s")
 esec=$(date -jf "%Y%m%d%H" "${edate}" +"%s")
 diff=$((${esec} - ${isec}))
@@ -146,6 +160,8 @@ EOF
 fi
 cat $cfile
 cdo -f nc import_binary ${cfile} ${ncfile}
+pwd
+## plot
 #if [ ${orig} = jma ]; then
     lfilter=False
 #else
@@ -167,10 +183,10 @@ EOF
 cat config.ncl
 
 ### plotting perturbations
-#for d in $(seq 0 $((${nd} - 1)));do
-ncl -nQ d=0 ../ensvsa.ncl
-ncl -nQ d=$((${nd} - 1)) ../ensvsa.ncl
-#done
+##for d in $(seq 0 $((${nd} - 1)));do
+#ncl -nQ d=0 ../ensvsa.ncl
+#ncl -nQ d=$((${nd} - 1)) ../ensvsa.ncl
+##done
 ### plotting perturbation vorticity
 #ncl -nQ d=0 lfilter=True ../ensvsa_vor.ncl
 ### plotting height-longitude sector
@@ -182,9 +198,9 @@ ncl -nQ d=$((${nd} - 1)) ../ensvsa.ncl
 ##ncl -nQ d=$((${nd} - 1)) latc=${latc} ../ensvsa_h-lon.ncl
 #done
 ### plotting SLP & vertical-interpolated winds
-#ncl -nQ d=0 ../ensvsa_vint.ncl
-#ncl -nQ d=4 ../ensvsa_vint.ncl
-#ncl -nQ d=$((${nd} - 1)) ../ensvsa_vint.ncl
+ncl -nQ d=0 ../ensvsa_vint.ncl
+ncl -nQ d=4 ../ensvsa_vint.ncl
+ncl -nQ d=$((${nd} - 1)) ../ensvsa_vint.ncl
 ### plotting Energy distribution
 for EN in te ke pe; do
 out=`echo ${tefile} | sed -e "s/EN/${EN}/g"`
@@ -208,4 +224,5 @@ fi
 #done
 #fi
 #rm -f ${ofile} ${ncfile}
+rm -f glb_${idate}_*.nc
 ls -ltr | tail -9

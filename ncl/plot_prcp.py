@@ -2,11 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import sys
-plt.rcParams['legend.fontsize'] = 16
-plt.rcParams['xtick.labelsize'] = 14
-plt.rcParams['ytick.labelsize'] = 14
-plt.rcParams['axes.labelsize']  = 18
-plt.rcParams['axes.titlesize']  = 18
+plt.rcParams['legend.fontsize'] = 24
+plt.rcParams['xtick.labelsize'] = 18
+plt.rcParams['ytick.labelsize'] = 18
+plt.rcParams['axes.labelsize']  = 20
+plt.rcParams['axes.titlesize']  = 20
 init = sys.argv[1] #yyyymmddhh
 iyr  = int(init[0:4])
 imo  = int(init[4:6])
@@ -58,12 +58,12 @@ for label in ax1.get_xticklabels():
 #curve plot
 ax2 = ax1.twinx()
 aprcp = pdata[:,5]
-ax2.plot(dates, aprcp, linewidth=2.0, color='k', label='radar')
+ax2.plot(dates, aprcp, linewidth=3.0, color='k', label='Radar')
 for k in range(len(sstlist)):
     sst = sstlist[k]
     aprcp = pdata[:,6+k]
     aprcp[aprcp > 1e20] = np.nan
-    ax2.plot(dates, aprcp, linewidth=2.0, color=colors[sst], label=sst)
+    ax2.plot(dates, aprcp, linewidth=3.0, color=colors[sst], label=sst.upper())
 ax2.set_xlim(idate, vdate)
 ax2.set_ylabel('Accumulated precipitation (mm)')
 if region == "region1":
@@ -74,4 +74,5 @@ elif region == "ST":
     ax2.set_ylim(0.0, 200.0)
 ax2.legend(loc='upper left')
 fig.tight_layout()
-fig.savefig("prcp_"+region+"_"+init+".png")
+fig.savefig("prcp_"+region+"_"+init+".pdf")
+plt.show()

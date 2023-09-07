@@ -111,7 +111,8 @@ begin
     ;us = dim_avg_n(upav({87:85},:), 0)
     ;us!0 = "lon"
     ;us&lon = u&lon
-    us = dim_avg_n(u_(:,{87:85},:), 1)
+    ;averaged between 1 to 8 degree of latitudes
+    us = dim_avg_n(u_(:,{89:82},:), 1)
     us!0 = "level"
     us&level = u&level
     us!1 = "lon"
@@ -121,7 +122,7 @@ begin
     ;vs = dim_avg_n(vpav({87:85},:), 0)
     ;vs!0 = "lon"
     ;vs&lon = u&lon
-    vs = dim_avg_n(v_(:,{87:85},:), 1)
+    vs = dim_avg_n(v_(:,{89:82},:), 1)
     vs!0 = "level"
     vs&level = v&level
     vs!1 = "lon"

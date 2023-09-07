@@ -20,14 +20,15 @@
 begin
 
 ;---Open netCDF file
+  dev="ps"
   ;hh = 12
   cmap = read_colormap_file("hotcold_18lev") ; low level
   ;cmap = cmap(::-1,:) ; for dyn
-  plev = 300
-  idd  = 11
-  edd  = 12
+  plev = 500
+  idd  = 9
+  edd  = 11
   date_range = "10"+sprinti("%0.2d",idd)+"-10"+sprinti("%0.2d",edd)
-  wks = gsn_open_wks("png","strm_merra2_"+date_range+"_p"+sprinti("%d",plev))
+  wks = gsn_open_wks(dev,"strm_merra2_"+date_range+"_p"+sprinti("%d",plev))
   plot = new(12,graphic)
   lon0  =  120.               ; select a subregion
   lon1  =  200.
@@ -153,15 +154,17 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-     res@cnFillOn             = True               ; turn on color for contours
+     ;res@cnFillOn             = True               ; turn on color for contours
+     res@cnFillOn             = False               ; turn on color for contours
      res@cnLinesOn            = True               ; turn off contour lines
      res@cnLineLabelsOn       = False              ; turn off contour line labels
      res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-     res@cnMinLevelValF       = -9.               ; set min contour level
-     res@cnMaxLevelValF       = 9.                ; set max contour level
-     res@cnLevelSpacingF      = 1.                 ; set contour spacing
+     res@cnMinLevelValF       = -16.               ; set min contour level
+     res@cnMaxLevelValF       = 16.                ; set max contour level
+     res@cnLevelSpacingF      = 2.                 ; set contour spacing
      res@gsnContourNegLineDashPattern = 2
-     res@gsnContourZeroLineThicknessF = 3.
+     res@gsnContourZeroLineThicknessF = 4.
+     res@cnLineThicknessF = 2.
      res@cnFillPalette        = cmap
 
      sf = sf * 1.0e-6

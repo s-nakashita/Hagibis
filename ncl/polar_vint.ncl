@@ -35,7 +35,7 @@ begin
 ;************************************************
   yyyymmddhh = "2019100912"
   ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
-  a = addfile("../rotate/np_glb_"+yyyymmddhh+"_mean.nc","r")
+  a = addfile("/Volumes/dandelion/netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean.nc","r")
   ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean_ug.nc","r")
   ;b = addfile("../../netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean_vg.nc","r")
   t = a->time
@@ -49,8 +49,8 @@ begin
   lev = a->level
   print(lev(2::-1))
   date  = cd_string(t, "%Y%N%D%H")
-  ds = ind(date.eq.2019101000) ;start
-  de = ind(date.eq.2019101018) ;end
+  ds = ind(date.eq.2019101012) ;start
+  de = ind(date.eq.2019101012) ;end
   nd = de - ds + 1
   year 	     = str_get_cols(yyyymmddhh,0,3)
   month	     = str_get_cols(yyyymmddhh,4,5)
@@ -64,9 +64,10 @@ begin
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
   ;wks = gsn_open_wks("png","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
-  wks = gsn_open_wks("png","asym_glb"+yyyymmddhh)             ; send graphics to PNG file
-  gsn_define_colormap(wks, "sunshine_9lev")
-  plot = new(4,"graphic")
+  wks = gsn_open_wks("ps","asym_glb"+yyyymmddhh)             ; send graphics to PNG file
+  ;gsn_define_colormap(wks, "sunshine_9lev")
+  gsn_define_colormap(wks, "MPL_Greys")
+  plot = new(1,"graphic")
 
 ;************************************************
 ; prepare filtering function
@@ -201,12 +202,12 @@ begin
     res@gsnSpreadColorEnd     = -3
     res@gsnScalarContour      = True              ; vectors over scalars
     res@vcRefAnnoFontHeightF  = 0.025
-    res@vcRefMagnitudeF       = 10.0              ; vec magnitude
+    res@vcRefMagnitudeF       = 20.0              ; vec magnitude
     res@vcRefLengthF          = 0.08               ; size of ref vector
     res@vcLineArrowColor      = "black"           ; white vectors
     res@vcMinDistanceF        = 0.04              ; thins arrows near pole  
     res@vcGlyphStyle          = "LineArrow"     ; turns on curly vectors
-    res@vcLineArrowThicknessF = 2.
+    res@vcLineArrowThicknessF = 4.
     res@vcMinMagnitudeF       = 2.0
 
     res@vcRefAnnoArrowLineColor   = "black"       ; black ref vector
@@ -236,8 +237,9 @@ begin
 ;  resP@gsnPanelMainString = str_get_cols(yyyymmddhh,8,9)+"00 UTC"
 ;  resP@gsnPanelMainString = "vertical integrated asymmetric wind "+str_get_cols(yyyymmddhh,4,9)
   resP@gsnPanelLabelBar	  = True
-  resP@lbOrientation      = "Horizontal"
-  resP@lbLabelFontHeightF = 0.015
+  ;resP@lbOrientation      = "Horizontal"
+  resP@lbOrientation      = "Vertical"
+  resP@lbLabelFontHeightF = 0.04
   resP@gsnPanelLeft	  = 0.005
   resP@gsnPanelBottom	  = 0.08
   resP@gsnPanelSave	  = True
