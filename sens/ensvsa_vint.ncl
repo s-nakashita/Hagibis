@@ -237,7 +237,7 @@ begin
    print(dimsizes(cmap1))
    print(dimsizes(cmap2))
    cmap = new((/32,4/),float)
-   cmap(:15,:) = cmap1(0:30:2,:)
+   cmap(:15,:) = cmap1(:15,:)
    cmap(15:,:) = cmap2(:16,:)
    wks = gsn_open_wks(dev,out+"_slp+wind")
    reste                = True               ; plot mods desired
@@ -262,7 +262,7 @@ begin
    reste@cnFillPalette        = cmap
    reste@gsnScalarContour     = True               ; contours desired
    reste@gsnContourZeroLineThicknessF = 0.0
-   reste@gsnContourNegLineDashPattern = 1
+   reste@gsnContourNegLineDashPattern = 2
    reste@gsnContourLineThicknessesScale = 2.0
 
    ;reste@mpLandFillColor      = "gray"            ; set land to be gray
@@ -273,7 +273,7 @@ begin
    reste@mpMaxLatF            =  lat1
    reste@lbOrientation            = "Vertical"     ; vertical label bar
    ;reste@lbOrientation            = "Horizontal"     ; vertical label bar
-   reste@lbLabelStride = 2
+   ;reste@lbLabelStride = 2
    ;reste@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 
    reste@vpXF = 0.15
@@ -283,16 +283,17 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-   reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-   ;reste@cnLevelSelectionMode = "ExplicitLevels"
+   ;reste@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+   reste@cnLevelSelectionMode = "ExplicitLevels"
 ;     res@cnMaxLevelCount	   = 10
    if (d.eq.0) then
 ;  d=0
       ;reste@cnLevels = (/1.,2.,4.,6.,8.,10.,15.,20.,25.,30.,35.,40.,45.,50.,60.,70.,80./)
       ;reste@cnLevels = (/1.,2.,3.,4.,5.,6.,8.,10.,12.5,15.,17.5,20./)
-      reste@cnMinLevelValF       = -1.4              ; set min contour level
-      reste@cnMaxLevelValF       = 1.4                ; set max contour level
-      reste@cnLevelSpacingF      = 0.2               ; set contour spacing
+      ;reste@cnMinLevelValF       = -1.4              ; set min contour level
+      ;reste@cnMaxLevelValF       = 1.4                ; set max contour level
+      ;reste@cnLevelSpacingF      = 0.2               ; set contour spacing
+      reste@cnLevels = (/-1.4,-1.0,-0.6,-0.2,0.2,0.6,1.0,1.4/)
       ;reste@cnMinLevelValF       = .1               ; set min contour level
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
@@ -301,9 +302,10 @@ begin
    else if (d.eq.2) then
 ;  d=1
       ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
-      reste@cnMinLevelValF       = -10.0               ; set min contour level
-      reste@cnMaxLevelValF       = 10.                 ; set max contour level
-      reste@cnLevelSpacingF      = 1.               ; set contour spacing
+      ;reste@cnMinLevelValF       = -10.0               ; set min contour level
+      ;reste@cnMaxLevelValF       = 10.                 ; set max contour level
+      ;reste@cnLevelSpacingF      = 1.               ; set contour spacing
+      reste@cnLevels = (/-8.,-6.,-4.,-2.,2.,4.,6.,8./)
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 10.               ; set contour spacing
@@ -311,9 +313,10 @@ begin
    else if (d.eq.4) then
 ;  d=2
       ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
-      reste@cnMinLevelValF       = -10.0               ; set min contour level
-      reste@cnMaxLevelValF       = 10.                 ; set max contour level
-      reste@cnLevelSpacingF      = 1.               ; set contour spacing
+      ;reste@cnMinLevelValF       = -10.0               ; set min contour level
+      ;reste@cnMaxLevelValF       = 10.                 ; set max contour level
+      ;reste@cnLevelSpacingF      = 1.               ; set contour spacing
+      reste@cnLevels = (/-8.,-6.,-4.,-2.,2.,4.,6.,8./)
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 10.               ; set contour spacing
@@ -321,9 +324,10 @@ begin
    else 
 ;  d=6
       ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
-      reste@cnMinLevelValF       = -50.0               ; set min contour level
-      reste@cnMaxLevelValF       = 50.                 ; set max contour level
-      reste@cnLevelSpacingF      = 5.               ; set contour spacing
+      ;reste@cnMinLevelValF       = -50.0               ; set min contour level
+      ;reste@cnMaxLevelValF       = 50.                 ; set max contour level
+      ;reste@cnLevelSpacingF      = 5.               ; set contour spacing
+      reste@cnLevels = (/-48.,-36.,-24.,-12.,12.,24.,36.,48./)
       ;reste@cnMinLevelValF       = 100.               ; set min contour level
       ;reste@cnMaxLevelValF       = 1000.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 100.               ; set contour spacing
@@ -339,11 +343,11 @@ begin
 ;     res@vcMinMagnitudeF	      = 1.0		  ; no effect with CurlyVector
 ;   reste@vcGlyphStyle            = "CurlyVector"     ; turn on curly vectors
    reste@vcFillArrowsOn       = True
-   reste@vcMinFracLengthF     = 0.2
+   reste@vcMinFracLengthF     = 0.5
    reste@vcFillArrowEdgeColor = "black"
    ;reste@vcFillArrowFillColor = "green"
    reste@vcFillArrowFillColor = "gray"
-   reste@vcMinDistanceF	      = 0.02
+   reste@vcMinDistanceF	      = 0.025
    reste@vcVectorDrawOrder       = "PostDraw"        ; draw vectors last
 
    wind = sqrt(up^2+vp^2)

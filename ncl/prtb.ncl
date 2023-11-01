@@ -20,13 +20,13 @@
 begin
 
 ;---Open netCDF file
-  rank = "worst"
+  rank = "best"
 ;do m=1,17
 ;  mem = sprinti("%0.2d", m) 
-  mem = "26"; "05"
+  mem =  "05"; "26";
   orig = "jma"
   init = "0912"
-  dev = "ps"
+  dev = "eps"
   a = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_mean.nc","r")
   b = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_"+mem+".nc","r")
 ;
@@ -70,8 +70,9 @@ begin
   print(dimsizes(cmap1))
   print(dimsizes(cmap2))
   cmap = new((/32,4/),float)
-  cmap(:15,:) = cmap1(0:30:2,:)
-  cmap(15:,:) = cmap2(:16,:)
+  cmap(:14,:) = cmap1(:14,:)
+  cmap(15,:) = (/0.0,0.0,0.0,0.0/)
+  cmap(16:,:) = cmap2(:15,:)
   ;exit()
     
   vdate = 2019100912
@@ -102,7 +103,7 @@ begin
   resps@gsnScalarContour     = True               ; contours desired
   resps@cnFillPalette        = cmap
   resps@gsnContourZeroLineThicknessF = 0.0
-  resps@gsnContourNegLineDashPattern = 1
+  resps@gsnContourNegLineDashPattern = 2
   resps@gsnContourLineThicknessesScale = 2.0
 
   resps@mpLandFillColor      = "gray"            ; set land to be gray
@@ -121,14 +122,16 @@ begin
 ; the full domain. If you wish to just consider the domain you are plotting,
 ; you must manually set those levels.
 
-  resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+  ;resps@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
   ;resps@cnMinLevelValF       = -1.5              ; set min contour level
   ;resps@cnMaxLevelValF       = 1.5                 ; set max contour level
   ;resps@cnLevelSpacingF      = 0.1             ; set contour spacing
-  resps@cnMinLevelValF       = -1.4              ; set min contour level
-  resps@cnMaxLevelValF       = 1.4                 ; set max contour level
-  resps@cnLevelSpacingF      = 0.2             ; set contour spacing
+  ;resps@cnMinLevelValF       = -1.4              ; set min contour level
+  ;resps@cnMaxLevelValF       = 1.4                 ; set max contour level
+  ;resps@cnLevelSpacingF      = 0.2             ; set contour spacing
+  resps@cnLevelSelectionMode = "ExplicitLevels"
+  resps@cnLevels = (/-1.4,-1.0,-0.6,-0.2,0.2,0.6,1.0,1.4/)
 
   plotp = gsn_csm_contour_map(wks, ps, resps)
 
@@ -246,7 +249,7 @@ exit()
       res@cnLineLabelsOn       = True
       res@cnLineColor          = "blue"
       res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-      res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+      res@gsnContourNegLineDashPattern = 2 	  ; sets negative contours to dash pattern 1
       res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
       res@cnMinLevelValF       = -3.0             ; set min contour level

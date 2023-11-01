@@ -13,7 +13,11 @@ idate=2019100912
 edate=2019101212
 smode=1
 emode=1
+if [ $orig = jma ]; then
 nlev=6
+else
+nlev=3
+fi
 CPPFLAGS="-cpp -E -P"
 if [ $nlev -eq 6 ]; then
 CPPFLAGS=${CPPFLAGS}" -Dlev6"
@@ -70,10 +74,9 @@ if [ read_netcdf.F90 -nt tmp/read_netcdf.mod ]; then
 fi
 make ${ntype} CPPFLAGS="${CPPFLAGS}" || exit 10
 cd $orig
-#rsync -auv ${datadir}/glb_${idate}_*.nc .
 for m in $(seq 1 $mem);do
 m2=`printf '%0.2d' $m`
-ln -s ${datadir}/glb_${idate}_${m2}.nc
+ln -s ${datadir}/glb_${idate}_${m2}.nc .
 done
 
 ln -s ../bin/ensvsa .
@@ -89,7 +92,9 @@ fi
 isec=$(date -jf "%Y%m%d%H" "${idate}" +"%s")
 esec=$(date -jf "%Y%m%d%H" "${edate}" +"%s")
 diff=$((${esec} - ${isec}))
+## per 12 hours
 #nd=$((${diff} / 43200 + 1))
+## per 6 hours
 nd=$((${diff} / 21600 + 1))
 echo $nd
 case $mm in
@@ -167,7 +172,7 @@ pwd
 #else
 #    lfilter=True
 #fi
-dev=png
+dev=eps
 cat > config.ncl << EOF
 ntype="${ntype}"
 ofile="${ofile}"
@@ -191,8 +196,8 @@ cat config.ncl
 #ncl -nQ d=0 lfilter=True ../ensvsa_vor.ncl
 ### plotting height-longitude sector
 #for d in $(seq 0 3); do # 20.0 30.0 35.0; do
-#latc=15.0
-#ncl -nQ d=0 latc=${latc} ../ensvsa_h-lon.ncl
+latc=15.0
+ncl -nQ d=0 latc=${latc} ../ensvsa_h-lon.ncl
 #latc=22.0
 #ncl -nQ d=0 latc=${latc} ../ensvsa_h-lon.ncl
 ##ncl -nQ d=$((${nd} - 1)) latc=${latc} ../ensvsa_h-lon.ncl

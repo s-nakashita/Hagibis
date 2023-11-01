@@ -218,11 +218,17 @@ begin
   resp@gsLineColor      = "black"                     ; color of lines
   resp@gsLineThicknessF = 3.0                       ; thickness of lines
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
-
+  ;cmap = read_colormap_file("hotcold_18lev")
+  cmap1 = read_colormap_file("gsdtol")
+  cmap2 = read_colormap_file("gsltod")
+  print(dimsizes(cmap1))
+  print(dimsizes(cmap2))
+  cmap = new((/32,4/),float)
+  cmap(:15,:) = cmap1(0:30:2,:)
+  cmap(15:,:) = cmap2(:16,:)
   do k = 0, nlev-1
       ilev = nlev-k-1
       wks = gsn_open_wks(dev,out+"_"+sprinti("%0.3d",toint(plev(ilev))))
-      cmap = read_colormap_file("hotcold_18lev")
       u = ug(ilev,:,:)
       v = vg(ilev,:,:)
       t = temp(ilev,:,:)
@@ -253,9 +259,14 @@ begin
       res@gsnRightStringParallelPosF = 1.1    
       res@gsnAddCyclic	      = False
       res@cnFillOn             = True               ; turn on color for contours
-      res@cnLinesOn            = False              ; turn off contour lines
+      res@cnLinesOn            = True              ; turn off contour lines
+      res@cnLineThicknessF     = 2.
       res@cnLineLabelsOn       = False              ; turn off contour line labels
       res@cnFillPalette        = cmap
+      res@gsnContourZeroLineThicknessF = 0.0
+      res@gsnContourNegLineDashPattern = 1
+      res@gsnContourLineThicknessesScale = 2.0
+
 
       res@vpXF = 0.15
       res@vpWidthF = 0.7
@@ -276,19 +287,19 @@ begin
 ;  d=0
       resv@cnMinLevelValF       = -2.              ; set min contour level
       resv@cnMaxLevelValF       = 2.                ; set max contour level
-      resv@cnLevelSpacingF      = .2               ; set contour spacing
+      resv@cnLevelSpacingF      = .4               ; set contour spacing
       resv@vcRefMagnitudeF      = 10.0
    else if (d.le.8) then 
 ;  d=2
       resv@cnMinLevelValF       = -5.               ; set min contour level
       resv@cnMaxLevelValF       = 5.                 ; set max contour level
-      resv@cnLevelSpacingF      = .5               ; set contour spacing
+      resv@cnLevelSpacingF      = 1.               ; set contour spacing
       resv@vcRefMagnitudeF      = 20.0
    else 
 ;  d=6
       resv@cnMinLevelValF       = -10.               ; set min contour level
       resv@cnMaxLevelValF       = 10.                 ; set max contour level
-      resv@cnLevelSpacingF      = 1.               ; set contour spacing
+      resv@cnLevelSpacingF      = 2.               ; set contour spacing
       resv@vcRefMagnitudeF      = 100.0
    end if
    end if
@@ -315,17 +326,18 @@ begin
       res@cnFillOn             = False             ; turn on color for contours
       res@cnLinesOn            = True              ; turn off contour lines
       res@cnLineLabelsOn       = True
-      res@cnLineColor          = "blue"
+      res@cnLineColor          = "black"
+      res@cnLineThicknessF     = 4.
       res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
       res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
       res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
 ;     res@cnMaxLevelCount	   = 10
       if (d.le.4) then
-;  d=0
-      res@cnMinLevelValF       = -5.               ; set min contour level
-      res@cnMaxLevelValF       = 5.                 ; set max contour level
-      res@cnLevelSpacingF      = 1.               ; set contour spacing
-   else if (d.le.8) then
+;;  d=0
+;      res@cnMinLevelValF       = -5.               ; set min contour level
+;      res@cnMaxLevelValF       = 5.                 ; set max contour level
+;      res@cnLevelSpacingF      = 1.               ; set contour spacing
+;   elseif (d.le.8) then
 ;  d=2
       res@cnMinLevelValF       = -10.               ; set min contour level
       res@cnMaxLevelValF       = 10.                 ; set max contour level
@@ -335,7 +347,6 @@ begin
       res@cnMinLevelValF       = -20.               ; set min contour level
       res@cnMaxLevelValF       = 20.                 ; set max contour level
       res@cnLevelSpacingF      = 4.               ; set contour spacing
-   end if
    end if
    ;end if
 ; when using the gsn_csm plot templates and overlay, it is necessary to

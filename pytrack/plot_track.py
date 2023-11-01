@@ -7,15 +7,15 @@ import sys
 import re
 plt.rcParams['font.size'] = 18
 
-#origs = ['ecmf','rjtd','kwbc','egrr']
-origs = ['rjtd']
+origs = ['ecmf','rjtd','kwbc','egrr']
+#origs = ['rjtd']
 centers = {'ecmf':'ecmwf','rjtd':'jma','kwbc':'ncep','egrr':'ukmo'}
 markers = {'ecmf':'s','rjtd':'o','kwbc':'^','egrr':'p'}
 #colors = {'ecmf':'blue','rjtd':'red','kwbc':'green','egrr':'lime'}
 colors = {'ecmf':'dimgray','rjtd':'dimgray','kwbc':'dimgray','egrr':'dimgray'}
 
-sdate = datetime(2019,10,9,12)
-edate = datetime(2019,10,9,12)
+sdate = datetime(2019,10,8,12)
+edate = datetime(2019,10,8,12)
 dt = timedelta(hours=24)
 if sdate==edate:
     cdate=sdate.strftime("%Y%m%d%H")
@@ -72,7 +72,7 @@ if lbst:
         if tmp==datetime(2019,10,12,12):
             lonsel.append(lonbst[i]);latsel.append(latbst[i])
             texts.append(f"{int(bsttrack[i,2])}")
-    ax.plot(lonbst,latbst,c='k',lw=4.0,\
+    ax.plot(lonbst,latbst,c='k',lw=4.0,ls='dashed',\
         transform=ccrs.PlateCarree(),label='best track')
     ax.plot(lonsel,latsel,marker='*',lw=0.0,\
         markerfacecolor='w',markeredgecolor='k',markersize=15.0,
@@ -110,13 +110,13 @@ while sdate <= edate:
         tmp=datetime(int(track[i,0]),int(track[i,1]),\
             int(track[i,2]),int(track[i,3]))
         time.append(tmp)
-        if tmp==datetime(2019,10,10,12) \
-            or tmp==datetime(2019,10,12,12):
+        if tmp==datetime(2019,10,12,12):
             lonsel.append(track[i,4]);latsel.append(track[i,5])
             texts.append(f"{int(track[i,2])}")
-    lonc = track[:,4]
-    latc = track[:,5]
-    slpc = track[:,6]
+            break
+    lonc = track[:len(time),4]
+    latc = track[:len(time),5]
+    slpc = track[:len(time),6]
     mew=1.5
     ax.plot(lonc,latc,c=colors[orig],lw=2.0,ls=style,\
         marker=markers[orig],ms=8.0,\
@@ -141,8 +141,8 @@ ax2.grid()
 ax.legend()
 ax2.legend()
 plt.setp(ax2.get_xticklabels(),rotation=30,ha="right")
-#fig.savefig(f'track{cdate}_tigge.png',dpi=300)
-#fig2.savefig(f'mslp{cdate}_tigge.png',dpi=300)
-fig.savefig(f'track{cdate}_jma.png',dpi=300)
-fig2.savefig(f'mslp{cdate}_jma.png',dpi=300)
+fig.savefig(f'track{cdate}_tigge.png',dpi=300)
+fig2.savefig(f'mslp{cdate}_tigge.png',dpi=300)
+#fig.savefig(f'track{cdate}_jma.png',dpi=300)
+#fig2.savefig(f'mslp{cdate}_jma.png',dpi=300)
 plt.show()

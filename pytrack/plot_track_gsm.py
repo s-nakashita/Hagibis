@@ -52,7 +52,7 @@ ax.set_extent([lonw,lone,lats,latn], ccrs.PlateCarree())
 ax.gridlines()
 
 # mslp
-fig2, ax2 = plt.subplots(figsize=(10,6),constrained_layout=True)
+fig2, ax2 = plt.subplots(figsize=(8,6),constrained_layout=True)
 
 if lbst:
     lonbst = bsttrack[:,4]
@@ -83,6 +83,7 @@ if lbst:
     #        transform=ccrs.PlateCarree())
     ax2.plot(btime,slpbst,c='k',lw=3.0,label='best track')
     ax2.set_xticks(xticks)
+    ax2.set_xlim(datetime(2019,10,9,0),datetime(2019,10,14,0))
 
 cmap = plt.get_cmap('tab10')
 icol = 0

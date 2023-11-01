@@ -98,7 +98,8 @@ elif exptype == "prtb":
     elist = ["cntl","ridge$+$","ridge$-$"]#,"tc",  "full"]
     exp = {"cntl":"cntl", "ridge$+$":"p", "tc":"p2", "ridge$-$":"pn", "full":"pf"}
     suffixes = {"cntl":"_est","ridge$+$":"_est+p","tc":"_est+p2","ridge$-$":"_est+pn","full":"_est+pf"}
-    colors = {"cntl":"red","ridge$+$":"blue","tc":"tab:green","ridge$-$":"green","full":"magenta"}
+    #colors = {"cntl":"red","ridge$+$":"blue","tc":"tab:green","ridge$-$":"green","full":"magenta"}
+    colors = {"cntl":"darkgray","ridge$+$":"darkgray","tc":"darkgray","ridge$-$":"darkgray","full":"darkgray"}
 #fig = plt.figure(figsize=(8,8))
 #ax = fig.add_subplot(projection="polar")
 for date in dates:
@@ -312,8 +313,8 @@ for e in elist:
             #if int(level_e[j]) % 100 == 0:
             if int(level_e[j]) in level_list:
                 ax_h.annotate(f"{int(level_e[j])}",xy=(theta[j],r[j]),
-                xycoords='data',horizontalalignment='left',
-                size=16,alpha=0.7,zorder=0)
+                xycoords='data',horizontalalignment='left',#alpha=0.7,
+                size=16,zorder=0)
     ax.plot(theta, r, lw=2, color=colors[e],label=e.upper())
     imrk=0
     for j in range(level_e.size):
@@ -349,8 +350,16 @@ for e in elist:
         arrowprops=dict(arrowstyle="<|-",color=colors[e])
         )
     if plot_hod:
+        deg=90.0-theta_v*180.0/np.pi
         ax_h.scatter(theta_v,r_v,s=100,marker='x',\
-            color=colors[e],linewidths=2.0,label='TC motion')
+            color=colors[e],linewidths=2.0,\
+            label='TC motion\n'+f'{r_v:.1f} m/s, {deg:.1f} deg.')
+        ax_h.annotate("",
+        xytext=(theta_v,r_v),xycoords='data',
+        xy=(0,0),textcoords='data',
+        horizontalalignment='left',
+        arrowprops=dict(arrowstyle="<|-",color='k')
+        )
         ax_h.tick_params()
         ax_h.set_xticks(np.deg2rad(np.array([0.0,90.0,180.0,270.0])))
         ax_h.set_xticklabels(['E','N','W','S'])
@@ -362,9 +371,10 @@ for e in elist:
             ax_h.set_ylim(0.0,22.5)
         angle = np.deg2rad(270)
         ax_h.legend(loc='lower center',
-        bbox_to_anchor=(np.cos(angle)/2+.5, np.sin(angle)/2+.8))
+        bbox_to_anchor=(np.cos(angle)/2+.5, np.sin(angle)/2+.7))
+        ax_h.grid(True)
         ax_h.set_title(f"{e.upper()} {title}")
-        fig_h.savefig(f"hod_tl{tl}/hod_{title}_{e}.png")
+        fig_h.savefig(f"hod_tl{tl}/hod_mono_{title}_{e}.png")
         plt.close(fig=fig_h)
     k+=1
 for ax1 in [ax,ax_v]:
@@ -375,7 +385,8 @@ for ax1 in [ax,ax_v]:
     ax1.legend(loc='lower center',#ncol=2,
         bbox_to_anchor=(np.cos(angle)/2+.5, np.sin(angle)/2+.7))
     ax1.set_title(title)
+    ax1.grid(True)
 #ax_v.set_ylim(0.0,8.0)
-fig.savefig(f"hod_tl{tl}/hod_{title}.png")
-fig_v.savefig(f"hod_tl{tl}/vel_{title}.png")
-plt.show()
+#fig.savefig(f"hod_tl{tl}/hod_mono_{title}.png")
+#fig_v.savefig(f"hod_tl{tl}/vel_mono_{title}.png")
+#plt.show()

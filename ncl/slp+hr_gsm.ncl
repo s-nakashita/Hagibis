@@ -24,13 +24,14 @@ begin
   ;cmap = read_colormap_file("precip3_16lev") ; all level
   ;cmap = read_colormap_file("BlueDarkRed18") ; low level
   ;cmap = read_colormap_file("MPL_YlOrRd") ; low level
-  cmap = read_colormap_file("hotcold_18lev")
+  ;cmap = read_colormap_file("hotcold_18lev")
+  cmap = read_colormap_file("gsltod")
   ;cmap = cmap(::-1,:) ; for dyn
   yyyymmddhh = 2019100912
   ;sst = "_mgdsst"
   ;a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_surf_asia_"+yyyymmddhh+".nc","r")
   ;b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
-  ;prtb = "cntl"
+  prtb = "pn"
   if(prtb.eq."cntl") then
   a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est/fcst_surf_asia_"+yyyymmddhh+".nc","r")
   b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
@@ -39,8 +40,8 @@ begin
   b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est_0912+"+prtb+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
   end if
   ;out="slp+hr_cloud"+yyyymmddhh+sst
-  out="slp+hrcv"+yyyymmddhh+"_"+prtb
-  wks = gsn_open_wks("ps",out)
+  out="slp+hrcv_mono_"+yyyymmddhh+"_"+prtb
+  wks = gsn_open_wks("pdf",out)
   ;plot = new(16,graphic)
   nrow=1
   ncol=4
@@ -123,7 +124,8 @@ begin
      ndimc = dimsizes(cmap)
      ncolor = (ndimc(0)+1)/2
      newcmap = new((/ncolor,ndimc(1)/),float)
-     newcmap(:,:) = cmap(ncolor-1:,:)
+     ;newcmap(:,:) = cmap(ncolor-1:,:)
+     newcmap(:,:) = cmap(:ncolor-1,:)
      res@cnFillPalette        = newcmap(:,:)
      res@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
      ;res@cnLevels = (/0.0,0.1,0.2,0.3,0.4,0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0/)

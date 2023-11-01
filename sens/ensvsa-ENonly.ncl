@@ -52,8 +52,6 @@ begin
   wks = gsn_open_wks(dev,out)
   nplots = nd / 4 + 1
   plot = new(nplots,graphic)
-  ;cmap = read_colormap_file("spread_15lev")
-  cmap = read_colormap_file("gsltod")
   
   ypts = (/ 37.0, 37.0, 33.0, 33.0, 37.0/)
   xpts = (/137.0,142.0,142.0,137.0,137.0/)
@@ -62,13 +60,40 @@ begin
   resp@gsLineColor      = "black"                     ; color of lines
   resp@gsLineThicknessF = 3.0                       ; thickness of lines
   i = 0;1
-  dum = new((/nplots,4/),graphic)  
+  dum = new((/nplots,5/),graphic)  
   cnLevels = (/\
-  (/2.,4.,8.,16.,32.,64.,128./),\
-  (/4.,8.,16.,32.,64.,128.,256./),\
-  (/8.,16.,32.,64.,128.,256.,512./),\
-  (/16.,32.,64.,128.,256.,512.,1024./)\
+  (/2.,4.,8.,16.,32.,64.,128.,256./),\
+  (/4.,8.,16.,32.,64.,128.,256.,512./),\
+  (/8.,16.,32.,64.,128.,256.,512.,1024./),\
+  (/16.,32.,64.,128.,256.,512.,1024.,2048./)\
   /)
+  ;cmap = read_colormap_file("spread_15lev")
+  cmaptmp = read_colormap_file("gsltod")
+  cmap = new((/10,4/),float)
+  do j=0,9
+    cmap(j,:) = cmaptmp(j*2,:)
+  end do
+  if(orig.eq."jma") then
+  tccenters = (/\
+  (/139.95, 21.373/),\
+  (/138.39, 24.98/),\
+  (/135.99, 28.949/),\
+  (/137.53, 34.971/)\
+  /)
+  elseif(orig.eq."ecmwf") then
+  tccenters = (/\
+   (/139.57, 21.1/),\
+   (/138.42, 25.013/),\
+   (/135.91, 29.047/),\
+   (/137.05, 34.462/)\
+   /)
+  end if
+  resm = True
+  resm@gsMarkerSizeF = 8.0
+  resm@gsMarkerIndex = 5
+  resm@gsMarkerThicknessF = 3.0
+  resm@gsMarkerColor      = "white"                     ; color of lines
+
   do d = 0,nd-1,4
      vdate  = cd_string(time(d), "%H UTC, %D")
      t = te(d,:,:)
@@ -107,6 +132,16 @@ begin
       res@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
       res@cnLevels = cnLevels(i,:)
 ;     res@cnMaxLevelCount	   = 10
+   if (d.le.4) then
+      resp@gsLineColor      = "black"                     ; color of lines
+   else
+      resp@gsLineColor      = "white"
+   end if
+   if (d.eq.0) then
+      resm@gsMarkerColor      = "black"                     ; color of lines
+   else
+      resm@gsMarkerColor      = "white"                     ; color of lines
+   end if
 ;   if (d.eq.0) then
 ;         res@cnLevels = (/0.5,1.,2.,4.,6.,8.,10./)
 ;  d=0
@@ -159,12 +194,13 @@ begin
       do j = 0 , 3
          dum(i,j)=gsn_add_polyline(wks,plot(i),xpts(j:j+1),ypts(j:j+1),resp)      
       end do
+      dum(i,4) = gsn_add_polymarker(wks,plot(i),tccenters(i,0),tccenters(i,1),resm)
       i = i + 1
       delete(res)
    end do
 
    resP	                   = True
    ;resP@gsnPanelMainString	   = "ensvsa moist TE"
-   ;gsn_panel(wks,plot,(/2,nplots/2+1/),resP)
-   gsn_panel(wks,plot,(/1,nplots/),resP)
+   gsn_panel(wks,plot,(/2,nplots/2/),resP)
+   ;gsn_panel(wks,plot,(/1,nplots/),resP)
 end

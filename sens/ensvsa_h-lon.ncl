@@ -229,8 +229,15 @@ begin
 ;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
   wks = gsn_open_wks(dev,out)
-  cmap = read_colormap_file("temp_19lev")
-  ;cmap = cmap(::-1,:) ;;reverse
+  ;cmap = read_colormap_file("temp_19lev")
+  ;;cmap = cmap(::-1,:) ;;reverse
+  cmap1 = read_colormap_file("gsdtol")
+  cmap2 = read_colormap_file("gsltod")
+  print(dimsizes(cmap1))
+  print(dimsizes(cmap2))
+  cmap = new((/32,4/),float)
+  cmap(:15,:) = cmap1(:15,:)
+  cmap(15:,:) = cmap2(:16,:)
   ;u = ug(:,{lon0:lon1})
   ;v = vg(:,{lon0:lon1})
   ;t = temp(:,{lon0:lon1})
@@ -299,33 +306,42 @@ begin
   res@gsnAddCyclic	      = False
   ;res@gsnScalarContour     = True               ; contours desired
   
-  res@lbOrientation            = "Horizontal"     ; vertical label bar
+  res@tmYRMode = "Automatic"
+  res@lbOrientation            = "Vertical"     ; vertical label bar
+  ;res@lbOrientation            = "Horizontal"     ; vertical label bar
   res@pmLabelBarOrthogonalPosF = -0.01          ; move label bar closer
 
   res@vpXF = 0.15
-  res@vpWidthF = 0.7
+  res@vpWidthF = 0.65
   
   res@cnFillOn             = True               ; turn on color for contours
   res@cnFillPalette        = cmap
-  res@cnLinesOn            = False              ; turn off contour lines
-  res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+  res@cnLinesOn            = True              ; turn off contour lines
+  res@cnLineThicknessF     = 2.
+  res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+  res@gsnContourNegLineDashPattern = 2 	  ; sets negative contours to dash pattern 1
+  ;res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
+  res@cnLevelSelectionMode = "ExplicitLevels"    ; set manual contour levels
   if (d.lt.4) then
 ;  d=0
-    res@cnMinLevelValF       = -1.8              ; set min contour level
-    res@cnMaxLevelValF       = 1.8              ; set max contour level
-    res@cnLevelSpacingF      = .2               ; set contour spacing
+    ;res@cnMinLevelValF       = -1.8              ; set min contour level
+    ;res@cnMaxLevelValF       = 1.8              ; set max contour level
+    ;res@cnLevelSpacingF      = .2               ; set contour spacing
+    res@cnLevels = (/-1.6,-1.2,-0.8,-0.4,0.4,0.8,1.2,1.6/)
   ;  res@vcRefMagnitudeF      = 10.0
   else if (d.lt.8) then 
 ;  d=2
-    res@cnMinLevelValF       = -5.               ; set min contour level
-    res@cnMaxLevelValF       = 5.                 ; set max contour level
-    res@cnLevelSpacingF      = .5               ; set contour spacing
+    ;res@cnMinLevelValF       = -5.               ; set min contour level
+    ;res@cnMaxLevelValF       = 5.                 ; set max contour level
+    ;res@cnLevelSpacingF      = .5               ; set contour spacing
+    res@cnLevels = (/-4.,-3.,-2.,-1.,1.,2.,3.,4./)
   ;  res@vcRefMagnitudeF      = 20.0
   else 
 ;  d=6
-    res@cnMinLevelValF       = -9.               ; set min contour level
-    res@cnMaxLevelValF       = 9.                 ; set max contour level
-    res@cnLevelSpacingF      = 1.               ; set contour spacing
+    ;res@cnMinLevelValF       = -9.               ; set min contour level
+    ;res@cnMaxLevelValF       = 9.                 ; set max contour level
+    ;res@cnLevelSpacingF      = 1.               ; set contour spacing
+    res@cnLevels = (/-8.,-6.,-4.,-2.,2.,4.,6.,8./)
   ;  res@vcRefMagnitudeF      = 100.0
   end if
   end if
@@ -343,18 +359,20 @@ begin
 if (ntype.eq."TE") then
   res@cnFillOn             = False             ; turn on color for contours
   res@cnLinesOn            = True              ; turn off contour lines
-  res@cnLineLabelsOn       = False
-  res@cnLineColor          = "blue"
-  res@cnLineThicknessF     = 3.0
+  res@cnLineLabelsOn       = True
+  res@cnLineColor          = "black"
+  res@cnLineThicknessF     = 4.0
+  res@cnInfoLabelOrthogonalPosF = -0.085
   res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
   res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
 ;     res@cnMaxLevelCount	   = 10
+  res@cnLevelSelectionMode = "ManualLevels"    ; set manual contour levels
   if (d.lt.4) then
-;  d=0
-    res@cnMinLevelValF       = -5.               ; set min contour level
-    res@cnMaxLevelValF       = 5.                 ; set max contour level
-    res@cnLevelSpacingF      = 1.               ; set contour spacing
-  else if (d.lt.8) then
+;;  d=0
+;    res@cnMinLevelValF       = -5.               ; set min contour level
+;    res@cnMaxLevelValF       = 5.                 ; set max contour level
+;    res@cnLevelSpacingF      = 1.               ; set contour spacing
+;  elseif (d.lt.8) then
 ;  d=2
     res@cnMinLevelValF       = -10.               ; set min contour level
     res@cnMaxLevelValF       = 10.                 ; set max contour level
@@ -365,8 +383,6 @@ if (ntype.eq."TE") then
     res@cnMaxLevelValF       = 10.                 ; set max contour level
     res@cnLevelSpacingF      = 2.               ; set contour spacing
   end if
-  end if
-  ;end if
 ; when using the gsn_csm plot templates and overlay, it is necessary to
 ; turn off the automatic label strings so that you don't get text on 
 ; top of text
@@ -376,22 +392,22 @@ if (ntype.eq."TE") then
   plotq = gsn_csm_pres_hgt(wks,q,res)
   overlay(plott,plotq)
 end if
-;; div
-  res@cnLinesOn            = True
-  res@cnFillOn             = False
-  res@cnLineLabelsOn       = True
-  res@cnInfoLabelOn        = False
-  res@cnLineColor          = "black"
-  res@cnLineThicknessF     = 5.0
-  res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
-  res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
-  res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
-  res@cnMinLevelValF = -5.
-  res@cnMaxLevelValF = 5.
-  res@cnLevelSpacingF = 1.
-  dv = -dv*1.0e5
-  plotz = gsn_csm_pres_hgt(wks,dv,res)
-  overlay(plott,plotz)
+;;; div
+;  res@cnLinesOn            = True
+;  res@cnFillOn             = False
+;  res@cnLineLabelsOn       = True
+;  res@cnInfoLabelOn        = False
+;  res@cnLineColor          = "black"
+;  res@cnLineThicknessF     = 5.0
+;  res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
+;  res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
+;  res@cnLevelSelectionMode = "ManualLevels"     ; set manual contour levels
+;  res@cnMinLevelValF = -5.
+;  res@cnMaxLevelValF = 5.
+;  res@cnLevelSpacingF = 1.
+;  dv = -dv*1.0e5
+;  plotz = gsn_csm_pres_hgt(wks,dv,res)
+;  overlay(plott,plotz)
 ;  if (d.eq.0) then
 ;;  d=0
 ;    res@cnMinLevelValF       = -20.               ; set min contour level
