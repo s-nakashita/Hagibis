@@ -33,7 +33,7 @@ begin
 ;************************************************
 ; read in atmospheric data
 ;************************************************
-  yyyymmddhh = "2019100912"
+  yyyymmddhh = "2019100900"
   ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
   a = addfile("/Volumes/dandelion/netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean.nc","r")
   ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean_ug.nc","r")
@@ -64,7 +64,7 @@ begin
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
   ;wks = gsn_open_wks("png","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
-  wks = gsn_open_wks("ps","asym_glb"+yyyymmddhh)             ; send graphics to PNG file
+  wks = gsn_open_wks("pdf","asym_glb"+yyyymmddhh)             ; send graphics to PNG file
   ;gsn_define_colormap(wks, "sunshine_9lev")
   gsn_define_colormap(wks, "MPL_Greys")
   plot = new(1,"graphic")

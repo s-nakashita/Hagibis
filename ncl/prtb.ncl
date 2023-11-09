@@ -26,7 +26,7 @@ begin
   mem =  "05"; "26";
   orig = "jma"
   init = "0912"
-  dev = "eps"
+  dev = "pdf"
   a = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_mean.nc","r")
   b = addfile("/Volumes/dandelion/netcdf/tigge/2019/"+orig+"/glb_201910"+init+"_"+mem+".nc","r")
 ;
@@ -106,6 +106,7 @@ begin
   resps@gsnContourNegLineDashPattern = 2
   resps@gsnContourLineThicknessesScale = 2.0
 
+  resps@mpDataBaseVersion = "Highres"
   resps@mpLandFillColor      = "gray"            ; set land to be gray
   resps@mpMinLonF            =  lon0               ; select a subregion
   resps@mpMaxLonF            =  lon1
@@ -150,8 +151,14 @@ begin
   resps@gsnLeftString    = ""
   resps@gsnCenterString  = ""
       
+  resps@cnLineColor = "white"
+  resps@cnLineThicknessF = 4.0
   plotpf = gsn_csm_contour(wks,pful,resps)
   overlay(plotp,plotpf)
+  resps@cnLineColor = "black"
+  resps@cnLineThicknessF = 2.0
+  plotpf2 = gsn_csm_contour(wks,pful,resps)
+  overlay(plotp,plotpf2)
   ;plot(0) = plotp
   draw(plotp)
   frame(wks)

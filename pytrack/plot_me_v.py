@@ -83,6 +83,7 @@ for i in range(4):
     ax.set_title(titles[val],fontsize=24)
     ax.set_ylabel(units[val])
     fig.savefig(f"{val}_tigge_mono.png",dpi=300)
+    fig.savefig(f"{val}_tigge_mono.pdf")
 #axs[0,0].set_title("ME speed")
 #axs[0,0].set_ylabel("m/s")
 #axs[1,0].set_title("RMSE speed")

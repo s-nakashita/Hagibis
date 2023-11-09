@@ -56,7 +56,9 @@ imo  = int(init[4:6])
 idy  = int(init[6:8])
 ihr  = int(init[8:])
 base  = datetime( iyr,imo,idy,ihr)
-start = sys.argv[2]
+start = init
+if len(sys.argv)>2:
+    start = sys.argv[2]
 iyr  = int(start[0:4])
 imo  = int(start[4:6])
 idy  = int(start[6:8])
@@ -374,7 +376,8 @@ for e in elist:
         bbox_to_anchor=(np.cos(angle)/2+.5, np.sin(angle)/2+.7))
         ax_h.grid(True)
         ax_h.set_title(f"{e.upper()} {title}")
-        fig_h.savefig(f"hod_tl{tl}/hod_mono_{title}_{e}.png")
+        fig_h.savefig(f"hod_tl{tl}/hod_mono_{title}_{e}.png",dpi=300)
+        fig_h.savefig(f"hod_tl{tl}/hod_mono_{title}_{e}.pdf")
         plt.close(fig=fig_h)
     k+=1
 for ax1 in [ax,ax_v]:
@@ -387,6 +390,8 @@ for ax1 in [ax,ax_v]:
     ax1.set_title(title)
     ax1.grid(True)
 #ax_v.set_ylim(0.0,8.0)
-#fig.savefig(f"hod_tl{tl}/hod_mono_{title}.png")
-#fig_v.savefig(f"hod_tl{tl}/vel_mono_{title}.png")
+#fig.savefig(f"hod_tl{tl}/hod_mono_{title}.png",dpi=300)
+#fig_v.savefig(f"hod_tl{tl}/vel_mono_{title}.png",dpi=300)
+#fig.savefig(f"hod_tl{tl}/hod_mono_{title}.pdf")
+#fig_v.savefig(f"hod_tl{tl}/vel_mono_{title}.pdf")
 #plt.show()

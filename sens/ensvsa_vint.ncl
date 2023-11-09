@@ -223,13 +223,6 @@ begin
 ; xpts = (/135.0,140.0,140.0,135.0,135.0/)
 ;  ypts = (/ 27.0, 27.0, 24.0, 24.0, 27.0/)
 ;  xpts = (/136.0,139.0,139.0,136.0,136.0/)
-;************************************************
-; add the box
-;************************************************
-  resp                  = True                      ; polyline mods desired
-  resp@gsLineColor      = "black"                     ; color of lines
-  resp@gsLineThicknessF = 4.0                       ; thickness of lines
-;  resp@gsLineLabelString= "test"                    ; adds a line label string
 
    ;cmap = read_colormap_file("hotcold_18lev")
    cmap1 = read_colormap_file("gsdtol")
@@ -265,6 +258,7 @@ begin
    reste@gsnContourNegLineDashPattern = 2
    reste@gsnContourLineThicknessesScale = 2.0
 
+   reste@mpDataBaseVersion = "Highres"
    ;reste@mpLandFillColor      = "gray"            ; set land to be gray
    reste@mpFillOn             =  False            ; not land fill 
    reste@mpMinLonF            =  lon0               ; select a subregion
@@ -298,7 +292,7 @@ begin
       ;reste@cnMinLevelValF       = 10.               ; set min contour level
       ;reste@cnMaxLevelValF       = 100.0                 ; set max contour level
       ;reste@cnLevelSpacingF      = 10.               ; set contour spacing
-      reste@vcRefMagnitudeF      = 10.0
+      reste@vcRefMagnitudeF      = 5.0
    else if (d.eq.2) then
 ;  d=1
       ;reste@cnLevels = (/10.,20.,30.,40.,50.,75.,100.,150.,200.,250.,300.,400.,500.,600.,800.,1000./)
@@ -422,17 +416,35 @@ begin
    resps@gsnLeftString    = ""
    resps@gsnCenterString  = ""
 ;   if (d.eq.0) then
+   resps@cnLineColor = "white"
+   resps@cnLineThicknessF = 6.0
    plotp = gsn_csm_contour(wks, ps_m, resps)
    ;plotp = gsn_csm_contour(wks, te, resps)
    overlay(plote,plotp)
+   resps@cnLineColor = "black"
+   resps@cnLineThicknessF = 3.0
+   plotp2 = gsn_csm_contour(wks, ps_m, resps)
+   overlay(plote,plotp2)
 ;   end if
+;************************************************
+; add the box
+;************************************************
+   resp                  = True                      ; polyline mods desired
+;  resp@gsLineLabelString= "test"                    ; adds a line label string
 ; create array of dummy graphic variables. This is required, b/c each line
 ; must be associated with a unique dummy variable.
-   dum = new(4,graphic)  
+   dum = new(8,graphic)  
 ; draw each line separately. Each line must contain two points.
+   resp@gsLineColor      = "white"                     ; color of lines
+   resp@gsLineThicknessF = 8.0                       ; thickness of lines
    do i = 0 , 3
       dum(i)=gsn_add_polyline(wks,plote,xpts(i:i+1),ypts(i:i+1),resp)      
    end do   
+   resp@gsLineColor      = "black"                     ; color of lines
+   resp@gsLineThicknessF = 4.0                       ; thickness of lines
+   do i = 0 , 3
+      dum(i+4)=gsn_add_polyline(wks,plote,xpts(i:i+1),ypts(i:i+1),resp)      
+   end do 
    ;plot(4) = plote
    draw(plote)
    frame(wks)

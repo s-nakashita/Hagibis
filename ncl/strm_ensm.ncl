@@ -21,8 +21,8 @@ begin
 
 ;---Open netCDF file
   orig = "jma"
-  dev = "ps"
-  init = "0912"
+  dev = "pdf"
+  init = "0900"
   if (init.eq."0900") then
     d_offset = 0
   else

@@ -360,8 +360,6 @@ if (ntype.eq."TE") then
   res@cnFillOn             = False             ; turn on color for contours
   res@cnLinesOn            = True              ; turn off contour lines
   res@cnLineLabelsOn       = True
-  res@cnLineColor          = "black"
-  res@cnLineThicknessF     = 4.0
   res@cnInfoLabelOrthogonalPosF = -0.085
   res@gsnContourZeroLineThicknessF = 0. 	  ; doubles thickness of zero contour
   res@gsnContourNegLineDashPattern = 1 	  ; sets negative contours to dash pattern 1
@@ -389,8 +387,14 @@ if (ntype.eq."TE") then
   res@gsnRightString   = ""    
   res@gsnLeftString    = ""
   res@gsnCenterString  = ""
+  res@cnLineColor          = "white"
+  res@cnLineThicknessF     = 6.0
   plotq = gsn_csm_pres_hgt(wks,q,res)
   overlay(plott,plotq)
+  res@cnLineColor          = "black"
+  res@cnLineThicknessF     = 3.0
+  plotq2 = gsn_csm_pres_hgt(wks,q,res)
+  overlay(plott,plotq2)
 end if
 ;;; div
 ;  res@cnLinesOn            = True

@@ -141,8 +141,12 @@ ax2.grid()
 ax.legend()
 ax2.legend()
 plt.setp(ax2.get_xticklabels(),rotation=30,ha="right")
-fig.savefig(f'track{cdate}_tigge.png',dpi=300)
-fig2.savefig(f'mslp{cdate}_tigge.png',dpi=300)
-#fig.savefig(f'track{cdate}_jma.png',dpi=300)
-#fig2.savefig(f'mslp{cdate}_jma.png',dpi=300)
+figname=f'track{cdate}_tigge'
+figname2=f'mslp{cdate}_tigge'
+#figname=f'track{cdate}_jma'
+#figname2=f'mslp{cdate}_jma'
+fig.savefig(f'{figname}.png',dpi=300)
+fig2.savefig(f'{figname2}.png',dpi=300)
+fig.savefig(f'{figname}.pdf')
+fig2.savefig(f'{figname2}.pdf')
 plt.show()

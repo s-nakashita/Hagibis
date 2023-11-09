@@ -172,7 +172,7 @@ pwd
 #else
 #    lfilter=True
 #fi
-dev=eps
+dev=pdf
 cat > config.ncl << EOF
 ntype="${ntype}"
 ofile="${ofile}"
