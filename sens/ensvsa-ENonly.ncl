@@ -94,9 +94,22 @@ begin
   resm@gsMarkerThicknessF = 3.0
   resm@gsMarkerColor      = "white"                     ; color of lines
 
+  ii = 0
   do d = 0,nd-1,4
      vdate  = cd_string(time(d), "%H UTC, %D")
      t = te(d,:,:)
+     if(d.eq.0.and.orig.eq."jma") then
+       tmax = avg(t({10:15},{148:154}))
+       print(t@long_name+":"+tmax)
+     end if
+     if(orig.eq."ecmwf") then
+       clonlat = tccenters(ii,:)
+       clon = clonlat(0)
+       clat = clonlat(1)
+       ii=ii+1
+       tmax = avg(t({clat-2:clat+2},{clon-2:clon+2}))
+       print(t@long_name+":"+tmax)
+     end if
 ;---Create plot
      res                = True               ; plot mods desired
      res@gsnDraw	      = False

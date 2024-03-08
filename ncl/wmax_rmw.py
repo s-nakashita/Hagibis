@@ -33,7 +33,7 @@ plt.rcParams['ytick.labelsize'] = 14
 plt.rcParams['axes.labelsize']  = 18
 plt.rcParams['axes.titlesize']  = 18
 fig, axes = \
-    plt.subplots(nrows=2,ncols=1,sharex=True,figsize=(11,11))
+    plt.subplots(nrows=3,ncols=1,sharex=True,figsize=(11,13))
 idate = datetime(2019, 10,  9, 12)
 vdate = datetime(2019, 10, 13,  0)
 # year mon day hour lon lat slp ws r(ws>25) r(ws>15)
@@ -47,27 +47,33 @@ for l in range(len(btime)):
     wspd[l] = convert_knot[bst[l,7].astype(np.int32)]
     radi[l] = convert_mile[bst[l,8].astype(np.int32)]
 axes[0].plot(btime, wspd, linewidth=3.0, color='k')
-axes[1].plot(btime, radi, linewidth=3.0, color='k')
-prtblist = ["cntl", "en-", "en+", "tc"]#,  "prtbf"]
+axes[2].plot(btime, radi, linewidth=3.0, color='k')
+prtblist = ["cntl", "en-", "en+"]#, "tc",  "prtbf"]
+labels = {"cntl":"CNTL","en-":"RIDGE$+$","en+":"RIDGE$-$"}
 suffixes = {"cntl":"", "en-":"+p", "tc":"+p2", "en+":"+pn", "prtbf":"+pf"}
-colors = {"cntl":"red","en-":"blue","tc":"tab:green","en+":"blue","prtbf":"magenta"}
-styles = {"cntl":"solid","en-":"solid","tc":"solid","en+":"dashed","prtbf":"solid"}
+colors = {"cntl":"red","en-":"blue","en+":"cyan","tc":"tab:green","prtbf":"magenta"}
+styles = {"cntl":"solid","en-":"solid","en+":"solid","tc":"solid","prtbf":"solid"}
 init = "2019100912"
 for prtb in prtblist:
     wfile = "wmax_" + init + "_"+prtb+".txt"
     rfile = "rmw_" + init + "_"+prtb+".txt"
+    r25file = "r25_" + init + "_"+prtb+".txt"
     wdata = np.loadtxt(wfile)
     rdata = np.loadtxt(rfile)
+    r25data = np.loadtxt(r25file)
     ndate = wdata.size
     time = []
     tdelta = timedelta(hours=6)
     time = [idate + tdelta*i for i in range(ndate)]
     axes[0].plot(time, wdata, linewidth=2.0, linestyle=styles[prtb], 
         #color=colors[sst], label=sst)
-        color=colors[prtb], label=prtb.upper())
+        color=colors[prtb], label=labels[prtb])
     axes[1].plot(time, rdata, linewidth=2.0, linestyle=styles[prtb], 
         #color=colors[sst], label=sst)
-        color=colors[prtb], label=prtb.upper())
+        color=colors[prtb], label=labels[prtb])
+    axes[2].plot(time, r25data, linewidth=2.0, linestyle=styles[prtb], 
+        #color=colors[sst], label=sst)
+        color=colors[prtb], label=labels[prtb])
 for ax in axes:
     ax.set_xticks(time[::2])
     ax.set_xticks(time, minor=True)
@@ -79,10 +85,13 @@ for ax in axes:
     for label in ax.get_xticklabels():
         label.set_rotation(30)
         label.set_horizontalalignment('right')
-axes[0].set_ylabel('Max wind speed (m/s)')
+axes[0].set_ylabel('Maximum wind speed (m/s)')
 axes[0].set_ylim(20.0, 60.0)
-axes[1].set_ylabel('Radius of Wspd > 25 m/s (km)')
-axes[1].set_ylim(50.0,400.0)
+axes[1].set_ylabel('Radius of Maximum Wspd (km)')
+axes[1].set_ylim(20.0,200.0)
+axes[2].set_ylabel('Radius of Wspd > 25 m/s (km)')
+axes[2].set_ylim(50.0,600.0)
 fig.tight_layout()
 #fig.savefig("slpc_gsmtl959_0900.png")
-fig.savefig("wspd_gsmtl479_0912.png")
+fig.savefig("wspd_gsmtl479_0912.png",dpi=300)
+plt.show()

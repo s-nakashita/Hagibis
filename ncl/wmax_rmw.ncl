@@ -25,6 +25,10 @@ begin
            "rmw_"+init+"_en-.txt", \
            "rmw_"+init+"_tc.txt", \
            "rmw_"+init+"_en+.txt"/)
+ r25txts = (/"r25_"+init+"_cntl.txt", \
+             "r25_"+init+"_en-.txt", \
+             "r25_"+init+"_tc.txt", \
+             "r25_"+init+"_en+.txt"/)
  v_thres = 25.0 ; strong wind threshold
  do j = 0, dimsizes(files)-1
   f = addfile(files(j), "r")
@@ -41,35 +45,52 @@ begin
   r@units = "km"
   ldata = new(ndate, float)
   rdata = new(ndate, typeof(r))
+  r25data = new(ndate, typeof(r))
   do it = 0, ndate-1
     vmax = 0.0
     rmax = 0.0
     imax = 0
-    rtmp = new(8, typeof(r))
-    do i = 0, 7
-      var = f->U10m(it,:,i*dnlon:(i+1)*dnlon-1)
-      tmp = dim_avg_n(var,1)
-      vtmp = max(tmp)
-      itmp = maxind(tmp)
-      ;rtmp = r(itmp)
-      if (vtmp .gt. vmax) then
-        vmax = vtmp
-      ;  rmax = rtmp
-        imax = itmp
+    var = f->U(it,{850},:,:)
+    vazim = var(:,0)
+    vazim = dim_avg_n(var,1)
+    vmax = max(vazim)
+    imax = maxind(vazim)
+    rmax = r(imax)
+    do ilat = 1, nlat-1
+      if (vazim(ilat) .lt. v_thres) then
+        break
       end if
-      do ilat = 1, nlat-1
-        if (tmp(ilat) .lt. v_thres) then
-          break
-        end if
-      end do
-      wgt = (v_thres - tmp(ilat))/(tmp(ilat-1)-tmp(ilat))
-      rtmp(i) = r(ilat-1)*wgt + r(ilat)*(1.0-wgt)
     end do
-    rmax = max(rtmp)
+    wgt = (v_thres - vazim(ilat))/(vazim(ilat-1)-vazim(ilat))
+    r25 = r(ilat-1)*wgt + r(ilat)*(1.0-wgt)
+;    rtmp = new(8, typeof(r))
+;    do i = 0, 7
+;      ;var = f->U10m(it,:,i*dnlon:(i+1)*dnlon-1)
+;      var = f->U(it,{850},:,i*dnlon:(i+1)*dnlon-1)
+;      tmp = dim_avg_n(var,1)
+;      vtmp = max(tmp)
+;      itmp = maxind(tmp)
+;      rtmp = r(itmp)
+;      if (vtmp .gt. vmax) then
+;        vmax = vtmp
+;      ;  rmax = rtmp
+;        imax = itmp
+;      end if
+;      do ilat = 1, nlat-1
+;        if (tmp(ilat) .lt. v_thres) then
+;          break
+;        end if
+;      end do
+;      wgt = (v_thres - tmp(ilat))/(tmp(ilat-1)-tmp(ilat))
+;      rtmp(i) = r(ilat-1)*wgt + r(ilat)*(1.0-wgt)
+;    end do
+;    rmax = max(rtmp)
     ldata(it) = vmax
     rdata(it) = rmax
+    r25data(it) = r25
     print(imax)
     print(rmax)
+    print(r25)
   end do
   ldata!0 = "time"
   ldata&time = time
@@ -79,8 +100,13 @@ begin
   rdata&time = time
   printMinMax(rdata, 0)
   asciiwrite(rtxts(j), rdata)
+  r25data!0 = "time"
+  r25data&time = time
+  printMinMax(r25data, 0)
+  asciiwrite(r25txts(j), r25data)
   delete(ldata)
   delete(rdata)
+  delete(r25data)
   delete(t)
  end do
 end

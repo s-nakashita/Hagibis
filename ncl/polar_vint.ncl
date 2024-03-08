@@ -33,7 +33,7 @@ begin
 ;************************************************
 ; read in atmospheric data
 ;************************************************
-  yyyymmddhh = "2019100900"
+  yyyymmddhh = "2019100912"
   ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_"+yyyymmddhh+"_mean.nc","r")
   a = addfile("/Volumes/dandelion/netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean.nc","r")
   ;a = addfile("../../netcdf/tigge/2019/jma/rotate/np_glb_"+yyyymmddhh+"_mean_ug.nc","r")
@@ -63,8 +63,9 @@ begin
   esec	= sec + 6*de
   sday 	= cd_string(ssec, "%N%D%H")
   eday 	= cd_string(esec, "%N%D%H")
+  dev = "pdf"
   ;wks = gsn_open_wks("png","asym_ini"+yyyymmddhh+"_"+sday+"_to_"+eday+"_vint")             ; send graphics to PNG file
-  wks = gsn_open_wks("pdf","asym_glb"+yyyymmddhh)             ; send graphics to PNG file
+  wks = gsn_open_wks(dev,"asym_glb"+yyyymmddhh)             ; send graphics to PNG file
   ;gsn_define_colormap(wks, "sunshine_9lev")
   gsn_define_colormap(wks, "MPL_Greys")
   plot = new(1,"graphic")
@@ -150,13 +151,23 @@ begin
     ;    end do
     ;  end do
     ;end do
-    upav = dim_sum_n(u_,0)
+    ; rotate longitude as north being 0
+    nlon = dimsizes(lon)
+    utmp = new(dimsizes(u_),typeof(u_))
+    utmp(:,:,0:nlon/2-1) = u_(:,:,nlon/2:)
+    utmp(:,:,nlon/2:) = u_(:,:,0:nlon/2-1)
+    copy_VarCoords(u_,utmp)
+    vtmp = new(dimsizes(v_),typeof(v_))
+    vtmp(:,:,0:nlon/2-1) = v_(:,:,nlon/2:)
+    vtmp(:,:,nlon/2:) = v_(:,:,0:nlon/2-1)
+    copy_VarCoords(v_,vtmp)
+    upav = dim_sum_n(utmp,0)
     upav!0 = "lat"
     upav!1 = "lon"
     upav&lat = lat
     upav&lon = lon
     vpav = upav
-    vpav = dim_sum_n(v_,0)
+    vpav = dim_sum_n(vtmp,0)
     wpav = upav
     ;wpav = dim_sum_n(w,0)
     wpav = sqrt(upav^2 + vpav^2)
@@ -171,10 +182,15 @@ begin
     res@gsnFrame   = False
     res@gsnPolar   = "NH"                         ; specify the hemisphere
     res@mpMinLatF  = 82                           ; minimum lat to plot
+    res@mpCenterLonF = 180
     res@mpFillOn   = False
     res@mpOutlineOn = False
     res@mpGridAndLimbOn = False
     res@lbLabelBarOn = False
+
+    res@gsnPolarLabelSpacing = 90
+    res@gsnPolarLabelFontHeightF = 0.01
+    res@gsnPolarLabelDistance = 1.08
 
     res@cnFillOn	       = True                  ; color fill
     res@cnLevelSelectionMode = "ManualLevels"
@@ -219,7 +235,7 @@ begin
       ;  res@gsnCenterString     = u_@level+"mb"
     res@gsnLeftString       = "Wind Velocity"
       ;else
-	  res@gsnCenterString	= day
+	  res@gsnCenterString	= "" ;day
 	  ;res@gsnCenterString	= ""
 	  res@gsnLeftString	= ""
       ;end if
