@@ -43,7 +43,7 @@ em=${edate:4:2}
 ed=${edate:6:2}
 eh=${edate:8:2}
 echo $em $ed $eh
-datadir=/Volumes/dandelion/netcdf/tigge/${yyyy}/${orig}
+datadir=/Volumes/dandelion/netcdf/tigge/${yyyy}/${mm}/${orig}
 if [ $smode -eq $emode ]; then
     header1=ensvsa-${ntype}-m${emode}
 else

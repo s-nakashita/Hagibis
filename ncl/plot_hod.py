@@ -100,8 +100,8 @@ elif exptype == "prtb":
     elist = ["cntl","ridge$+$","ridge$-$"]#,"tc",  "full"]
     exp = {"cntl":"cntl", "ridge$+$":"p", "tc":"p2", "ridge$-$":"pn", "full":"pf"}
     suffixes = {"cntl":"_est","ridge$+$":"_est+p","tc":"_est+p2","ridge$-$":"_est+pn","full":"_est+pf"}
-    #colors = {"cntl":"red","ridge$+$":"blue","tc":"tab:green","ridge$-$":"green","full":"magenta"}
-    colors = {"cntl":"darkgray","ridge$+$":"darkgray","tc":"darkgray","ridge$-$":"darkgray","full":"darkgray"}
+    colors = {"cntl":"red","ridge$+$":"blue","tc":"tab:green","ridge$-$":"green","full":"magenta"}
+    #colors = {"cntl":"darkgray","ridge$+$":"darkgray","tc":"darkgray","ridge$-$":"darkgray","full":"darkgray"}
 #fig = plt.figure(figsize=(8,8))
 #ax = fig.add_subplot(projection="polar")
 for date in dates:
@@ -376,8 +376,8 @@ for e in elist:
         bbox_to_anchor=(np.cos(angle)/2+.5, np.sin(angle)/2+.7))
         ax_h.grid(True)
         ax_h.set_title(f"{e.upper()} {title}")
-        fig_h.savefig(f"hod_tl{tl}/hod_mono_{title}_{e}.png",dpi=300)
-        fig_h.savefig(f"hod_tl{tl}/hod_mono_{title}_{e}.pdf")
+        fig_h.savefig(f"hod_tl{tl}/hod_{title}_{e}.png",dpi=300)
+        fig_h.savefig(f"hod_tl{tl}/hod_{title}_{e}.pdf")
         plt.close(fig=fig_h)
     k+=1
 for ax1 in [ax,ax_v]:

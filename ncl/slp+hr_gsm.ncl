@@ -24,14 +24,14 @@ begin
   ;cmap = read_colormap_file("precip3_16lev") ; all level
   ;cmap = read_colormap_file("BlueDarkRed18") ; low level
   ;cmap = read_colormap_file("MPL_YlOrRd") ; low level
-  ;cmap = read_colormap_file("hotcold_18lev")
-  cmap = read_colormap_file("gsltod")
+  cmap = read_colormap_file("hotcold_18lev")
+  ;cmap = read_colormap_file("gsltod")
   ;cmap = cmap(::-1,:) ; for dyn
   yyyymmddhh = 2019100912
   ;sst = "_mgdsst"
   ;a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_surf_asia_"+yyyymmddhh+".nc","r")
   ;b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl959L100"+sst+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
-  prtb = "pn"
+  prtb = "cntl"
   if(prtb.eq."cntl") then
   a = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est/fcst_surf_asia_"+yyyymmddhh+".nc","r")
   b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
@@ -40,7 +40,7 @@ begin
   b = addfile("/Volumes/dandelion/GSMJob/Jobwk_Tl479L100_est_0912+"+prtb+"/fcst_phy3mpp_"+yyyymmddhh+".nc","r")
   end if
   ;out="slp+hr_cloud"+yyyymmddhh+sst
-  out="slp+hrcv_mono_"+yyyymmddhh+"_"+prtb
+  out="slp+hrcv_"+yyyymmddhh+"_"+prtb
   wks = gsn_open_wks("pdf",out)
   ;plot = new(16,graphic)
   nrow=1
@@ -81,7 +81,7 @@ begin
      dT       = dTcv
      ;dT       = dTcv + dTlc
      ctime    = time6h(d)
-     date     = cd_string(ctime, "%HZ%D")
+     date     = cd_string(ctime, "%H00UTC, %D")
      ;dT = dTp - dTm
      dT = dT*conform(dT, dp, 0)
      dTdt = dT(0,:,:)
@@ -97,8 +97,11 @@ begin
 ;     res@cnInfoLabelOn	      = False
      
      res@gsnCenterString	   = date
-     res@gsnRightString     = dTdt@units
+     res@gsnRightString     = "" ;dTdt@units
      res@gsnLeftString	   = ps@units
+     res@gsnCenterStringFontHeightF = 0.04
+     res@gsnRightStringFontHeightF = 0.03
+     res@gsnLeftStringFontHeightF = 0.03
      ;res@gsnCenterStringOrthogonalPosF = 0.02
      res@gsnAddCyclic	      = False
      res@cnFillOn             = True               ; turn on color for contours
@@ -124,8 +127,8 @@ begin
      ndimc = dimsizes(cmap)
      ncolor = (ndimc(0)+1)/2
      newcmap = new((/ncolor,ndimc(1)/),float)
-     ;newcmap(:,:) = cmap(ncolor-1:,:)
-     newcmap(:,:) = cmap(:ncolor-1,:)
+     newcmap(:,:) = cmap(ncolor-1:,:)
+     ;newcmap(:,:) = cmap(:ncolor-1,:)
      res@cnFillPalette        = newcmap(:,:)
      res@cnLevelSelectionMode = "ExplicitLevels"     ; set manual contour levels
      ;res@cnLevels = (/0.0,0.1,0.2,0.3,0.4,0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0/)
@@ -147,6 +150,13 @@ begin
      resp@cnFillOn             = False               ; turn on color for contours
      resp@cnLinesOn            = True                ; turn off contour lines
      resp@cnLineLabelsOn        = True
+     if(id.eq.(dimsizes(plot)-1)) then
+       resp@cnInfoLabelOn = True
+       resp@cnInfoLabelOrthogonalPosF = -0.055
+       resp@cnInfoLabelFontHeightF = 0.02
+     else
+       resp@cnInfoLabelOn = False
+     end if
      ;resp@cnLineColor          = "blue"
      resp@gsnRightString   = ""    
      resp@gsnLeftString    = ""
@@ -162,6 +172,9 @@ begin
    resP	                   = True
    ;resP@gsnPanelMainString	   = "SLP + "+dT@long_name+" 600-200 hPa"
    resP@gsnPanelLabelBar     = True
+   resP@lbTitleString = "K h~S~-1~N~"
+   resP@lbTitleDirection = "across"
+   resP@lbTitlePosition = "right"
    gsn_panel(wks,plot,(/nrow,ncol/),resP)
    delete(plot)
 end
